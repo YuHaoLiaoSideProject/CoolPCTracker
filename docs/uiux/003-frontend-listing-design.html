@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI/UX 設計規格 — 003 前端列表與搜尋（完整規格）</title>
+<style>
+/* ════════════════════════════════════════════════════════════
+   共用 Design Token（與 004 平行子任務一致，不可更動）
+   ════════════════════════════════════════════════════════════ */
+:root {
+  --brand: #1f6feb; --brand-soft: #e8f0fe;
+  --price-up: #e02424; --price-down: #18933f; --price-flat: #6b7280;
+  --bg: #f7f8fa; --surface: #ffffff; --border: #e5e7eb;
+  --text: #1f2937; --text-dim: #6b7280;
+  --warn-bg: #fff7e6; --warn-border: #f5c518; --warn-text: #8a6d00;
+  --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,.08);
+  --h: 36px; --h-mobile: 44px; --fs: 0.875rem;
+
+  --accent: #1a73e8; --accent-hover: #1557b0; --accent-light: rgba(26,115,232,.12);
+  --brand-strong: #1557b0;
+  --ring: rgba(26,115,232,.14);
+  --success: #188038; --success-light: #e6f4ea; --success-border: #a8dab5;
+  --danger: #c5221f; --danger-light: #fce8e6;
+  --warning: #e37400; --warning-light: #fff4e5;
+  --radius-sm: 6px; --transition: 0.2s ease; --fade: 150ms ease;
+  --surface-2: #f0f2f5; --surface-3: #e8ebef; --muted: #6b7280;
+  --shadow-hover: 0 2px 8px rgba(31,111,235,.15);
+  --frame: #eef0f3; --shadow-lg: 0 12px 32px rgba(0,0,0,.16);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+[data-theme="dark"] {
+  --brand: #4c8dff; --brand-soft: #1d2f4d;
+  --price-up: #f87171; --price-down: #4ade80; --price-flat: #9ca3af;
+  --bg: #0f141a; --surface: #161c24; --border: #2a3340;
+  --text: #e5e7eb; --text-dim: #8b95a3;
+  --warn-bg: #2b230f; --warn-border: #f5c518; --warn-text: #f2d57a;
+  --shadow: 0 1px 3px rgba(0,0,0,.5);
+  --accent: #8ab4f8; --accent-hover: #aecbfa; --accent-light: rgba(138,180,248,.16);
+  --brand-strong: #6ea8ff;
+  --ring: rgba(138,180,248,.28);
+  --success: #81c995; --success-light: #1c2f24; --success-border: #2e5c40;
+  --danger: #f28b82; --danger-light: #3a2226;
+  --warning: #fdd663; --warning-light: #3a2c14;
+  --surface-2: #1e2530; --surface-3: #232c38; --muted: #8b95a3;
+  --shadow-hover: 0 2px 8px rgba(76,141,255,.25);
+  --frame: #0d1318; --shadow-lg: 0 12px 36px rgba(0,0,0,.6);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: var(--bg); color: var(--text);
+  transition: background var(--transition), color var(--transition);
+  padding: 2rem 1.25rem 4rem;
+}
+button, input, select { font-family: inherit; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+h1 { font-size: 1.35rem; margin: 0; }
+.sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+.controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.segmented { display: inline-flex; align-items: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.segmented button { border: none; background: none; color: var(--muted); font-size: 0.82rem; padding: 0.45rem 0.85rem; border-radius: 7px; cursor: pointer; transition: all var(--transition); font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
+.segmented button:hover { color: var(--text); }
+.segmented button.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+.segmented .lbl { font-size: 0.72rem; font-weight: 700; color: var(--muted); letter-spacing: .3px; padding: 0 0.5rem; }
+.segmented .sep { width: 1px; height: 20px; background: var(--border); margin: 0 0.25rem; }
+
+/* 狀態 Demo 控制列（文件 chrome，兩裝置視圖皆可見） */
+.statebar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; background: var(--frame); border: 1px solid var(--border); border-radius: 14px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; }
+.statebar .st-hint { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+
+.frame { background: var(--frame); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem 1.5rem 1.8rem; margin-bottom: 1.5rem; }
+.frame h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.frame .fsub { color: var(--muted); font-size: 0.82rem; margin: 0 0 1rem; line-height: 1.6; }
+.browser-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; }
+.bdot { width: 11px; height: 11px; border-radius: 50%; }
+.bdot:nth-child(1){ background:#f87171 } .bdot:nth-child(2){ background:#fbbf24 } .bdot:nth-child(3){ background:#34d399 }
+.browser-url { flex: 1; max-width: 460px; margin-left: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.3rem 0.8rem; font-size: 0.75rem; color: var(--muted); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.elem-count { font-size: 0.72rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 0.2rem 0.7rem; white-space: nowrap; }
+.elem-count b { color: var(--accent); }
+
+/* ════════════════════════════════════════════════════════════
+   003 App 頁面元件（對應開發規格 §7）
+   ════════════════════════════════════════════════════════════ */
+.app-page { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); transition: background var(--transition); overflow: hidden; }
+.app-page.is-mobile { max-width: 390px; margin: 0 auto; }
+
+.listing { display: grid; grid-template-columns: 240px 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; padding: 16px; }
+.listing-sidebar { position: sticky; top: 72px; align-self: start; }
+.sidebar-title { font-size: 0.72rem; color: var(--text-dim); font-weight: 700; letter-spacing: .4px; padding: 2px 10px 8px; }
+.sidebar-list { display: flex; flex-direction: column; gap: 4px; }
+.cat { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; height: var(--h); padding: 0 12px; border-radius: var(--radius-sm); border: 1px solid transparent; background: transparent; color: var(--text); font-size: 0.875rem; cursor: pointer; transition: all var(--transition); text-align: left; }
+.cat:hover { background: var(--brand-soft); color: var(--brand); }
+.cat.is-active { background: var(--brand-soft); color: var(--brand-strong); font-weight: 700; border-color: rgba(31,111,235,.3); }
+[data-theme="dark"] .cat.is-active { border-color: rgba(76,141,255,.4); }
+.cat .cat-cnt { font-size: 0.7rem; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px; font-weight: 600; }
+.cat.is-active .cat-cnt { background: var(--surface); color: var(--brand-strong); }
+
+.listing-main { min-width: 0; }
+.search-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.search { position: relative; flex: 1; min-width: 220px; max-width: 400px; }
+.search input { width: 100%; height: var(--h); padding: 0 2.6rem 0 2.3rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: var(--fs); transition: border-color var(--transition), box-shadow var(--transition); }
+.search input::placeholder { color: var(--muted); }
+.search .s-ico { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--text-dim); display: flex; pointer-events: none; }
+.search .s-clear { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; border: none; background: none; color: var(--text-dim); cursor: pointer; display: none; align-items: center; justify-content: center; transition: all var(--transition); }
+.search.has-value .s-clear { display: flex; }
+.search .s-clear:hover { background: var(--surface-2); color: var(--text); }
+.sr-hint { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+
+.spec-filter { margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 10px 12px; }
+.spec-filter-head { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.spec-filter-head .hint { font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+.spec-form { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.spec-form select { height: var(--h); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: var(--fs); padding: 0 8px; cursor: pointer; transition: border-color var(--transition), box-shadow var(--transition); }
+.spec-form .op { font-weight: 700; color: var(--text-dim); }
+.spec-form input[type="number"] { height: var(--h); width: 92px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 8px; font-size: var(--fs); color: var(--text); background: var(--surface); transition: border-color var(--transition), box-shadow var(--transition); }
+.spec-form input.error { border-color: var(--danger); }
+.spec-form .unit { font-size: 0.78rem; color: var(--text-dim); }
+.btn { height: var(--h); display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 0.9rem; border-radius: var(--radius-sm); font-size: var(--fs); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: all var(--transition); white-space: nowrap; font-weight: 500; }
+.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--muted); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+[data-theme="dark"] .btn-primary, [data-theme="dark"] .btn-primary:hover:not(:disabled) { color: #0f141a; }
+[data-theme="dark"] .btn-primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+.spec-err { font-size: 0.75rem; color: var(--danger); margin-top: 6px; display: none; }
+.spec-err.show { display: block; }
+.cond-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.fchip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 6px 0 10px; border-radius: 999px; background: var(--brand-soft); border: 1px solid rgba(31,111,235,.35); color: var(--brand-strong); font-size: 0.78rem; font-weight: 600; }
+[data-theme="dark"] .fchip { border-color: rgba(76,141,255,.5); }
+.fchip.static { padding: 0 10px; }
+.fchip button { width: 20px; height: 20px; border: none; border-radius: 50%; background: rgba(31,111,235,.14); color: var(--brand-strong); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition); }
+.fchip button:hover { background: var(--brand); color: #fff; }
+
+.list-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 10px; flex-wrap: wrap; }
+.list-title { font-size: 0.95rem; font-weight: 700; }
+.list-title .cnt { color: var(--text-dim); font-weight: 500; font-size: 0.8rem; }
+.list-title .cnt b { color: var(--brand); font-family: var(--mono); }
+
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.product-card:hover, .product-card:focus-visible { border-color: var(--brand); box-shadow: var(--shadow-hover); outline: none; }
+.pc-name { font-size: 0.95rem; font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pc-specs { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 0.72rem; color: var(--text-dim); background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.pc-price { display: flex; align-items: baseline; gap: 8px; margin-top: auto; }
+.pc-current { font-size: 1.15rem; font-weight: 700; }
+.pc-delta { font-size: 0.85rem; font-weight: 600; }
+.price-up { color: var(--price-up); }
+.price-down { color: var(--price-down); }
+.price-flat { color: var(--price-flat); }
+
+.sparkline { width: 100%; height: 28px; display: block; }
+.sparkline polyline { fill: none; stroke: var(--brand); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.sparkline--empty { color: var(--text-dim); font-size: 0.8rem; }
+
+.skeleton-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.skeleton-list .sk { height: 150px; border-radius: var(--radius); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.empty-state, .error-state { text-align: center; padding: 48px 16px; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.empty-state .es-ico, .error-state .es-ico { color: var(--muted); display: flex; }
+.empty-state h3, .error-state h3 { margin: 0; font-size: 1rem; color: var(--text); }
+.empty-state p, .error-state p { margin: 0; font-size: 0.85rem; max-width: 46ch; }
+.empty-state .cond-list { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.empty-actions { display: flex; gap: 8px; margin-top: 6px; }
+.retry-btn { height: var(--h); padding: 0 1.1rem; border: none; border-radius: var(--radius-sm); background: var(--brand); color: #fff; font-size: var(--fs); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background var(--transition); }
+.retry-btn:hover { background: var(--accent-hover); }
+[data-theme="dark"] .retry-btn, [data-theme="dark"] .retry-btn:hover { color: #0f141a; }
+[data-theme="dark"] .retry-btn:hover { background: var(--accent); }
+
+.stale-banner { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--warn-bg); border-bottom: 1px solid var(--warn-border); color: var(--warn-text); padding: 8px 14px; font-size: 0.85rem; text-align: center; }
+.stale-banner svg { flex-shrink: 0; }
+
+.fade-in { animation: fadein var(--fade); }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+/* 一般 focus（非鍵盤）不畫 ring，避免滑鼠點擊閃光圈 */
+.search input:focus, .spec-form select:focus, .spec-form input[type="number"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+/* ── 元件解剖 ── */
+.anatomy { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1.25rem; margin-top: 1.1rem; }
+.anat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem 1.1rem; }
+.anat-card h4 { margin: 0 0 0.8rem; font-size: 0.92rem; display: flex; align-items: center; gap: 0.4rem; }
+.anat-card h4 .tag { font-size: 0.62rem; font-weight: 700; background: var(--accent-light); color: var(--accent); border-radius: 20px; padding: 0.12rem 0.5rem; }
+.anat-stage { background: var(--frame); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1rem; margin-bottom: 0.85rem; }
+.anat-dims { font-size: 0.74rem; color: var(--muted); line-height: 1.9; }
+.anat-dims b { color: var(--accent); font-family: var(--mono); }
+
+/* 狀態矩陣表 */
+.states { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 1rem; }
+.states th, .states td { border: 1px solid var(--border); padding: 0.55rem 0.75rem; text-align: left; vertical-align: top; }
+.states th { background: var(--surface-2); font-size: 0.74rem; color: var(--muted); font-weight: 700; }
+.states td:first-child { white-space: nowrap; font-weight: 600; }
+.states code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0.05rem 0.35rem; font-size: 0.72rem; font-family: var(--mono); }
+
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0.5rem 1.5rem; margin-top: 1rem; }
+.anno { display: flex; gap: 0.55rem; font-size: 0.8rem; color: var(--muted); align-items: flex-start; line-height: 1.55; }
+.anno .num { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-light); color: var(--accent); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.anno b { color: var(--text); }
+
+.note { font-size: 0.78rem; color: var(--muted); margin-top: 1rem; line-height: 1.7; background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; padding: 0.6rem 0.9rem; }
+.note b { color: var(--accent); }
+
+/* Token 卡片 */
+.tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.tcard { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 0.95rem; }
+.tcard .tk { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.4px; }
+.tcard .tv { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-top: 0.2rem; font-family: var(--mono); }
+.tcard .td { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; line-height: 1.5; }
+.tcard .tv.accent { color: var(--accent); }
+.tcard .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 6px; border: 1px solid rgba(0,0,0,.12); }
+
+.footnote { margin-top: 2rem; font-size: 0.72rem; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 0.75rem; line-height: 1.9; }
+.footnote b { color: var(--text); }
+
+/* ── Mobile 視圖（body.view-mobile 時顯示 mobile-frame）── */
+.frame.mobile-frame { display: none; }
+body.view-mobile .frame.mobile-frame { display: block; }
+body.view-mobile .frame.desktop-frame { display: none; }
+
+.mobile-frame .listing { grid-template-columns: 1fr; padding: 10px; gap: 12px; }
+.mobile-frame .listing-sidebar { position: static; }
+.mobile-frame .sidebar-title { display: none; }
+.mobile-frame .sidebar-list { flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+.mobile-frame .cat { flex: 0 0 auto; width: auto; height: var(--h-mobile); border: 1px solid var(--border); background: var(--surface); padding: 0 14px; justify-content: center; }
+.mobile-frame .cat:hover { background: var(--surface-2); }
+.mobile-frame .cat.is-active { background: var(--brand-soft); }
+.mobile-frame .cat .cat-cnt { margin-left: 6px; }
+.mobile-frame .search { max-width: none; }
+.mobile-frame .search input { height: var(--h-mobile); }
+.mobile-frame .spec-form select, .mobile-frame .spec-form input[type="number"], .mobile-frame .btn, .mobile-frame .retry-btn { height: var(--h-mobile); }
+.mobile-frame .spec-form input[type="number"] { flex: 1; max-width: 110px; }
+.mobile-frame .cat-grid { grid-template-columns: 1fr; }
+.mobile-frame .pc-price { flex-wrap: wrap; }
+.mobile-frame .sr-hint { display: none; }
+.mobile-frame .stale-banner { font-size: 0.8rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>003 前端列表與搜尋 — 設計規格</h1>
+      <div class="sub">完整規格（綠地專案）・分類側欄／全文搜尋／規格篩選／商品卡片／八態狀態矩陣</div>
+    </div>
+    <div class="controls">
+      <div class="segmented" id="devSwitch">
+        <button data-dev="desktop" class="active" aria-pressed="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Desktop</button>
+        <button data-dev="mobile" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Mobile</button>
+      </div>
+      <button class="segmented" id="themeToggle" style="display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px 12px;color:var(--muted);font-size:.82rem;cursor:pointer;font-weight:500;"><svg id="themeIco" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span id="themeLabel">切換深色</span></button>
+    </div>
+  </div>
+
+  <!-- ══════════ 狀態 Demo 控制列（兩視圖皆可用） ══════════ -->
+  <div class="statebar">
+    <div class="segmented" id="stateBar"></div>
+    <span class="st-hint">狀態切換即時同步 desktop／mobile 兩視圖；spec 篩選 chips 於下方畫面內操作。</span>
+  </div>
+
+  <!-- ══════════ 1. 設計 Token ══════════ -->
+  <div class="frame">
+    <h2>1. 設計 Token</h2>
+    <p class="fsub">共用 token（與 004 平行子任務一致，不可更動）；數值對應開發規格 §7.1。深色主題為自訂對應值，兩主題皆可讀。</p>
+    <div class="tokens">
+      <div class="tcard"><div class="tk">Brand</div><div class="tv accent"><span class="sw" style="background:var(--brand)"></span>#1f6feb</div><div class="td">側欄 active・卡片 hover・sparkline・重試</div></div>
+      <div class="tcard"><div class="tk">Brand Soft</div><div class="tv"><span class="sw" style="background:var(--brand-soft)"></span>#e8f0fe</div><div class="td">active 分類底・條件 chip 底</div></div>
+      <div class="tcard"><div class="tk">漲 / 跌 / 持平</div><div class="tv">#e02424 / #18933f / #6b7280</div><div class="td">價格語意色（附文字，不單靠顏色）</div></div>
+      <div class="tcard"><div class="tk">背景 / 表面</div><div class="tv">#f7f8fa / #ffffff</div><div class="td">頁面底 vs 卡片・輸入框</div></div>
+      <div class="tcard"><div class="tk">邊框 / 文字</div><div class="tv">#e5e7eb / #1f2937</div><div class="td">分層與對比（對比 ≥4.5:1）</div></div>
+      <div class="tcard"><div class="tk">警告橫幅</div><div class="tv">#fff7e6 / #f5c518 / #8a6d00</div><div class="td">資料過期提示（warn 三件組）</div></div>
+      <div class="tcard"><div class="tk">圓角</div><div class="tv">10 / 6px</div><div class="td">卡片面板 10px・按鈕輸入 6px</div></div>
+      <div class="tcard"><div class="tk">控制高度</div><div class="tv accent">36 / 44px</div><div class="td">desktop var(--h)・mobile var(--h-mobile)</div></div>
+      <div class="tcard"><div class="tk">字級 / 陰影</div><div class="tv">0.875rem</div><div class="td">基礎字級；卡片陰影 0 1px 3px rgba(0,0,0,.08)</div></div>
+      <div class="tcard"><div class="tk">動畫</div><div class="tv">0.2s / 150ms</div><div class="td">transition 0.2s ease・淡入 150ms・尊重 reduced-motion</div></div>
+      <div class="tcard"><div class="tk">Focus</div><div class="tv accent">3px ring</div><div class="td">:focus-visible accent 光圈（WCAG 2.4.7）</div></div>
+      <div class="tcard"><div class="tk">字體</div><div class="tv">system-ui</div><div class="td">-apple-system…Noto Sans TC…；mono ui-monospace…</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 2. 完整畫面（Desktop） ══════════ -->
+  <div class="frame desktop-frame">
+    <h2>2. 完整畫面與狀態 Demo（Desktop ≥1024px）</h2>
+    <p class="fsub">側欄 240px sticky・搜尋 300ms debounce・規格篩選 AND・卡片多欄。可互動：點分類／輸入搜尋／套用與移除條件 chips／狀態列切換。</p>
+    <div class="browser-bar">
+      <span class="bdot"></span><span class="bdot"></span><span class="bdot"></span>
+      <span class="browser-url" id="url-desk">https://coolpc-tracker.github.io/CoolPCTracker/</span>
+      <span class="elem-count">互動：<b>狀態 Demo・chips 增減・主題/裝置切換</b></span>
+    </div>
+    <div id="app-desk"></div>
+    <div class="note"><b>驗證重點：</b>控制元件同高 <b>36px</b>、側欄 <b>240px</b>；空分類狀態在此僅能由狀態列觸發（demo 資料 9 分類皆有商品，對應 BDD E6）。</div>
+  </div>
+
+  <!-- ══════════ 3. Mobile ══════════ -->
+  <div class="frame mobile-frame">
+    <h2>3. Mobile（≤767px）</h2>
+    <p class="fsub">單欄佈局・側欄收合為水平捲動 chips・控制元件 44px（WCAG 2.5.5）・卡片單欄・價格可換行。與桌面共用同一狀態（切換狀態列即可同步）。</p>
+    <div class="browser-bar">
+      <span class="bdot"></span><span class="bdot"></span><span class="bdot"></span>
+      <span class="browser-url" id="url-mob">https://coolpc-tracker.github.io/CoolPCTracker/</span>
+      <span class="elem-count">觸控目標：<b>44px</b></span>
+    </div>
+    <div id="app-mob"></div>
+    <p class="note"><b>Mobile 規範：</b>觸控目標一律 <b>44px</b>（WCAG 2.5.5）；斷點實作依開發規格 §7.6（1023／639）。</p>
+  </div>
+
+  <!-- ══════════ 4. 元件解剖 ══════════ -->
+  <div class="frame">
+    <h2>4. 元件解剖</h2>
+    <p class="fsub">七個核心元件：放大渲染＋尺寸註記（實測基礎皆為本頁 CSS 計算值）。</p>
+    <div class="anatomy">
+
+      <div class="anat-card">
+        <h4>CategorySidebar <span class="tag">側欄</span></h4>
+        <div class="anat-stage">
+          <div style="max-width:240px">
+            <div class="sidebar-title">分類</div>
+            <div class="sidebar-list">
+              <button class="cat"><span>全部</span><span class="cat-cnt">14</span></button>
+              <button class="cat is-active" aria-pressed="true"><span>顯示卡</span><span class="cat-cnt">4</span></button>
+              <button class="cat"><span>CPU</span><span class="cat-cnt">2</span></button>
+              <button class="cat"><span>記憶體</span><span class="cat-cnt">1</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="anat-dims">
+          寬度 <b>240px</b>（.listing grid 第一欄）・項目高 <b>36px</b>／行動 <b>44px</b>・圓角 <b>6px</b><br>
+          active = <b>brand-soft 底 + brand 字 + 700</b>＋筆數 badge・sticky <b>top:72px</b><br>
+          資料源 <b>CATEGORIES 常數</b>（僅 9 大分類）・點擊同步 <b>?category=&lt;key&gt;</b>
+        </div>
+      </div>
+
+      <div class="anat-card">
+        <h4>SearchBar <span class="tag">搜尋</span></h4>
+        <div class="anat-stage">
+          <div class="search has-value">
+            <span class="s-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+            <input type="search" value="RTX 4070" aria-label="搜尋商品名稱或規格" readonly>
+            <button class="s-clear" aria-label="清除搜尋"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+        <div class="anat-dims">
+          高度 <b>36px</b>／行動 <b>44px</b>・圓角 <b>6px</b>・focus <b>3px ring</b>・clear ✕ <b>24px</b><br>
+          比對範圍僅 <b>name + spec 欄位</b>（不含 history／flags）・<b>300ms debounce</b><br>
+          僅空白字元 = 視同未搜尋・特殊字元字面比對不拋錯
+        </div>
+      </div>
+
+      <div class="anat-card">
+        <h4>SpecFilterPanel <span class="tag">規格篩選</span></h4>
+        <div class="anat-stage">
+          <div class="spec-filter">
+            <div class="spec-filter-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg> 規格篩選 <span class="hint">多條件為 AND 交集</span></div>
+            <div class="spec-form">
+              <select aria-label="規格欄位"><option>VRAM</option><option>瓦數</option><option>CPU核數</option></select>
+              <span class="op">≥</span>
+              <input type="number" value="12" aria-label="門檻數值" readonly>
+              <span class="unit">G</span>
+              <button class="btn btn-primary">套用篩選</button>
+            </div>
+            <div class="cond-chips">
+              <span class="fchip"><span>VRAM≥12G</span><button aria-label="移除條件 VRAM≥12G"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></span>
+              <span class="fchip"><span>瓦數≥750W</span><button aria-label="移除條件 瓦數≥750W"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></span>
+            </div>
+          </div>
+        </div>
+        <div class="anat-dims">
+          條件 chip 高 <b>28px</b>・pill 圓角 <b>999px</b>・✕ 移除鈕 <b>20px</b><br>
+          語意僅 <b>≥</b>（邊界值納入：12G 命中 12G）・多條件 <b>AND</b>・同欄位重複套用 → <b>取代</b><br>
+          無效輸入 → danger 紅字「請輸入有效數值門檻（≥）」
+        </div>
+      </div>
+
+      <div class="anat-card">
+        <h4>ProductCard <span class="tag">商品卡片</span></h4>
+        <div class="anat-stage">
+          <article class="product-card" style="max-width:340px">
+            <div class="pc-name">RTX 4070 Ti SUPER 16G 顯示卡</div>
+            <div class="pc-specs"><span class="chip">VRAM 16G</span><span class="chip">285W</span><span class="chip">MSI</span></div>
+            <svg class="sparkline" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,6.5 20,13.5 40,8 60,16 80,20 100,22.5"/></svg>
+            <div class="pc-price"><span class="pc-current">NT$ 28,990</span><span class="pc-delta price-down">跌 300</span></div>
+          </article>
+        </div>
+        <div class="anat-dims">
+          padding <b>12 / 14px</b>・圓角 <b>10px</b>・名稱 2 行 clamp・sparkline 高 <b>28px</b><br>
+          hover → <b>border brand + 0 2px 8px rgba(31,111,235,.15)</b>・cursor pointer（004 入口預告）<br>
+          漲紅 / 跌綠 / 持平灰・缺昨日價「—」・004/005 事件出口集中此元件
+        </div>
+      </div>
+
+      <div class="anat-card">
+        <h4>Sparkline <span class="tag">迷你趨勢</span></h4>
+        <div class="anat-stage">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <svg class="sparkline" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,10 25,14 50,8 75,18 100,12"/></svg>
+            <span class="sparkline--empty">—</span>
+          </div>
+        </div>
+        <div class="anat-dims">
+          <b>viewBox 0 0 100 28</b>・polyline stroke <b>brand 1.5</b>・round join/cap<br>
+          history <b>≥2 筆</b>才畫線；<b>&lt;2 筆顯示「—」</b>（與 005 追蹤頁語意一致）<br>
+          卡片取最近 <b>30 點</b>（history.slice(-30)）・svg 一律 <b>aria-hidden</b>
+        </div>
+      </div>
+
+      <div class="anat-card">
+        <h4>EmptyState <span class="tag">空狀態三分流</span></h4>
+        <div class="anat-stage">
+          <div class="empty-state" style="padding:22px 12px">
+            <span class="es-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8.5 8.5l5 5M13.5 8.5l-5 5"/></svg></span>
+            <h3>沒有符合「量子電腦」的商品</h3>
+            <p>搜尋範圍僅涵蓋商品名稱與規格欄位，試試其他關鍵字。</p>
+            <div class="empty-actions"><button class="btn">清除搜尋</button></div>
+          </div>
+        </div>
+        <div class="anat-dims">
+          padding <b>48 / 16px</b>・icon <b>40px</b>・清除按鈕 <b>36px</b><br>
+          分流優先序：<b>search → filter → category</b>（keyword 有值→搜尋空；conditions 有值→篩選空；其餘→空分類）<br>
+          空分類 = <b>純說明不報錯</b>、不觸發重試
+        </div>
+      </div>
+
+      <div class="anat-card">
+        <h4>ErrorState <span class="tag">錯誤＋重試</span></h4>
+        <div class="anat-stage">
+          <div class="error-state" style="padding:22px 12px" role="alert">
+            <span class="es-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></span>
+            <h3>資料載入失敗</h3>
+            <p>無法取得 data/items.json（網路中斷或檔案暫時不可得）。</p>
+            <button class="retry-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>重試</button>
+          </div>
+        </div>
+        <div class="anat-dims">
+          重試按鈕高 <b>36px</b>（brand 底白字）・<b>role="alert"</b><br>
+          fetch 失敗 →「資料載入失敗」；parse 失敗 →「資料格式錯誤」<br>
+          <b>錯誤只出現在列表區</b>：側欄／搜尋框／篩選面板照常渲染（BDD 不白屏）
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════ 5. 狀態矩陣 ══════════ -->
+  <div class="frame">
+    <h2>5. 狀態矩陣</h2>
+    <p class="fsub">八態全覆蓋：idle / hover / focus / active / disabled / loading / error / 空結果（BDD @error-handling @edge-case 24 Scenario）。</p>
+    <table class="states">
+      <tr><th style="width:130px;">狀態</th><th>視覺</th><th>互動</th></tr>
+      <tr><td>idle</td><td>卡片 <code>surface</code> 底＋<code>--border</code> 邊＋<code>--shadow</code>；分類項透明底；文字 <code>--text</code></td><td>可點擊／可輸入；卡片 <code>cursor:pointer</code>（004 入口預告）</td></tr>
+      <tr><td>hover</td><td>卡片 border → <code>--brand</code>＋<code>0 2px 8px rgba(31,111,235,.15)</code>；分類項淡 <code>--brand-soft</code> 底；按鈕 <code>--surface-2</code> 底</td><td>提示可操作；hover 不位移、不換行</td></tr>
+      <tr><td>focus</td><td><code>:focus-visible</code> <b>3px accent ring</b>（搜尋／按鈕／chips 移除／卡片 <code>tabindex=0</code>）</td><td>鍵盤 Enter／Space 觸發卡片 open、按鈕、chip 移除</td></tr>
+      <tr><td>active</td><td>側欄分類 <code>--brand-soft</code> 底＋<code>--brand</code> 字＋700；狀態 Demo 按鈕白底＋accent 字</td><td><code>aria-pressed="true"</code>；URL 同步 <code>?category=&lt;key&gt;</code>（mockup 更新 browser-bar URL）</td></tr>
+      <tr><td>disabled</td><td><code>opacity:.5</code>＋<code>cursor:not-allowed</code></td><td>無任何條件時「清除全部條件」按鈕 disabled</td></tr>
+      <tr><td>loading</td><td>列表區 skeleton 卡片（灰階 shimmer <b>1.2s</b>）；側欄／搜尋／篩選照常渲染</td><td><code>aria-busy="true"</code>；不白屏（BDD smoke）</td></tr>
+      <tr><td>error</td><td>列表區 <code>ErrorState</code>：SVG 圖示＋「資料載入失敗／資料格式錯誤」＋brand 重試鈕</td><td>重試 → loading → 重載；<code>role="alert"</code>；錯誤不擴散至側欄／搜尋</td></tr>
+      <tr><td>空結果</td><td><code>EmptyState</code> 三分流：搜尋（「沒有符合『xx』的商品」）／篩選（列出條件）／空分類（純說明）</td><td>搜尋/篩選空 → 清除按鈕；空分類 →「查看全部商品」；皆不觸發重試</td></tr>
+    </table>
+    <div class="legend">
+      <div class="anno"><span class="num">1</span><span><b>過期橫幅</b>：role=alert・warn 色系三件組・資料仍正常顯示（E3，>7 天與 007 共用）</span></div>
+      <div class="anno"><span class="num">2</span><span><b>側欄 240px</b> sticky＋9 分類筆數 badge＋deep link <code>?category=</code> 雙向同步</span></div>
+      <div class="anno"><span class="num">3</span><span><b>搜尋 300ms debounce</b>＋clear ✕；僅比對 name＋spec（「9999」不命中歷史價）</span></div>
+      <div class="anno"><span class="num">4</span><span><b>規格 chips AND</b>：同欄位取代、邊界值納入（12G 命中 12G）、缺欄位靜默排除</span></div>
+      <div class="anno"><span class="num">5</span><span><b>命中筆數</b>「x / 14 筆」<code>aria-live</code>；清除全部條件保留目前分類</span></div>
+      <div class="anno"><span class="num">6</span><span><b>卡片＝004 入口</b>（點卡片進詳情）＋005 追蹤/比價 props 預留</span></div>
+      <div class="anno"><span class="num">7</span><span><b>漲跌 1.4.1</b>：顏色＋文字（漲/跌/持平/—）並存；無昨日價顯示「—」</span></div>
+      <div class="anno"><span class="num">8</span><span><b>sparkline &lt;2 筆</b>不畫線顯示「—」；卡片取最近 30 點</span></div>
+      <div class="anno"><span class="num">9</span><span><b>空狀態三分流</b>：search→filter→category 優先序；空分類不報錯</span></div>
+      <div class="anno"><span class="num">10</span><span><b>錯誤僅列表區</b>：側欄／搜尋／篩選不白屏；重試不刷新全頁</span></div>
+      <div class="anno"><span class="num">11</span><span><b>控制高度</b> 36／44px；行動端觸控目標 44px（WCAG 2.5.5）</span></div>
+      <div class="anno"><span class="num">12</span><span><b>圖示全 inline SVG</b>（aria-hidden）・動畫尊重 <code>prefers-reduced-motion</code></span></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 6. 規格摘要 ══════════ -->
+  <div class="frame">
+    <h2>6. 規格摘要 — CSS 變數對應</h2>
+    <p class="fsub">實作時直接套用下列變數與結構（開發規格 §7 為唯一來源；dark 值為本文件自訂對應）。</p>
+    <table class="states">
+      <tr><th style="width:200px;">項目</th><th>Light 值</th><th>Dark 值</th><th>對應</th></tr>
+      <tr><td>主品牌色</td><td><code>#1f6feb</code></td><td><code>#4c8dff</code></td><td><code>--brand</code></td></tr>
+      <tr><td>品牌淡底</td><td><code>#e8f0fe</code></td><td><code>#1d2f4d</code></td><td><code>--brand-soft</code></td></tr>
+      <tr><td>漲／跌／持平</td><td><code>#e02424 / #18933f / #6b7280</code></td><td><code>#f87171 / #4ade80 / #9ca3af</code></td><td><code>--price-up / --price-down / --price-flat</code></td></tr>
+      <tr><td>頁面背景</td><td><code>#f7f8fa</code></td><td><code>#0f141a</code></td><td><code>--bg</code></td></tr>
+      <tr><td>表面／邊框</td><td><code>#ffffff / #e5e7eb</code></td><td><code>#161c24 / #2a3340</code></td><td><code>--surface / --border</code></td></tr>
+      <tr><td>文字／次要文字</td><td><code>#1f2937 / #6b7280</code></td><td><code>#e5e7eb / #8b95a3</code></td><td><code>--text / --text-dim</code></td></tr>
+      <tr><td>過期橫幅</td><td><code>#fff7e6 / #f5c518 / #8a6d00</code></td><td><code>#2b230f / #f5c518 / #f2d57a</code></td><td><code>--warn-bg / --warn-border / --warn-text</code></td></tr>
+      <tr><td>圓角</td><td><code>10px / 6px</code></td><td><code>10px / 6px</code></td><td><code>--radius / --radius-sm</code></td></tr>
+      <tr><td>陰影</td><td><code>0 1px 3px rgba(0,0,0,.08)</code></td><td><code>0 1px 3px rgba(0,0,0,.5)</code></td><td><code>--shadow</code></td></tr>
+      <tr><td>控制高度</td><td><code>36px / 44px</code></td><td><code>36px / 44px</code></td><td><code>--h / --h-mobile</code></td></tr>
+      <tr><td>基礎字級</td><td><code>0.875rem</code></td><td><code>0.875rem</code></td><td><code>--fs</code></td></tr>
+      <tr><td>強調／成功／危險／警告</td><td><code>#1a73e8 / #188038 / #c5221f / #e37400</code></td><td><code>#8ab4f8 / #81c995 / #f28b82 / #fdd663</code></td><td><code>--accent / --success / --danger / --warning</code></td></tr>
+      <tr><td>動畫</td><td><code>0.2s ease／150ms</code></td><td>同左</td><td><code>--transition／--fade</code></td></tr>
+      <tr><td>卡片 hover shadow</td><td><code>0 2px 8px rgba(31,111,235,.15)</code></td><td><code>0 2px 8px rgba(76,141,255,.25)</code></td><td><code>--shadow-hover</code></td></tr>
+    </table>
+    <div class="note"><b>無障礙：</b>WCAG 1.4.1（漲跌附文字）・2.5.5（觸控 44px）・2.4.7（3px focus ring）・4.1.2（aria-pressed／aria-busy／role=alert／aria-live／SVG aria-hidden）。</div>
+  </div>
+
+  <div class="footnote">
+    📄 設計文件：<b>docs/uiux/003-frontend-listing-design.md</b> ・ 本文件：<b>docs/uiux/003-frontend-listing-design.html</b><br>
+    上游：<b>docs/development/003-frontend-listing-search.md</b>（§7 token 唯一來源）・ <b>docs/bdds/003-frontend-listing-search.feature</b>（24 Scenario）・ <b>docs/interaction-flows/003-frontend-listing-search.md</b><br>
+    實作範圍：<b>web/src/ 綠地新增（useItems／useFilters／CategorySidebar／SearchBar／SpecFilterPanel／ProductCard／Sparkline／EmptyState／ErrorState／ListingView）</b>
+  </div>
+</div>
+
+<script>
+/* ══════════════ 共用切換（模板內建） ══════════════ */
+const themeBtn = document.getElementById('themeToggle');
+const themeLabel = document.getElementById('themeLabel');
+function setTheme(dark){
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  themeLabel.textContent = dark ? '切換淺色' : '切換深色';
+}
+themeBtn.addEventListener('click', () => {
+  setTheme(document.documentElement.dataset.theme !== 'dark');
+});
+const devSwitch = document.getElementById('devSwitch');
+devSwitch.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  devSwitch.querySelectorAll('button').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed','true');
+  document.body.classList.toggle('view-mobile', b.dataset.dev === 'mobile');
+}));
+
+/* ══════════════ 003 Demo 資料（14 筆，涵蓋 9 分類） ══════════════ */
+const CATS = [
+  { key: 'CPU', label: 'CPU' }, { key: 'MB', label: '主機板' }, { key: 'RAM', label: '記憶體' },
+  { key: 'GPU', label: '顯示卡' }, { key: 'SSD', label: 'SSD' }, { key: 'HDD', label: 'HDD' },
+  { key: 'DESKTOP', label: '套裝/準系統' }, { key: 'BUNDLE', label: '劈發價組合區' }, { key: 'CARD', label: '記憶卡' },
+];
+const FIELDS = [
+  { key: 'vram', label: 'VRAM', unit: 'G', suffix: 'G' },
+  { key: 'cores', label: 'CPU核數', unit: '核', suffix: '' },
+  { key: 'wattage', label: '瓦數', unit: 'W', suffix: 'W' },
+  { key: 'capacity', label: '容量', unit: 'GB', suffix: 'GB' },
+  { key: 'ram', label: '記憶體', unit: 'GB', suffix: 'GB' },
+];
+const ITEMS = [
+  { name: 'RTX 4070 Ti SUPER 16G', cat: '顯示卡', spec: { vram: 16, wattage: 285, brand: 'MSI' }, price: 28990, dt: '跌 300', dc: 'price-down', hist: [29990, 29990, 29490, 29490, 29290, 28990] },
+  { name: 'RTX 4060 Ti 8G', cat: '顯示卡', spec: { vram: 8, wattage: 220 }, price: 13990, dt: '持平', dc: 'price-flat', hist: [13990, 13990, 13990, 13990] },
+  { name: 'RX 7900 XTX 24G', cat: '顯示卡', spec: { vram: 24, wattage: 355 }, price: 31990, dt: '漲 500', dc: 'price-up', hist: [31490, 31490, 31490, 31990, 31990] },
+  { name: '某 12G 顯示卡', cat: '顯示卡', spec: { vram: 12, wattage: 200 }, price: 9990, dt: '持平', dc: 'price-flat', hist: [9990, 9990] },
+  { name: 'i5-13600K', cat: 'CPU', spec: { cores: 14, threads: 20, base: 3.5 }, price: 9490, dt: '跌 200', dc: 'price-down', hist: [9690, 9690, 9690, 9490] },
+  { name: 'i7-14700K', cat: 'CPU', spec: { cores: 20, threads: 28 }, price: 13990, dt: '持平', dc: 'price-flat', hist: [13990, 13990, 13990, 13990, 13990] },
+  { name: '美光 Crucial DDR5 32G', cat: '記憶體', spec: { ram: 32 }, price: 2999, dt: '—', dc: '', hist: [2999] },
+  { name: '三星 990 PRO 2TB', cat: 'SSD', spec: { capacity: 2000 }, price: 4999, dt: '漲 100', dc: 'price-up', hist: [4899, 4899, 4999, 4999] },
+  { name: 'WD 紅標 8TB NAS', cat: 'HDD', spec: { capacity: 8000 }, price: 8999, dt: '跌 200', dc: 'price-down', hist: [9199, 9199, 8999] },
+  { name: '技嘉 B760M GAMING', cat: '主機板', spec: { socket: 'LGA1700' }, price: 3990, dt: '持平', dc: 'price-flat', hist: [3990, 3990] },
+  { name: '三星 PRO Plus 256G', cat: '記憶卡', spec: { capacity: 256 }, price: 1099, dt: '持平', dc: 'price-flat', hist: [1099, 1099] },
+  { name: 'AMD R5 7500F 劈發價組合', cat: '劈發價組合區', spec: { cores: 6, wattage: 750 }, price: 12990, dt: '跌 300', dc: 'price-down', hist: [13290, 13290, 12990] },
+  { name: 'XC-5500 隨機贈品主機', cat: '套裝/準系統', spec: {}, price: 7990, dt: '跌 500', dc: 'price-down', hist: [8490, 8490, 7990] },
+  { name: 'XC-750 套裝主機', cat: '套裝/準系統', spec: { wattage: 750 }, price: 14990, dt: '持平', dc: 'price-flat', hist: [14990, 14990] },
+];
+
+const state = {
+  mode: 'normal',          // normal | loading | error | empty-search | empty-filter | empty-category
+  stale: false,
+  keyword: '',
+  conditions: [],          // {id,label,field,value,unit}
+  category: null,          // null | key
+  draftField: 'vram',
+  draftValue: '',
+  specError: false,
+};
+let focusMemo = null;
+
+/* ══════════════ 工具函式 ══════════════ */
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function labelOf(key){ const c = CATS.find(x => x.key === key); return c ? c.label : ''; }
+function ico(n){
+  const I = {
+    search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+    x: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    filter: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>',
+    warn: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+    alert: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+    refresh: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>',
+    'search-x': '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8.5 8.5l5 5M13.5 8.5l-5 5"/></svg>',
+    'filter-x': '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/><path d="M9 14.5L14.5 9M14.5 14.5L9 9"/></svg>',
+    box: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
+    clear: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>',
+  };
+  return I[n] || '';
+}
+function chipTexts(it){
+  const s = it.spec, out = [];
+  if (s.vram) out.push('VRAM ' + s.vram + 'G');
+  if (s.cores) out.push(s.cores + '核');
+  if (s.threads) out.push(s.threads + '緒');
+  if (s.wattage) out.push(s.wattage + 'W');
+  if (s.capacity) out.push(s.capacity >= 1000 ? (s.capacity / 1000) + 'TB' : s.capacity + 'GB');
+  if (s.ram) out.push(s.ram + 'GB');
+  if (s.socket) out.push(s.socket);
+  return out.slice(0, 4);
+}
+function matches(it, q){
+  if (it.name.toLowerCase().includes(q)) return true;
+  const specText = Object.values(it.spec).map(v => String(v ?? '')).join(' ').toLowerCase();
+  return specText.includes(q);
+}
+function filtered(){
+  const q = state.keyword.trim().toLowerCase();
+  return ITEMS.filter(it => {
+    if (state.category && it.cat !== labelOf(state.category)) return false;
+    if (q && !matches(it, q)) return false;
+    return state.conditions.every(c => typeof it.spec[c.field] === 'number' && it.spec[c.field] >= c.value);
+  });
+}
+
+/* ══════════════ 區塊渲染 ══════════════ */
+function sparkHTML(hist){
+  if (hist.length < 2) return '<span class="sparkline--empty">—</span>';
+  const min = Math.min.apply(null, hist), max = Math.max.apply(null, hist);
+  const pts = hist.map((p, i) => {
+    const x = (i / (hist.length - 1)) * 100;
+    const y = min === max ? 14 : 27 - ((p - min) / (max - min)) * 25;
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  });
+  return '<svg class="sparkline" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(' ') + '"/></svg>';
+}
+function cardHTML(it){
+  const chips = chipTexts(it).map(t => '<span class="chip">' + t + '</span>').join('');
+  const price = 'NT$ ' + it.price.toLocaleString('zh-TW');
+  return '<article class="product-card" tabindex="0" role="button" aria-label="' + esc(it.name + '，目前價格 ' + price + '，' + it.dt) + '">' +
+    '<div class="pc-name">' + esc(it.name) + '</div>' +
+    '<div class="pc-specs">' + chips + '</div>' +
+    sparkHTML(it.hist) +
+    '<div class="pc-price"><span class="pc-current">' + price + '</span><span class="pc-delta ' + it.dc + '">' + it.dt + '</span></div>' +
+  '</article>';
+}
+function skeletonHTML(){
+  let s = '';
+  for (let i = 0; i < 6; i++) s += '<div class="sk"></div>';
+  return '<div class="skeleton-list" aria-busy="true">' + s + '</div>';
+}
+function errorHTML(){
+  return '<div class="error-state fade-in" role="alert">' +
+    '<span class="es-ico">' + ico('alert') + '</span>' +
+    '<h3>資料載入失敗</h3>' +
+    '<p>無法取得 data/items.json（網路中斷或檔案暫時不可得）。</p>' +
+    '<button class="retry-btn" data-retry>' + ico('refresh') + '重試</button>' +
+  '</div>';
+}
+function emptyHTML(kind){
+  if (kind === 'search'){
+    return '<div class="empty-state fade-in">' +
+      '<span class="es-ico">' + ico('search-x') + '</span>' +
+      '<h3>沒有符合「' + esc(state.keyword.trim()) + '」的商品</h3>' +
+      '<p>搜尋範圍僅涵蓋商品名稱與規格欄位，試試其他關鍵字。</p>' +
+      '<div class="empty-actions"><button class="btn" data-clear-empty data-target="search">清除搜尋</button></div>' +
+    '</div>';
+  }
+  if (kind === 'filter'){
+    const conds = state.mode === 'empty-filter'
+      ? [{ label: 'VRAM≥24G' }, { label: '瓦數≥1200W' }]
+      : state.conditions;
+    return '<div class="empty-state fade-in">' +
+      '<span class="es-ico">' + ico('filter-x') + '</span>' +
+      '<h3>沒有符合條件的商品</h3>' +
+      '<p>已套用條件：</p>' +
+      '<div class="cond-list">' + conds.map(c => '<span class="fchip static">' + esc(c.label) + '</span>').join('') + '</div>' +
+      '<div class="empty-actions"><button class="btn" data-clear-empty data-target="filter">清除篩選</button></div>' +
+    '</div>';
+  }
+  return '<div class="empty-state fade-in">' +
+    '<span class="es-ico">' + ico('box') + '</span>' +
+    '<h3>此分類目前沒有商品</h3>' +
+    '<p>可能是爬蟲尚未收錄或分類資料異動，這不是錯誤。</p>' +
+    '<div class="empty-actions"><button class="btn" data-clear-empty data-target="category">查看全部商品</button></div>' +
+  '</div>';
+}
+function listArea(){
+  if (state.mode === 'loading') return skeletonHTML();
+  if (state.mode === 'error') return errorHTML();
+  if (state.mode === 'empty-search') return emptyHTML('search');
+  if (state.mode === 'empty-filter') return emptyHTML('filter');
+  if (state.mode === 'empty-category') return emptyHTML('category');
+  const list = filtered();
+  if (list.length === 0){
+    const kind = state.keyword.trim() ? 'search' : (state.conditions.length ? 'filter' : 'category');
+    return emptyHTML(kind);
+  }
+  const hasFilter = state.keyword.trim() !== '' || state.conditions.length > 0;
+  const catLabel = state.category ? labelOf(state.category) : '全部';
+  return '<div class="list-head">' +
+    '<div class="list-title">' + esc(catLabel) + '商品 <span class="cnt" aria-live="polite"><b>' + list.length + '</b> / ' + ITEMS.length + ' 筆</span></div>' +
+    (hasFilter ? '<button class="btn" data-clear-all>' + ico('clear') + '清除全部條件</button>' : '') +
+  '</div>' +
+  '<div class="cat-grid fade-in">' + list.map(cardHTML).join('') + '</div>';
+}
+function sidebarHTML(){
+  const counts = {};
+  ITEMS.forEach(it => { counts[it.cat] = (counts[it.cat] || 0) + 1; });
+  let s = '<div class="sidebar-title">分類</div><div class="sidebar-list">';
+  s += '<button class="cat' + (state.category ? '' : ' is-active') + '" data-cat="all" aria-pressed="' + (!state.category) + '"><span>全部</span><span class="cat-cnt">' + ITEMS.length + '</span></button>';
+  CATS.forEach(c => {
+    const on = state.category === c.key;
+    s += '<button class="cat' + (on ? ' is-active' : '') + '" data-cat="' + c.key + '" aria-pressed="' + on + '"><span>' + c.label + '</span><span class="cat-cnt">' + (counts[c.label] || 0) + '</span></button>';
+  });
+  return s + '</div>';
+}
+function searchRowHTML(){
+  const hasVal = state.keyword !== '';
+  return '<div class="search-row">' +
+    '<div class="search' + (hasVal ? ' has-value' : '') + '">' +
+      '<span class="s-ico">' + ico('search') + '</span>' +
+      '<input type="search" data-keeper="search" data-search value="' + esc(state.keyword) + '" placeholder="搜尋商品名稱或規格…" aria-label="搜尋商品名稱或規格">' +
+      '<button class="s-clear" data-clear-search aria-label="清除搜尋">' + ico('x') + '</button>' +
+    '</div>' +
+    '<span class="sr-hint">300ms debounce・僅比對名稱＋規格</span>' +
+  '</div>';
+}
+function specFilterHTML(){
+  const f = FIELDS.find(x => x.key === state.draftField);
+  const chips = state.conditions.map(c =>
+    '<span class="fchip"><span>' + esc(c.label) + '</span><button data-remove-cond="' + c.id + '" aria-label="移除條件 ' + esc(c.label) + '">' + ico('x') + '</button></span>'
+  ).join('');
+  return '<div class="spec-filter">' +
+    '<div class="spec-filter-head">' + ico('filter') + ' 規格篩選 <span class="hint">多條件為 AND 交集・同欄位重複套用會取代</span></div>' +
+    '<div class="spec-form">' +
+      '<select data-field aria-label="規格欄位">' + FIELDS.map(x => '<option value="' + x.key + '"' + (x.key === state.draftField ? ' selected' : '') + '>' + x.label + '</option>').join('') + '</select>' +
+      '<span class="op">≥</span>' +
+      '<input type="number" min="0" inputmode="decimal" data-keeper="fvalue" data-fvalue value="' + esc(state.draftValue) + '" placeholder="數值" aria-label="門檻數值" class="' + (state.specError ? 'error' : '') + '">' +
+      '<span class="unit">' + f.unit + '</span>' +
+      '<button class="btn btn-primary" data-apply>套用篩選</button>' +
+    '</div>' +
+    '<div class="spec-err' + (state.specError ? ' show' : '') + '" role="alert">請輸入有效數值門檻（≥）</div>' +
+    (state.conditions.length ? '<div class="cond-chips">' + chips + '</div>' : '') +
+  '</div>';
+}
+function staleBannerHTML(){
+  return '<div class="stale-banner" role="alert">' + ico('warn') + '資料可能已過期（最後更新：2026-08-01 08:00，台北時間）</div>';
+}
+function renderApp(container, isMobile){
+  let list = listArea();
+  let inner = '<div class="app-page' + (isMobile ? ' is-mobile' : '') + '">';
+  if (state.stale && state.mode === 'normal') inner += staleBannerHTML();
+  inner += '<div class="listing">' +
+    '<aside class="listing-sidebar">' + sidebarHTML() + '</aside>' +
+    '<main class="listing-main">' + searchRowHTML() + specFilterHTML() + list + '</main>' +
+  '</div></div>';
+  container.innerHTML = inner;
+}
+function renderStateBar(){
+  const DEMOS = [
+    ['normal', '正常列表'], ['loading', '載入中'], ['error', '載入錯誤'],
+    ['empty-search', '搜尋空'], ['empty-filter', '篩選空'], ['empty-category', '空分類'],
+  ];
+  document.getElementById('stateBar').innerHTML =
+    '<span class="lbl">狀態 Demo</span>' +
+    DEMOS.map(d => '<button data-demo="' + d[0] + '" class="' + (d[0] === state.mode ? 'active' : '') + '" aria-pressed="' + (d[0] === state.mode) + '">' + d[1] + '</button>').join('') +
+    '<span class="sep"></span>' +
+    '<button data-stale class="' + (state.stale ? 'active' : '') + '" aria-pressed="' + state.stale + '">' + ico('warn') + '過期橫幅</button>';
+}
+function renderUrl(){
+  const u = state.category
+    ? 'https://coolpc-tracker.github.io/CoolPCTracker/?category=' + state.category
+    : 'https://coolpc-tracker.github.io/CoolPCTracker/';
+  document.getElementById('url-desk').textContent = u;
+  document.getElementById('url-mob').textContent = u;
+}
+function captureFocus(){
+  const el = document.activeElement;
+  if (el && el.matches && el.matches('[data-keeper]')){
+    focusMemo = { k: el.dataset.keeper, pos: el.selectionStart, host: (el.closest('.app-page') || {}).id || 'app-desk' };
+  } else focusMemo = null;
+}
+function restoreFocus(){
+  if (!focusMemo) return;
+  const host = document.getElementById(focusMemo.host) || document.getElementById('app-desk');
+  const el = host.querySelector('[data-keeper="' + focusMemo.k + '"]');
+  if (el){
+    el.focus();
+    if (focusMemo.pos != null) el.setSelectionRange(focusMemo.pos, focusMemo.pos);
+  }
+  focusMemo = null;
+}
+function renderAll(){
+  captureFocus();
+  renderApp(document.getElementById('app-desk'), false);
+  renderApp(document.getElementById('app-mob'), true);
+  renderStateBar();
+  renderUrl();
+  restoreFocus();
+}
+
+/* ══════════════ 互動事件（document 委派，兩視圖共用同一狀態） ══════════════ */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-cat],[data-clear-search],[data-apply],[data-remove-cond],[data-clear-all],[data-clear-empty],[data-retry],[data-demo],[data-stale]');
+  if (!t) return;
+  if (t.hasAttribute('data-cat')) state.category = t.dataset.cat === 'all' ? null : t.dataset.cat;
+  else if (t.hasAttribute('data-clear-search')) state.keyword = '';
+  else if (t.hasAttribute('data-apply')) applyFilter();
+  else if (t.hasAttribute('data-remove-cond')) state.conditions = state.conditions.filter(c => c.id !== t.dataset.removeCond);
+  else if (t.hasAttribute('data-clear-all')){ state.keyword = ''; state.conditions = []; }
+  else if (t.hasAttribute('data-clear-empty')) clearEmpty(t.dataset.target);
+  else if (t.hasAttribute('data-retry')){
+    state.mode = 'loading';
+    renderAll();
+    setTimeout(() => { state.mode = 'normal'; renderAll(); }, 800);
+    return;
+  }
+  else if (t.hasAttribute('data-demo')) state.mode = t.dataset.demo;
+  else if (t.hasAttribute('data-stale')) state.stale = !state.stale;
+  renderAll();
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.matches && t.matches('[data-search]')){ state.keyword = t.value; renderAll(); }
+  else if (t.matches && t.matches('[data-fvalue]')){
+    state.draftValue = t.value;
+    if (state.specError){ state.specError = false; renderAll(); }
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches && t.matches('[data-field]')){ state.draftField = t.value; renderAll(); }
+});
+function applyFilter(){
+  const f = FIELDS.find(x => x.key === state.draftField);
+  const v = Number(state.draftValue);
+  if (state.draftValue === '' || !Number.isFinite(v) || v < 0){
+    state.specError = true;
+    renderAll();
+    return;
+  }
+  const label = f.label + '≥' + v + f.suffix;
+  state.conditions = [
+    ...state.conditions.filter(c => c.field !== f.key),
+    { id: f.key + '-' + v, label: label, field: f.key, value: v, unit: f.unit },
+  ];
+  state.specError = false;
+  state.draftValue = '';
+  renderAll();
+}
+function clearEmpty(target){
+  if (target === 'search') state.keyword = '';
+  else if (target === 'filter') state.conditions = [];
+  else state.category = null;
+  state.mode = 'normal';
+}
+
+/* 初始渲染 */
+renderAll();
+</script>
+</body>
+</html>

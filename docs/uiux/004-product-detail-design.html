@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>004 商品詳情＋歷史趨勢圖 — UI/UX 設計規格（完整規格）</title>
+<style>
+
+/* ════════════════════════════════════════════════════════════
+   設計 Token（004 共用表：與 003 平行子任務一致，不可更動）
+   ════════════════════════════════════════════════════════════ */
+:root {
+  --brand: #1f6feb; --brand-soft: #e8f0fe;
+  --price-up: #e02424; --price-down: #18933f; --price-flat: #6b7280;
+  --bg: #f7f8fa; --surface: #ffffff; --border: #e5e7eb;
+  --text: #1f2937; --text-dim: #6b7280;
+  --warn-bg: #fff7e6; --warn-border: #f5c518; --warn-text: #8a6d00;
+  --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,.08);
+  --h: 36px; --h-mobile: 44px; --fs: 0.875rem;
+  --accent: #1a73e8; --accent-hover: #1557b0; --accent-light: rgba(26,115,232,0.12);
+  --success: #188038; --success-light: #e6f4ea; --success-border: #a8dab5;
+  --danger: #c5221f; --danger-light: #fce8e6; --danger-border: #f5c6c2;
+  --warning: #e37400; --warning-light: #fff4e5;
+  --transition: 0.2s ease; --fade: 150ms;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+[data-theme="light"] {
+  --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f2f4f7; --surface-3: #eceff3;
+  --border: #e5e7eb; --text: #1f2937; --muted: #6b7280;
+  --shadow: 0 1px 3px rgba(0,0,0,.08); --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+  --frame: #eef0f3;
+}
+[data-theme="dark"] {
+  --bg: #0d1217; --surface: #161c23; --surface-2: #1d242e; --surface-3: #232c38;
+  --border: #2a3340; --text: #d7dbe1; --muted: #8b94a0;
+  --shadow: 0 2px 14px rgba(0,0,0,.5); --shadow-lg: 0 12px 36px rgba(0,0,0,.6);
+  --frame: #0a0e13;
+  --brand-soft: rgba(31,111,235,.22);
+  --warn-bg: #3a2f14; --warn-border: #8a6d00; --warn-text: #e3bd5f;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: var(--bg); color: var(--text); transition: background var(--transition), color var(--transition);
+  padding: 2rem 1.25rem 4rem;
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+h1 { font-size: 1.35rem; margin: 0; }
+.sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+.controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.segmented { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; }
+.segmented button { border: none; background: none; color: var(--muted); font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 7px; cursor: pointer; transition: all var(--transition); font-weight: 500; }
+.segmented button:hover { color: var(--text); }
+.segmented button.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+
+.frame { background: var(--frame); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem 1.5rem 1.8rem; margin-bottom: 1.5rem; }
+.frame h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.frame .fsub { color: var(--muted); font-size: 0.82rem; margin: 0 0 1rem; line-height: 1.6; }
+.browser-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; }
+.bdot { width: 11px; height: 11px; border-radius: 50%; }
+.bdot:nth-child(1){ background:#f87171 } .bdot:nth-child(2){ background:#fbbf24 } .bdot:nth-child(3){ background:#34d399 }
+.browser-url { flex: 1; max-width: 420px; margin-left: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.3rem 0.8rem; font-size: 0.75rem; color: var(--muted); }
+.elem-count { font-size: 0.72rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 0.2rem 0.7rem; white-space: nowrap; }
+.elem-count b { color: var(--accent); }
+
+.app-page { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); transition: background var(--transition); overflow: hidden; }
+.app-page.is-mobile { max-width: 390px; margin: 0 auto; }
+.table-skel { padding: 0.9rem 1rem; }
+.row { height: 34px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; }
+.row:last-child { margin-bottom: 0; }
+
+.btn { height: var(--h); display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 0.9rem; border-radius: 6px; font-size: var(--fs); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: all var(--transition); white-space: nowrap; font-weight: 500; }
+.btn:hover { background: var(--surface-2); border-color: var(--muted); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn:focus-visible, .target-input:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--brand-soft); border-color: var(--brand); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+.btn-primary:disabled { background: var(--brand); border-color: var(--brand); }
+
+/* ── 004：詳情頁版面 ── */
+.pd { max-width: 1080px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
+.pd-sec { display: flex; gap: 10px; align-items: flex-start; }
+.pd-sec-body { flex: 1; min-width: 0; }
+.n { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.pd-breadcrumb { font-size: 13px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pd-breadcrumb a { color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.pd-breadcrumb a:hover { text-decoration: underline; }
+.pd-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pd-title h1 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.4; }
+.pd-meta { font-size: 12px; color: var(--text-dim); font-family: var(--mono); margin-top: 4px; }
+.badge-gone { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge-ok { background: var(--brand-soft); color: var(--brand); border: 1px solid rgba(31,111,235,.25); border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+/* 價格摘要卡 */
+.pd-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.sum-label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+.sum-price { font-size: 28px; font-weight: 800; color: var(--text); font-family: var(--mono); }
+.sum-change { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; margin-top: 6px; }
+.sum-change svg { width: 14px; height: 14px; }
+.change-down { color: var(--price-down); }
+.change-up { color: var(--price-up); }
+.change-flat { color: var(--price-flat); }
+.change-none { color: var(--text-dim); font-weight: 500; }
+.flat-dash { color: var(--price-flat); }
+.sum-low { font-size: 18px; font-weight: 700; font-family: var(--mono); color: var(--price-down); }
+.sum-prev { font-size: 15px; font-weight: 600; font-family: var(--mono); color: var(--text); }
+.sum-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.sum-time { font-size: 14px; font-weight: 600; font-family: var(--mono); }
+.stale-hint { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--warn-text); background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 6px; padding: 3px 10px; }
+.stale-hint .n { width: 15px; height: 15px; font-size: 10px; background: var(--warn-text); }
+
+/* 規格表 */
+.spec-table { display: grid; grid-template-columns: 140px 1fr; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+.spec-key { background: var(--surface-2); padding: 8px 14px; font-size: 13px; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+.spec-value { padding: 8px 14px; font-size: 14px; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+.spec-key:nth-last-child(2), .spec-value:last-child { border-bottom: none; }
+.spec-empty-note { margin-top: 8px; font-size: 11.5px; line-height: 1.7; color: var(--warn-text); background: var(--warn-bg); border: 1px dashed var(--warn-border); border-radius: 6px; padding: 6px 10px; }
+.spec-empty-note code { font-family: var(--mono); font-size: 11px; }
+
+/* 趨勢圖區 */
+.pd-chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.pd-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.pd-chart-title { font-size: 15px; font-weight: 700; }
+.pd-chart-hint { font-size: 12px; color: var(--text-dim); }
+.js-chart { position: relative; width: 100%; height: 360px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; cursor: crosshair; }
+.chart-svg { width: 100%; height: 100%; display: block; }
+.chart-svg .grid { stroke: var(--border); stroke-width: 1; }
+.chart-svg .axis { stroke: var(--border); stroke-width: 1; }
+.chart-svg .line { fill: none; stroke: var(--brand); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-svg .pt { fill: var(--surface); stroke: var(--brand); stroke-width: 2; }
+.chart-svg .pt-low { fill: var(--price-down); stroke: var(--surface); stroke-width: 2; }
+.chart-svg .markline { stroke: #f59e0b; stroke-width: 1.5; stroke-dasharray: 6 4; }
+.chart-svg .label { font-size: 11px; fill: var(--muted); font-family: var(--mono); }
+.chart-svg .label-strong { font-size: 11px; font-weight: 700; fill: var(--text); font-family: var(--mono); }
+.chart-svg .tick-x { font-size: 10px; fill: var(--muted); font-family: var(--mono); }
+.chart-svg .ml-label-bg { fill: #f59e0b; }
+.chart-svg .ml-label { font-size: 11px; font-weight: 700; fill: #fff; font-family: var(--mono); }
+.chart-svg .guide { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart-tip { position: absolute; z-index: 5; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: var(--shadow-lg); padding: 6px 9px; font-size: 12px; line-height: 1.6; min-width: 130px; }
+.chart-tip .t-date { color: var(--text-dim); font-size: 11px; }
+.chart-tip .t-price { font-weight: 700; font-family: var(--mono); }
+.chart-tip .t-target { color: var(--warning); font-family: var(--mono); }
+.chart-zoominfo { position: absolute; left: 10px; top: 8px; z-index: 2; font-size: 11px; color: var(--text-dim); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; font-family: var(--mono); }
+.chart-degrade { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 2; font-size: 12px; color: var(--warn-text); background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
+
+/* 目標價輸入 */
+.target-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.target-form .lbl { font-size: 13px; color: var(--text-dim); }
+.target-input { width: 170px; height: var(--h); padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: var(--fs); font-family: var(--mono); transition: border-color var(--transition), box-shadow var(--transition); }
+.target-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); outline: none; }
+.target-input.is-error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(197,34,31,.15); }
+.target-error { color: var(--danger); font-size: 13px; width: 100%; }
+.hint-out-of-range { color: var(--warn-text); background: var(--warn-bg); border: 1px solid var(--warn-border); font-size: 13px; border-radius: 6px; padding: 6px 10px; width: 100%; }
+
+/* WatchActions（005 預留） */
+.pd-watch { background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.watch-title { font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
+.tag-005 { font-size: 11px; font-weight: 700; background: var(--brand-soft); color: var(--brand); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+.watch-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.watch-note { font-size: 12px; color: var(--text-dim); flex-basis: 100%; margin-top: 2px; }
+
+/* 四態：載入中 skeleton / 錯誤 / 找不到 */
+.skel { padding: 24px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+.skel-line { height: 14px; border-radius: 6px; background: var(--surface-2); }
+.skel-title { width: 55%; height: 22px; }
+.skel-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.skel-card { height: 92px; border-radius: var(--radius); background: var(--surface-2); }
+.skel-spec { height: 180px; border-radius: var(--radius); background: var(--surface-2); }
+.skel-chart { height: 300px; border-radius: var(--radius); background: var(--surface-2); }
+.shimmer { position: relative; overflow: hidden; }
+.shimmer::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation: shimmer 1.4s infinite; }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.state-box { text-align: center; padding: 56px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.state-box .s-ico { width: 40px; height: 40px; color: var(--muted); margin-bottom: 4px; }
+.state-box h3 { margin: 0; font-size: 18px; }
+.state-box p { margin: 0; font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+.state-box .actions { display: flex; align-items: center; gap: 14px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+.ghost-link { color: var(--accent); text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
+.ghost-link:hover { text-decoration: underline; }
+
+/* Demo 控制列 */
+.demo-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; color: var(--text-dim); }
+.demo-bar .lbl { font-weight: 700; color: var(--text); white-space: nowrap; }
+.mini-seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
+.mini-seg button { border: none; background: none; color: var(--text-dim); font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.mini-seg button:hover { color: var(--text); }
+.mini-seg button.active { background: var(--brand); color: #fff; }
+.mini-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.mini-btn:hover { border-color: var(--brand); color: var(--brand); }
+.check-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.check-chip input { accent-color: var(--brand); }
+
+/* ── 元件規格（anatomy）── */
+.anatomy { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.1rem; }
+@media (max-width: 760px) { .anatomy { grid-template-columns: 1fr; } }
+.anat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem 1.1rem; }
+.anat-card h4 { margin: 0 0 0.8rem; font-size: 0.92rem; display: flex; align-items: center; gap: 0.4rem; }
+.anat-card h4 .tag { font-size: 0.62rem; font-weight: 700; background: var(--brand-soft); color: var(--brand); border-radius: 20px; padding: 0.12rem 0.5rem; }
+.anat-stage { background: var(--frame); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1rem; margin-bottom: 0.85rem; }
+.anat-dims { font-size: 0.74rem; color: var(--muted); line-height: 1.8; }
+.anat-dims b { color: var(--accent); font-family: var(--mono); }
+
+/* 狀態矩陣表 */
+.states { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 1rem; }
+.states th, .states td { border: 1px solid var(--border); padding: 0.55rem 0.75rem; text-align: left; vertical-align: top; }
+.states th { background: var(--surface-2); font-size: 0.74rem; color: var(--muted); font-weight: 700; }
+.states td:first-child { white-space: nowrap; font-weight: 600; }
+.states .demo-cell { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.states code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0.05rem 0.35rem; font-size: 0.72rem; font-family: var(--mono); }
+.sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0.5rem 1.5rem; margin-top: 1rem; }
+.anno { display: flex; gap: 0.55rem; font-size: 0.8rem; color: var(--muted); align-items: flex-start; line-height: 1.55; }
+.anno .num { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-light); color: var(--accent); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.anno b { color: var(--text); }
+
+.note { font-size: 0.78rem; color: var(--muted); margin-top: 1rem; line-height: 1.7; background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; padding: 0.6rem 0.9rem; }
+.note b { color: var(--accent); }
+
+.demo-hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.7rem; line-height: 1.6; }
+.demo-hint b { color: var(--accent); }
+
+/* Token 卡片 */
+.tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.tcard { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 0.95rem; }
+.tcard .tk { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.4px; }
+.tcard .tv { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-top: 0.2rem; }
+.tcard .td { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; line-height: 1.5; }
+.tcard .tv.accent { color: var(--accent); }
+
+.footnote { margin-top: 2rem; font-size: 0.72rem; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 0.75rem; line-height: 1.7; }
+
+/* mobile 切換 */
+.frame.mobile-frame { display: none; }
+body.view-mobile .frame.mobile-frame { display: block; }
+body.view-mobile .frame.desktop-frame { display: none; }
+.mobile-frame .app-page { max-width: 390px; margin: 0 auto; }
+body.view-mobile .pd { padding: 14px 12px 32px; gap: 14px; }
+body.view-mobile .pd-summary { grid-template-columns: 1fr; gap: 14px; padding: 16px; }
+body.view-mobile .spec-table { grid-template-columns: 120px 1fr; }
+body.view-mobile .js-chart { height: 300px; }
+body.view-mobile .target-form { flex-direction: column; align-items: stretch; gap: 8px; }
+body.view-mobile .target-input { width: 100%; height: var(--h-mobile); }
+body.view-mobile .target-form .btn { height: var(--h-mobile); justify-content: center; width: 100%; }
+body.view-mobile .pd-watch .btn { height: var(--h-mobile); flex: 1; justify-content: center; }
+body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after { animation: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+</style>
+</head>
+<!-- body 不帶 data-theme：避免與 html 的 [data-theme] 選擇器打架，確保深色主題套用到全部內容 -->
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>004 商品詳情＋歷史趨勢圖 — UI/UX 設計規格</h1>
+      <div class="sub">完整規格（web/ 為綠地，無既有 UI 可比對）・與 003 共用 Design Token ・對應 docs/development/004-product-detail-price-chart.md</div>
+    </div>
+    <div class="controls">
+      <div class="segmented" id="devSwitch">
+        <button data-dev="desktop" class="active">🖥 Desktop</button>
+        <button data-dev="mobile">📱 Mobile</button>
+      </div>
+      <button class="segmented" id="themeToggle" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;">🌙 切換深色</button>
+    </div>
+  </div>
+
+  <!-- ══════════ 1. 設計 Token ══════════ -->
+  <div class="frame">
+    <h2>1️⃣ 設計 Token（共用表，與 003 一致）</h2>
+    <p class="fsub">所有數值對應專案共用 CSS 變數；深色主題另有對應值（見 :root / [data-theme]），兩主題皆可讀。</p>
+    <div class="tokens">
+      <div class="tcard"><div class="tk">品牌主色</div><div class="tv accent">#1f6feb</div><div class="td">--brand：主按鈕・focus ring・active 狀態</div></div>
+      <div class="tcard"><div class="tk">漲 / 跌 / 平</div><div class="tv">#e02424 / #18933f / #6b7280</div><div class="td">--price-up 漲紅 ▲・--price-down 降綠 ▼・--price-flat 持平灰 —</div></div>
+      <div class="tcard"><div class="tk">背景 / 表面</div><div class="tv">#f7f8fa / #ffffff</div><div class="td">--bg 頁面底・--surface 卡片</div></div>
+      <div class="tcard"><div class="tk">文字 / 次要</div><div class="tv">#1f2937 / #6b7280</div><div class="td">--text 主文字・--text-dim 次要說明</div></div>
+      <div class="tcard"><div class="tk">警告（超區間・過期）</div><div class="tv">#fff7e6 / #f5c518 / #8a6d00</div><div class="td">--warn-bg / --warn-border / --warn-text</div></div>
+      <div class="tcard"><div class="tk">控制高度</div><div class="tv accent">36 / 44px</div><div class="td">--h desktop 36px・--h-mobile ≤767px 44px（WCAG 2.5.5）</div></div>
+      <div class="tcard"><div class="tk">字級</div><div class="tv">0.875rem</div><div class="td">--fs 控制元件・目前價 28px / 800</div></div>
+      <div class="tcard"><div class="tk">圓角 / 陰影</div><div class="tv">10px / 0 1px 3px</div><div class="td">--radius 卡片・--shadow 卡片陰影</div></div>
+      <div class="tcard"><div class="tk">強調四色</div><div class="tv">#1a73e8 / #188038 / #c5221f / #e37400</div><div class="td">--accent / --success / --danger / --warning</div></div>
+      <div class="tcard"><div class="tk">動畫</div><div class="tv">0.2s ease / 150ms</div><div class="td">--transition 轉場・內容淡入 150ms・尊重 reduced-motion</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 2. 完整畫面（Desktop） ══════════ -->
+  <div class="frame desktop-frame">
+    <h2>2️⃣ 完整畫面與互動（Desktop）</h2>
+    <p class="fsub">以下為「就緒」態的完整詳情頁；上方狀態列可切換四態、下方 Demo 列可操作漲跌四態、圖表模式與目標價。</p>
+    <div class="browser-bar">
+      <span class="bdot"></span><span class="bdot"></span><span class="bdot"></span>
+      <span class="browser-url">https://coolpc-tracker.github.io/#/product/3f9a1c2b8e4d5f6a</span>
+      <span class="elem-count">互動：<b>四態・漲跌・目標價・圖表</b></span>
+    </div>
+
+    <div class="demo-bar">
+      <span class="lbl">狀態 Demo：</span>
+      <div class="mini-seg" id="stateSeg">
+        <button data-state="loading">載入中</button>
+        <button data-state="error">載入失敗</button>
+        <button data-state="notfound">找不到商品</button>
+        <button data-state="ready" class="active">就緒</button>
+      </div>
+      <span class="lbl">漲跌：</span>
+      <div class="mini-seg" id="trendSeg">
+        <button data-trend="down" class="active">降價</button>
+        <button data-trend="up">漲價</button>
+        <button data-trend="flat">持平</button>
+        <button data-trend="none">首日無昨日價</button>
+      </div>
+      <span class="lbl">圖表：</span>
+      <div class="mini-seg" id="chartModeSeg">
+        <button data-mode="multi" class="active">多筆</button>
+        <button data-mode="single">單筆降級</button>
+      </div>
+      <button class="mini-btn" data-zoomact="in">＋ 放大</button>
+      <button class="mini-btn" data-zoomact="out">－ 縮小</button>
+      <button class="mini-btn" data-zoomact="reset">重置</button>
+      <label class="check-chip"><input type="checkbox" id="goneToggle">下架 badge</label>
+      <label class="check-chip"><input type="checkbox" id="staleToggle">過期提示</label>
+    </div>
+
+    <div class="app-page" id="detailPage">
+
+      <!-- 四態：載入中 -->
+      <div data-state="loading" hidden>
+        <div class="skel">
+          <div class="skel-line skel-title shimmer"></div>
+          <div class="skel-cards">
+            <div class="skel-card shimmer"></div><div class="skel-card shimmer"></div>
+            <div class="skel-card shimmer"></div><div class="skel-card shimmer"></div>
+          </div>
+          <div class="skel-spec shimmer"></div>
+          <div class="skel-chart shimmer"></div>
+          <p style="font-size:12px;color:var(--text-dim);text-align:center;">載入中…（fetch data/items.json → 依 id 定位商品）</p>
+        </div>
+      </div>
+
+      <!-- 四態：載入失敗 -->
+      <div data-state="error" hidden>
+        <div class="state-box">
+          <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3>資料載入失敗</h3>
+          <p>無法讀取 data/items.json（網路或伺服器錯誤）。<br>此為錯誤態：error='fetch'（解析失敗顯示「資料格式錯誤」）。</p>
+          <div class="actions">
+            <button class="btn btn-primary" id="retryBtn">重新載入</button>
+            <a class="ghost-link" href="#/list">← 返回列表</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 四態：找不到商品 -->
+      <div data-state="notfound" hidden>
+        <div class="state-box">
+          <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2M8.5 11h5" stroke-linecap="round"/></svg>
+          <h3>找不到此商品</h3>
+          <p>URL 中的商品 id（8a4b2c6d1e9f3a71）不存在於 items.json。<br>可能已失效、格式錯誤，或尚未收錄。</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#/list">返回列表</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 四態：就緒（完整詳情頁） -->
+      <div data-state="ready">
+        <div class="pd">
+          <div class="pd-sec">
+            <span class="n">1</span>
+            <div class="pd-sec-body">
+              <div class="pd-breadcrumb">
+                <a href="#/list"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3 5 8l5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>返回列表（CPU）</a>
+                <span>/</span><span>Intel 第14代</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pd-sec">
+            <span class="n">2</span>
+            <div class="pd-sec-body">
+              <div class="pd-title">
+                <h1>Intel i5-13600K</h1>
+                <span class="badge-gone" id="badgeGone" hidden>此商品已下架</span>
+                <span class="badge-ok">在庫</span>
+              </div>
+              <div class="pd-meta">ID：3f9a1c2b8e4d5f6a ・ 主分類：CPU ・ status: in_stock</div>
+            </div>
+          </div>
+
+          <div class="pd-sec">
+            <span class="n">3</span>
+            <div class="pd-sec-body">
+              <div class="pd-summary">
+                <div class="sum-item">
+                  <div class="sum-label">目前價格</div>
+                  <div class="sum-price" id="sumCur">NT$9,990</div>
+                  <div class="sum-change change-down" id="sumChange"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v9M4.5 8.5 8 12l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>降價 NT$510（-4.9%）</div>
+                </div>
+                <div class="sum-item">
+                  <div class="sum-label">前次價格</div>
+                  <div class="sum-prev" id="sumPrev">NT$10,500</div>
+                  <div class="sum-sub">前一筆歷史紀錄（08-05）</div>
+                </div>
+                <div class="sum-item">
+                  <div class="sum-label">歷史最低價</div>
+                  <div class="sum-low" id="sumLow">NT$9,990</div>
+                  <div class="sum-sub" id="sumLowDate">2026-08-10 達成（多日同價取最早日）</div>
+                </div>
+                <div class="sum-item">
+                  <div class="sum-label">最後更新</div>
+                  <div class="sum-time">2026-08-15 14:00（台北時間）</div>
+                  <div class="sum-sub">每日爬蟲約台北 14:00</div>
+                  <div class="stale-hint" id="staleHint" hidden><span class="n">8</span>資料可能已過期（&gt;7 天）</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pd-sec">
+            <span class="n">4</span>
+            <div class="pd-sec-body">
+              <div class="spec-table">
+                <div class="spec-key">品牌</div><div class="spec-value">Intel</div>
+                <div class="spec-key">型號</div><div class="spec-value">i5-13600K</div>
+                <div class="spec-key">核心數</div><div class="spec-value">14</div>
+                <div class="spec-key">執行緒</div><div class="spec-value">20</div>
+                <div class="spec-key">基礎時脈(GHz)</div><div class="spec-value">3.5</div>
+                <div class="spec-key">功耗 TDP(W)</div><div class="spec-value">125</div>
+                <div class="spec-key">腳位</div><div class="spec-value">LGA1700</div>
+              </div>
+              <div class="spec-empty-note">spec.turbo_ghz＝空值 → <code>entries.filter(v =&gt; v != null &amp;&amp; v !== '')</code> 整列不渲染；key 經 <code>SPEC_LABELS</code> 中文化，維持物件鍵序</div>
+            </div>
+          </div>
+
+          <div class="pd-sec">
+            <span class="n">5</span>
+            <div class="pd-sec-body">
+              <div class="pd-chart-wrap">
+                <div class="pd-chart-head">
+                  <div class="pd-chart-title">歷史價格趨勢</div>
+                  <div class="pd-chart-hint">懸停查價（tooltip）・滾輪／按鈕縮放（dataZoom）・ECharts 5 示意（inline SVG）</div>
+                </div>
+                <div class="js-chart" id="chartDesk" data-single="">
+                  <svg class="chart-svg" viewBox="0 0 560 300" role="img" aria-label="歷史價格趨勢圖（示意）"></svg>
+                  <div class="chart-tip" hidden></div>
+                  <div class="chart-zoominfo"></div>
+                  <div class="chart-degrade" hidden>資料不足：僅顯示單一資料點（首日追蹤）</div>
+                </div>
+                <div class="target-form" id="targetForm">
+                  <label class="lbl" for="targetInput">目標價</label>
+                  <input id="targetInput" class="target-input" type="text" inputmode="decimal" placeholder="例：9,500">
+                  <button type="button" class="btn btn-primary target-set">設定目標價</button>
+                  <button type="button" class="btn target-clear">清除目標價</button>
+                  <div class="target-error" aria-live="polite" hidden></div>
+                  <div class="hint-out-of-range" hidden>目標價超出歷史區間（9,990–11,500），Y 軸已自動擴展以顯示該線。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pd-sec">
+            <span class="n">7</span>
+            <div class="pd-sec-body">
+              <div class="pd-watch">
+                <span class="watch-title">追蹤與比價 <span class="tag-005">005 預留</span></span>
+                <div class="watch-btns">
+                  <button class="btn" disabled><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M8 2.2a3.6 3.6 0 0 0-3.6 3.6c0 1.9-.8 2.9-1.5 3.4.2.2 2.7.4 5.1.4s4.9-.2 5.1-.4c-.7-.5-1.5-1.5-1.5-3.4A3.6 3.6 0 0 0 8 2.2Z"/><path d="M6.5 12.4a1.6 1.6 0 0 0 3 0" stroke-linecap="round"/></svg>加入追蹤</button>
+                  <button class="btn" disabled><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 12.5v-9M8 12.5v-9M13 12.5v-9M1.5 12.5h13"/></svg>加入比價</button>
+                </div>
+                <span class="watch-note">004 僅渲染佔位並傳遞 item.id；追蹤／通知邏輯於 005 實作後啟用。</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <p class="demo-hint"><b>Demo 操作：</b>① 狀態列切換四態；載入失敗態的「重新載入」會模擬重試（→ 載入中 800ms → 就緒）。② 漲跌列切換 降價▼／漲價▲／持平—／首日。③ 圖表列切換多筆／單筆降級、＋－／重置縮放、勾選下架與過期提示。④ 目標價輸入「9,500」按設定 → 出現琥珀 markLine；輸入 abc／0／-100／空白 → 紅框＋提示；「9,000」→ 超區間提示（仍套用）。</p>
+
+    <!-- 元件解剖 -->
+    <div class="anatomy">
+      <div class="anat-card">
+        <h4>SpecTable 規格表 <span class="tag">元件</span></h4>
+        <div class="anat-stage">
+          <div class="spec-table" style="box-shadow:none;max-width:520px;">
+            <div class="spec-key">品牌</div><div class="spec-value">Intel</div>
+            <div class="spec-key">型號</div><div class="spec-value">i5-13600K</div>
+            <div class="spec-key">核心數</div><div class="spec-value">14</div>
+            <div class="spec-key">執行緒</div><div class="spec-value">20</div>
+            <div class="spec-key">腳位</div><div class="spec-value">LGA1700</div>
+          </div>
+          <div style="margin-top:8px;font-size:11px;line-height:1.7;color:var(--warn-text);background:var(--warn-bg);border:1px dashed var(--warn-border);border-radius:6px;padding:6px 10px;max-width:520px;">空值欄位（turbo_ghz、base_ghz…）整列不渲染 — 物件鍵序即欄位順序</div>
+        </div>
+        <div class="anat-dims">兩欄 <b>140px / 1fr</b>・欄位名 <b>13px</b> 淺底（--surface-2）・值 <b>14px</b> mono・圓角 <b>10px</b>・mobile 欄位名收窄 <b>120px</b></div>
+      </div>
+      <div class="anat-card">
+        <h4>PriceTrendChart 趨勢圖 <span class="tag">ECharts 5</span></h4>
+        <div class="anat-stage">
+          <div style="position:relative;height:220px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+            <svg viewBox="0 0 560 220" style="width:100%;height:100%;display:block;" aria-hidden="true">
+              <g stroke="var(--border)"><line x1="60" y1="16" x2="60" y2="182"/><line x1="60" y1="182" x2="532" y2="182"/></g>
+              <g stroke="var(--border)" stroke-dasharray="2 4" opacity=".7"><line x1="60" y1="52" x2="532" y2="52"/><line x1="60" y1="90" x2="532" y2="90"/><line x1="60" y1="128" x2="532" y2="128"/></g>
+              <path d="M 84 150 L 172 132 L 260 146 L 350 104 L 440 68 L 508 46" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linejoin="round"/>
+              <circle cx="508" cy="46" r="5" fill="var(--price-down)"/>
+              <text x="500" y="30" text-anchor="end" font-size="10" fill="var(--text)" font-family="var(--mono)">歷史最低 9,990</text>
+              <line x1="60" y1="86" x2="532" y2="86" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 4"/>
+              <rect x="392" y="66" width="130" height="16" rx="3" fill="#f59e0b"/>
+              <text x="398" y="78" font-size="10" fill="#fff" font-weight="700" font-family="var(--mono)">目標價 NT$9,500</text>
+              <g fill="var(--muted)" font-size="9" font-family="var(--mono)" text-anchor="middle">
+                <text x="84" y="196">07-12</text><text x="172" y="196">07-18</text><text x="260" y="196">07-25</text><text x="350" y="196">08-01</text><text x="440" y="196">08-05</text><text x="508" y="196">08-10</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="anat-dims">高度 <b>360px</b>・寬 <b>100%</b>・X 軸 <b>type:'time'</b> 非等間距不補點・tooltip <b>axis + cross</b>・dataZoom <b>inside＋slider（點數 ≥15 才顯示）</b>・markLine <b>dashed #f59e0b 1.5px</b>・歷史最低 <b>綠點＋標籤</b>・單筆 <b>單點＋label 降級</b></div>
+      </div>
+      <div class="anat-card">
+        <h4>價格摘要區 <span class="tag">區塊</span></h4>
+        <div class="anat-stage">
+          <div class="pd-summary" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));padding:14px;box-shadow:none;">
+            <div><div class="sum-label">目前價格</div><div class="sum-price" style="font-size:22px;">NT$9,990</div><div class="sum-change change-down" style="font-size:13px;"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v9M4.5 8.5 8 12l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>降價 NT$510（-4.9%）</div></div>
+            <div><div class="sum-label">歷史最低</div><div class="sum-low" style="font-size:16px;">NT$9,990</div><div class="sum-sub">2026-08-10 達成</div></div>
+            <div><div class="sum-label">最後更新</div><div class="sum-time" style="font-size:13px;">14:00（台北）</div><div class="sum-sub">每日爬蟲</div></div>
+          </div>
+        </div>
+        <div class="anat-dims">目前價 <b>28px / 800</b>・漲跌 <b>14px / 600</b>＋SVG 箭頭・卡片 <b>10px</b> 圓角・grid <b>auto-fit minmax(180px,1fr)</b>・mobile 單欄堆疊</div>
+      </div>
+      <div class="anat-card">
+        <h4>WatchActions <span class="tag">005 預留</span></h4>
+        <div class="anat-stage">
+          <div class="pd-watch" style="box-shadow:none;">
+            <span class="watch-title">追蹤與比價 <span class="tag-005">005 預留</span></span>
+            <div class="watch-btns">
+              <button class="btn" disabled><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M8 2.2a3.6 3.6 0 0 0-3.6 3.6c0 1.9-.8 2.9-1.5 3.4.2.2 2.7.4 5.1.4s4.9-.2 5.1-.4c-.7-.5-1.5-1.5-1.5-3.4A3.6 3.6 0 0 0 8 2.2Z"/><path d="M6.5 12.4a1.6 1.6 0 0 0 3 0" stroke-linecap="round"/></svg>加入追蹤</button>
+              <button class="btn" disabled><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 12.5v-9M8 12.5v-9M13 12.5v-9M1.5 12.5h13"/></svg>加入比價</button>
+            </div>
+            <span class="watch-note" style="flex-basis:auto;">004 僅佔位，不實作追蹤邏輯</span>
+          </div>
+        </div>
+        <div class="anat-dims">按鈕 <b>36px</b>（mobile <b>44px</b>）・disabled <b>opacity .55</b>・dashed 邊框表「預留」・接收 <b>item.id</b></div>
+      </div>
+    </div>
+
+    <!-- 狀態矩陣 -->
+    <table class="states">
+      <tr><th style="width:170px;">狀態</th><th>視覺</th><th>互動</th></tr>
+      <tr><td>頁面・載入中</td><td class="demo-cell"><span class="sw" style="background:var(--surface-3);"></span>全頁 skeleton（標題／價格卡／規格／圖表區灰階 shimmer）</td><td>不可互動；載入完成自動切就緒</td></tr>
+      <tr><td>頁面・載入失敗</td><td class="demo-cell"><span class="sw" style="background:var(--danger);"></span>置中「資料載入失敗」＋「重新載入」主按鈕（--brand）</td><td>retry → 回 loading → 成功就緒／失敗停留；可返回列表</td></tr>
+      <tr><td>頁面・找不到商品</td><td class="demo-cell"><span class="sw" style="background:var(--muted);"></span>置中「找不到此商品」＋「返回列表」</td><td>deep link 失效／id 錯誤（E3/E15）；返回列表保留分類 context</td></tr>
+      <tr><td>頁面・就緒</td><td class="demo-cell"><span class="sw" style="background:var(--brand);"></span>完整版面：麵包屑→標題→價格摘要→規格表→趨勢圖＋目標價→WatchActions</td><td>trend／tooltip／zoom／目標價全互動可用</td></tr>
+      <tr><td>規格表・有值／空值</td><td class="demo-cell">兩欄 grid；空值（null/''）欄位整列不渲染</td><td>純展示；維持物件鍵序</td></tr>
+      <tr><td>目標價・idle</td><td class="demo-cell"><code>170px</code> 輸入框＋「設定目標價」（--h 36px）</td><td>輸入數字（含小數）</td></tr>
+      <tr><td>目標價・focus</td><td class="demo-cell">邊框 <code>--brand</code>＋<code>3px</code> --brand-soft 光圈</td><td>Enter 等同「設定目標價」</td></tr>
+      <tr><td>目標價・error</td><td class="demo-cell"><span class="sw" style="background:var(--danger);"></span>紅框＋紅字提示（4 組訊息），<b>不套用 markLine</b></td><td>空白／abc／0／-100 對應 4 組訊息；修正後重新套用</td></tr>
+      <tr><td>markLine・顯示</td><td class="demo-cell"><span class="sw" style="background:#f59e0b;"></span>琥珀 dashed 橫線＋標籤「目標價 NT$9,500」</td><td>tooltip 懸停一併顯示「目標價 NT$…」；修改輸入→線更新</td></tr>
+      <tr><td>markLine・清除</td><td class="demo-cell">線與標籤消失</td><td>「清除目標價」→ targetPrice=null；session 級不持久化（E12）</td></tr>
+      <tr><td>markLine・超區間</td><td class="demo-cell"><span class="sw" style="background:var(--warning);"></span>線仍顯示＋Y 軸擴展（×0.98/×1.02）＋warn 提示</td><td>9,000 對 9,990–11,500 → 仍套用；可調整或清除（E7）</td></tr>
+    </table>
+
+    <!-- 重點註記 -->
+    <div class="legend">
+      <div class="anno"><span class="num">1</span><span><b>麵包屑／返回</b>：返回列表保留 003 分類 context（query 回帶）；13px 連結</span></div>
+      <div class="anno"><span class="num">2</span><span><b>標題＋狀態 badge</b>：status=gone →「此商品已下架」（淺紅底）；在庫 badge 用 --brand-soft；ID 以 mono 顯示</span></div>
+      <div class="anno"><span class="num">3</span><span><b>價格摘要卡</b>：目前價 28px/800、漲跌四態（降綠▼／漲紅▲／持平灰—／首日無昨日價）、歷史最低＋最早達成日、最後更新（台北時區）</span></div>
+      <div class="anno"><span class="num">4</span><span><b>規格表</b>：SPEC_LABELS 中文化、空值欄位整列不渲染、維持物件鍵序</span></div>
+      <div class="anno"><span class="num">5</span><span><b>趨勢圖</b>：time 軸非等間距不補點、tooltip cross 懸停查價、dataZoom（inside 滾輪＋slider ≥15 點）、歷史最低綠點標示、單筆降級「資料不足」</span></div>
+      <div class="anno"><span class="num">6</span><span><b>目標價輸入</b>：4 組驗證訊息（空白／abc／0／-100）、Enter 提交、session 級不持久化；超區間→Y 軸擴展＋warn 提示</span></div>
+      <div class="anno"><span class="num">7</span><span><b>WatchActions</b>：005 預留佔位（加入追蹤／加入比價），僅傳 item.id，disabled 呈現</span></div>
+      <div class="anno"><span class="num">8</span><span><b>過期提示</b>：crawled_at &gt; 7 天 → warn 底「資料可能已過期」（與 003/007 共用規則）</span></div>
+    </div>
+    <div class="note"><b>無障礙：</b>1.4.1 漲跌附 ▼/▲ SVG 箭頭與文字，非僅顏色・2.5.5 mobile 控制元件 44px・2.4.7 focus ring（--brand＋3px --brand-soft）・4.1.2 圖表容器 <code>role="img"</code>＋<code>aria-label</code>、錯誤訊息 <code>aria-live</code>・2.1.1 目標價 Enter 提交、縮放提供按鈕・2.3.3 動畫尊重 <code>prefers-reduced-motion</code>・圖示全為 inline SVG（aria-hidden）。</div>
+  </div>
+
+  <!-- ══════════ 3. Mobile ══════════ -->
+  <div class="frame mobile-frame">
+    <h2>3️⃣ Mobile（≤767px）</h2>
+    <p class="fsub">控制元件 44px、價格摘要單欄、規格表欄位名 120px；圖表支援觸控拖曳縮放（dataZoom inside）。</p>
+    <div class="app-page is-mobile">
+      <div class="pd">
+        <div class="pd-sec">
+          <span class="n">1</span>
+          <div class="pd-sec-body">
+            <div class="pd-breadcrumb">
+              <a href="#/list"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3 5 8l5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>返回列表（CPU）</a>
+            </div>
+          </div>
+        </div>
+        <div class="pd-sec">
+          <span class="n">2</span>
+          <div class="pd-sec-body">
+            <div class="pd-title">
+              <h1>Intel i5-13600K</h1>
+              <span class="badge-ok">在庫</span>
+            </div>
+            <div class="pd-meta">ID：3f9a1c2b8e4d5f6a</div>
+          </div>
+        </div>
+        <div class="pd-sec">
+          <span class="n">3</span>
+          <div class="pd-sec-body">
+            <div class="pd-summary">
+              <div class="sum-item">
+                <div class="sum-label">目前價格</div>
+                <div class="sum-price" style="font-size:24px;">NT$9,990</div>
+                <div class="sum-change change-down"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v9M4.5 8.5 8 12l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>降價 NT$510（-4.9%）</div>
+              </div>
+              <div class="sum-item"><div class="sum-label">前次價格</div><div class="sum-prev">NT$10,500</div><div class="sum-sub">前一筆（08-05）</div></div>
+              <div class="sum-item"><div class="sum-label">歷史最低價</div><div class="sum-low">NT$9,990</div><div class="sum-sub">2026-08-10 達成</div></div>
+              <div class="sum-item"><div class="sum-label">最後更新</div><div class="sum-time" style="font-size:13px;">2026-08-15 14:00（台北）</div><div class="sum-sub">每日爬蟲</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pd-sec">
+          <span class="n">4</span>
+          <div class="pd-sec-body">
+            <div class="spec-table">
+              <div class="spec-key">品牌</div><div class="spec-value">Intel</div>
+              <div class="spec-key">型號</div><div class="spec-value">i5-13600K</div>
+              <div class="spec-key">核心數</div><div class="spec-value">14</div>
+              <div class="spec-key">執行緒</div><div class="spec-value">20</div>
+              <div class="spec-key">腳位</div><div class="spec-value">LGA1700</div>
+            </div>
+          </div>
+        </div>
+        <div class="pd-sec">
+          <span class="n">5</span>
+          <div class="pd-sec-body">
+            <div class="pd-chart-wrap">
+              <div class="pd-chart-head">
+                <div class="pd-chart-title">歷史價格趨勢</div>
+                <div class="pd-chart-hint">觸控拖曳縮放・長按查價</div>
+              </div>
+              <div class="js-chart" id="chartMob" data-single="">
+                <svg class="chart-svg" viewBox="0 0 560 300" role="img" aria-label="歷史價格趨勢圖（示意）"></svg>
+                <div class="chart-tip" hidden></div>
+                <div class="chart-zoominfo"></div>
+                <div class="chart-degrade" hidden>資料不足：僅顯示單一資料點（首日追蹤）</div>
+              </div>
+              <div class="target-form" id="targetFormMob">
+                <label class="lbl" for="targetInputMob">目標價</label>
+                <input id="targetInputMob" class="target-input" type="text" inputmode="decimal" placeholder="例：9,500">
+                <button type="button" class="btn btn-primary target-set">設定目標價</button>
+                <button type="button" class="btn target-clear">清除目標價</button>
+                <div class="target-error" aria-live="polite" hidden></div>
+                <div class="hint-out-of-range" hidden>目標價超出歷史區間，Y 軸已自動擴展。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pd-sec">
+          <span class="n">7</span>
+          <div class="pd-sec-body">
+            <div class="pd-watch">
+              <span class="watch-title">追蹤與比價 <span class="tag-005">005 預留</span></span>
+              <div class="watch-btns" style="width:100%;">
+                <button class="btn" disabled>加入追蹤</button>
+                <button class="btn" disabled>加入比價</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Mobile 規範：</b>觸控目標一律 <b>44px</b>（WCAG 2.5.5）・摘要卡單欄・規格表欄位名 <b>120px</b>・圖表全寬 <b>300px</b> 高・目標價按鈕全寬 44px。</p>
+  </div>
+
+  <!-- ══════════ 4. 規格摘要 ══════════ -->
+  <div class="frame">
+    <h2>4️⃣ 規格摘要 — CSS 變數對應</h2>
+    <p class="fsub">實作時直接套用下列共用變數（scoped SFC 內引用；markLine 樣式於 ECharts option 設定，需覆寫用 <code>:deep(.echarts-mark-line-label)</code>）。</p>
+    <table class="states">
+      <tr><th style="width:220px;">項目</th><th>值</th><th>對應</th></tr>
+      <tr><td>品牌主色</td><td>#1f6feb</td><td><code>--brand</code></td></tr>
+      <tr><td>品牌淺底（focus ring／badge）</td><td>#e8f0fe</td><td><code>--brand-soft</code></td></tr>
+      <tr><td>漲價 / 降價 / 持平</td><td>#e02424 / #18933f / #6b7280</td><td><code>--price-up</code> / <code>--price-down</code> / <code>--price-flat</code></td></tr>
+      <tr><td>頁面背景 / 卡片表面</td><td>#f7f8fa / #ffffff</td><td><code>--bg</code> / <code>--surface</code></td></tr>
+      <tr><td>邊框 / 主文字 / 次要文字</td><td>#e5e7eb / #1f2937 / #6b7280</td><td><code>--border</code> / <code>--text</code> / <code>--text-dim</code></td></tr>
+      <tr><td>警告（目標價超區間・過期提示）</td><td>#fff7e6 / #f5c518 / #8a6d00</td><td><code>--warn-bg</code> / <code>--warn-border</code> / <code>--warn-text</code></td></tr>
+      <tr><td>卡片圓角 / 陰影</td><td>10px / 0 1px 3px rgba(0,0,0,.08)</td><td><code>--radius</code> / <code>--shadow</code></td></tr>
+      <tr><td>控制高度（desktop / mobile）</td><td>36px / 44px</td><td><code>--h</code> / <code>--h-mobile</code></td></tr>
+      <tr><td>控制字級</td><td>0.875rem</td><td><code>--fs</code></td></tr>
+      <tr><td>強調 / 成功 / 危險 / 警告</td><td>#1a73e8 / #188038 / #c5221f / #e37400</td><td><code>--accent</code> / <code>--success</code> / <code>--danger</code> / <code>--warning</code></td></tr>
+      <tr><td>轉場 / 淡入</td><td>0.2s ease / 150ms</td><td><code>--transition</code> / fade</td></tr>
+      <tr><td>markLine 目標價線</td><td>dashed #f59e0b 1.5px（option lineStyle）</td><td>ECharts <code>series.markLine</code></td></tr>
+      <tr><td>字體</td><td>-apple-system, … "Noto Sans TC", "PingFang TC", "Microsoft JhengHei"</td><td><code>font-family</code></td></tr>
+      <tr><td>數字 mono</td><td>ui-monospace, SFMono-Regular, Menlo, Consolas</td><td><code>--mono</code></td></tr>
+    </table>
+    <div class="note"><b>深色主題：</b>各變數於 <code>[data-theme="dark"]</code> 有對應值（背景 #0d1217／表面 #161c23／邊框 #2a3340／文字 #d7dbe1…），兩主題皆可讀；markLine 琥珀色於兩主題維持對比。</div>
+  </div>
+
+  <div class="footnote">
+    📄 設計文件：<b>docs/uiux/004-product-detail-design.md</b> ・ 本文件：<b>docs/uiux/004-product-detail-design.html</b> ・ 基底：templates/mockup-skeleton.html<br>
+    實作範圍：<b>004 商品詳情與歷史趨勢圖</b>（web/src：router / composables / components / views）・ 與 003 共用 useItems／useCrawledAt／types/item.ts（本稿未讀取 003 檔案）・ 005 整合點：WatchActions 佔位
+  </div>
+</div>
+
+<script>
+// ── 通用切換（模板內建，勿刪）──
+const themeBtn = document.getElementById('themeToggle');
+themeBtn.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+  themeBtn.textContent = dark ? '🌙 切換深色' : '☀️ 切換淺色';
+});
+const devSwitch = document.getElementById('devSwitch');
+devSwitch.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  devSwitch.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.body.classList.toggle('view-mobile', b.dataset.dev === 'mobile');
+}));
+
+// ── 004 Demo：四態切換 ──
+const stateSeg = document.getElementById('stateSeg');
+const blocks = document.querySelectorAll('#detailPage [data-state]');
+function showState(s) {
+  blocks.forEach(b => { b.hidden = b.dataset.state !== s; });
+  stateSeg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x.dataset.state === s));
+}
+stateSeg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => showState(b.dataset.state)));
+document.getElementById('retryBtn').addEventListener('click', () => {
+  const btn = document.getElementById('retryBtn');
+  btn.disabled = true;
+  showState('loading');
+  setTimeout(() => { btn.disabled = false; showState('ready'); }, 800);
+});
+
+// ── 004 Demo：漲跌四態 ──
+const ARR_DOWN = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v9M4.5 8.5 8 12l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ARR_UP = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V4M4.5 7.5 8 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const TRENDS = {
+  down: { cur: '9,990', prev: 'NT$10,500', low: 'NT$9,990', lowDate: '2026-08-10 達成（多日同價取最早日）', html: ARR_DOWN + '降價 NT$510（-4.9%）', cls: 'change-down' },
+  up:   { cur: '1,990', prev: 'NT$1,890', low: 'NT$1,890', lowDate: '2026-07-28 達成', html: ARR_UP + '漲價 NT$100（+5.3%）', cls: 'change-up' },
+  flat: { cur: '2,990', prev: 'NT$2,990', low: 'NT$2,990', lowDate: '2026-08-05 達成', html: '<span class="flat-dash">—</span> 持平', cls: 'change-flat' },
+  none: { cur: '5,990', prev: '—', low: 'NT$5,990', lowDate: '2026-08-15 達成（＝目前價）', html: '首日追蹤，尚無漲跌比較', cls: 'change-none' },
+};
+document.getElementById('trendSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  document.getElementById('trendSeg').querySelectorAll('button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  const t = TRENDS[b.dataset.trend];
+  document.getElementById('sumCur').textContent = 'NT$' + t.cur;
+  document.getElementById('sumPrev').textContent = t.prev;
+  document.getElementById('sumLow').textContent = t.low;
+  document.getElementById('sumLowDate').textContent = t.lowDate;
+  const c = document.getElementById('sumChange');
+  c.className = 'sum-change ' + t.cls;
+  c.innerHTML = t.html;
+}));
+
+// ── 004 Demo：下架 / 過期提示 ──
+document.getElementById('goneToggle').addEventListener('change', e => { document.getElementById('badgeGone').hidden = !e.target.checked; });
+document.getElementById('staleToggle').addEventListener('change', e => { document.getElementById('staleHint').hidden = !e.target.checked; });
+
+// ── 004 Demo：趨勢圖（inline SVG 模擬 ECharts）──
+const fmt = n => 'NT$' + n.toLocaleString('zh-TW');
+const HIST = [['2026-07-12', 11500], ['2026-07-18', 11300], ['2026-07-25', 11200], ['2026-08-01', 10900], ['2026-08-05', 10500], ['2026-08-10', 9990]];
+const SINGLE = [['2026-08-15', 5990]];
+const CX0 = 64, CX1 = 528, CY0 = 24, CY1 = 252;
+const day = d => Date.parse(d) / 86400000;
+const SVGN = 'http://www.w3.org/2000/svg';
+const mk = (t, a, tx) => { const e = document.createElementNS(SVGN, t); for (const k in a) e.setAttribute(k, a[k]); if (tx != null) e.textContent = tx; return e; };
+
+function renderChart(host) {
+  const single = !!host.dataset.single;
+  const pts = single ? SINGLE : HIST;
+  const target = host._target != null ? host._target : null;
+  const zoom = host._zoom || 1;
+  const n = pts.length;
+  let win = Math.max(1, Math.ceil(n / zoom));
+  if (!single && win < 2) win = 2;
+  const start = Math.max(0, n - win);
+  const vis = pts.slice(start);
+  let ys = pts.map(p => p[1]);
+  if (target != null) ys = ys.concat([target]);
+  let yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
+  const pad = (yMax - yMin) * 0.06 || 1;
+  yMin -= pad; yMax += pad;
+  const offBase = day(vis[0][0]);
+  const offEnd = day(vis[vis.length - 1][0]);
+  const span = (offEnd - offBase) || 1;
+  const px = i => vis.length === 1 ? (CX0 + CX1) / 2 : CX0 + (day(vis[i][0]) - offBase) / span * (CX1 - CX0);
+  const py = v => CY0 + (yMax - v) / (yMax - yMin) * (CY1 - CY0);
+  const low = Math.min.apply(null, pts.map(p => p[1]));
+  const lowIdx = pts.findIndex(p => p[1] === low);
+  const svg = host.querySelector('.chart-svg');
+  const info = host.querySelector('.chart-zoominfo');
+  const degrade = host.querySelector('.chart-degrade');
+  svg.innerHTML = '';
+  for (let g = 0; g <= 4; g++) {
+    const v = yMax - g / 4 * (yMax - yMin);
+    const y = py(v);
+    svg.appendChild(mk('line', { class: 'grid', x1: CX0, y1: y, x2: CX1, y2: y }));
+    svg.appendChild(mk('text', { class: 'label', x: CX0 - 8, y: y + 4, 'text-anchor': 'end' }, fmt(Math.round(v))));
+  }
+  svg.appendChild(mk('line', { class: 'axis', x1: CX0, y1: CY1, x2: CX1, y2: CY1 }));
+  svg.appendChild(mk('line', { class: 'axis', x1: CX0, y1: CY0, x2: CX0, y2: CY1 }));
+  if (target != null) {
+    const yt = py(target);
+    svg.appendChild(mk('line', { class: 'markline', x1: CX0, y1: yt, x2: CX1, y2: yt }));
+    const txt = '目標價 ' + fmt(target);
+    const tw = txt.length * 6.2 + 18;
+    svg.appendChild(mk('rect', { class: 'ml-label-bg', x: CX1 - tw + 6, y: yt - 18, width: tw, height: 16, rx: 3 }));
+    svg.appendChild(mk('text', { class: 'ml-label', x: CX1 - tw + 13, y: yt - 6.5 }, txt));
+  }
+  if (vis.length > 1) {
+    const d = vis.map((p, i) => (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(p[1]).toFixed(1)).join(' ');
+    svg.appendChild(mk('path', { class: 'line', d: d }));
+  }
+  vis.forEach((p, i) => {
+    const x = px(i), y = py(p[1]);
+    const isLow = (start + i) === lowIdx;
+    svg.appendChild(mk('circle', { class: isLow ? 'pt-low' : 'pt', cx: x, cy: y, r: isLow ? 5 : 3.5 }));
+    if (isLow) {
+      svg.appendChild(mk('text', { class: 'label-strong', x: x + 8, y: y - 8 }, '歷史最低 ' + p[1].toLocaleString('zh-TW')));
+    }
+    svg.appendChild(mk('text', { class: 'tick-x', x: x, y: CY1 + 16, 'text-anchor': 'middle' }, p[0].slice(5)));
+  });
+  const guide = mk('line', { class: 'guide', x1: CX0, y1: CY0, x2: CX0, y2: CY1, visibility: 'hidden' });
+  svg.appendChild(guide);
+  host._guide = guide;
+  host._xs = vis.map((_, i) => px(i));
+  host._ys = vis.map((_, i) => py(vis[i][1]));
+  host._pts = vis;
+  info.textContent = single ? '1 筆資料' : '顯示 ' + vis.length + '/' + n + ' 點';
+  degrade.hidden = !single;
+}
+
+function chartMove(e, host) {
+  const tip = host.querySelector('.chart-tip');
+  const r = host.querySelector('.chart-svg').getBoundingClientRect();
+  const scale = Math.min(r.width / 560, r.height / 300);
+  const offX = (r.width - 560 * scale) / 2, offY = (r.height - 300 * scale) / 2;
+  const sx = (e.clientX - r.left - offX) / scale;
+  const sy = (e.clientY - r.top - offY) / scale;
+  const xs = host._xs || [], ys = host._ys || [], pts = host._pts || [];
+  let best = -1, bd = 1e9;
+  xs.forEach((x, i) => { const d = Math.abs(x - sx); if (d < bd) { bd = d; best = i; } });
+  if (best < 0) return;
+  const p = pts[best];
+  tip.innerHTML = '<div class="t-date">' + p[0] + '</div><div class="t-price">' + fmt(p[1]) + '</div>' + (host._target != null ? '<div class="t-target">目標價 ' + fmt(host._target) + '</div>' : '');
+  let tx = sx + 14, ty = ys[best] - 12;
+  if (tx + 150 > 560) tx = sx - 164;
+  if (ty < 4) ty = ys[best] + 26;
+  tip.style.left = (tx / 560 * 100) + '%';
+  tip.style.top = (ty / 300 * 100) + '%';
+  tip.hidden = false;
+  host._guide.setAttribute('x1', sx); host._guide.setAttribute('x2', sx);
+  host._guide.setAttribute('y1', CY0); host._guide.setAttribute('y2', CY1);
+  host._guide.setAttribute('visibility', 'visible');
+}
+
+document.querySelectorAll('.js-chart').forEach(host => {
+  renderChart(host);
+  host.addEventListener('mousemove', e => chartMove(e, host));
+  host.addEventListener('mouseleave', () => {
+    host.querySelector('.chart-tip').hidden = true;
+    if (host._guide) host._guide.setAttribute('visibility', 'hidden');
+  });
+  host.addEventListener('wheel', e => {
+    e.preventDefault();
+    const z = host._zoom || 1;
+    host._zoom = Math.min(3, Math.max(1, e.deltaY < 0 ? z * 1.25 : z / 1.25));
+    renderChart(host);
+  }, { passive: false });
+});
+
+// ── 004 Demo：圖表模式（多筆 / 單筆）與縮放按鈕 ──
+document.getElementById('chartModeSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  document.getElementById('chartModeSeg').querySelectorAll('button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  const h = document.getElementById('chartDesk');
+  h.dataset.single = b.dataset.mode === 'single' ? '1' : '';
+  h._zoom = 1;
+  renderChart(h);
+}));
+document.querySelectorAll('[data-zoomact]').forEach(b => b.addEventListener('click', () => {
+  const h = document.getElementById('chartDesk');
+  const z = h._zoom || 1;
+  if (b.dataset.zoomact === 'in') h._zoom = Math.min(3, z * 1.5);
+  else if (b.dataset.zoomact === 'out') h._zoom = Math.max(1, z / 1.5);
+  else h._zoom = 1;
+  renderChart(h);
+}));
+
+// ── 004 Demo：目標價（驗證 → markLine）──
+function initTarget(formId, chartId) {
+  const form = document.getElementById(formId);
+  const input = form.querySelector('.target-input');
+  const err = form.querySelector('.target-error');
+  const hint = form.querySelector('.hint-out-of-range');
+  const chart = document.getElementById(chartId);
+  const RANGE = { min: 9990, max: 11500 };
+  function fail(msg) {
+    chart._target = null;
+    input.classList.add('is-error');
+    err.textContent = msg; err.hidden = false;
+    hint.hidden = true;
+    renderChart(chart);
+  }
+  function apply() {
+    const raw = input.value.trim();
+    if (raw === '') return fail('請輸入目標價');
+    const v = Number(raw);
+    if (!Number.isFinite(v)) return fail('請輸入有效數字');
+    if (v <= 0) return fail('請輸入大於 0 的有效數字');
+    chart._target = v;
+    input.classList.remove('is-error');
+    err.hidden = true; err.textContent = '';
+    hint.hidden = !(v < RANGE.min || v > RANGE.max);
+    renderChart(chart);
+  }
+  form.querySelector('.target-set').addEventListener('click', apply);
+  form.querySelector('.target-clear').addEventListener('click', () => {
+    chart._target = null;
+    input.value = '';
+    input.classList.remove('is-error');
+    err.hidden = true; err.textContent = '';
+    hint.hidden = true;
+    renderChart(chart);
+  });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
+}
+initTarget('targetForm', 'chartDesk');
+initTarget('targetFormMob', 'chartMob');
+</script>
+</body>
+</html>
