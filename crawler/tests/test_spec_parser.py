@@ -61,6 +61,22 @@ class TestCpuDeepParse:
         assert spec.model == "i5-13600K"
         assert spec.extra == {}
 
+    def test_apu_model_g_suffix_not_parsed_as_clock(self) -> None:
+        # AMD 5600G/5500GT 等型號尾綴 G/GT 不得誤判為時脈（5600 ≠ 3.9GHz）
+        spec = parse_spec("CPU", "AMD R5 5600G【6核/12緒】3.9G(↑4.4G)/65W")
+        assert spec.brand == "AMD"
+        assert spec.model == "R5 5600G"
+        assert spec.extra["base_ghz"] == 3.9
+        assert spec.extra["turbo_ghz"] == 4.4
+        assert spec.extra["tdp_w"] == 65
+        assert spec.extra["cores"] == 6
+        assert spec.extra["threads"] == 12
+
+    def test_apu_gt_suffix_not_parsed_as_clock(self) -> None:
+        spec = parse_spec("CPU", "AMD R5 5500GT【6核/12緒】3.6G(↑4.2G)/65W")
+        assert spec.extra["base_ghz"] == 3.6
+        assert spec.extra["turbo_ghz"] == 4.2
+
 
 # ── 顯示卡深度 ───────────────────────────────────────────────────────────
 
@@ -80,6 +96,13 @@ class TestGpuDeepParse:
         assert spec.extra["chip"] == "RX 6600"
         assert spec.extra.get("vram_gb") is None
 
+    def test_intel_arc_a770_chip(self) -> None:
+        # 規格註記的 Arc A770 形式：ARC + A + 數字
+        spec = parse_spec("顯示卡", "Intel Arc A770 16G")
+        assert spec.brand == "Intel"
+        assert spec.extra["chip"] == "Arc A770"
+        assert spec.extra["vram_gb"] == 16
+
 
 # ── 記憶體深度 ───────────────────────────────────────────────────────────
 
@@ -97,6 +120,11 @@ class TestRamDeepParse:
         assert spec.extra["capacity_gb"] == 16
         assert spec.extra["spec"] == "DDR4"
         assert spec.extra["clock_mhz"] == 3200
+
+    def test_gb_multiplier_form(self) -> None:
+        # 8GB*2 雙通道套裝 → 總容量 16（與 16GB(8G*2) 形式一致）
+        spec = parse_spec("記憶體", "Kingston 8GB*2 DDR4-3200 桌上型記憶體")
+        assert spec.extra["capacity_gb"] == 16
 
 
 # ── SSD 深度 ─────────────────────────────────────────────────────────────

@@ -81,8 +81,13 @@ def _capacity_gb(name: str) -> int | None:
 _CPU_BRANDS: tuple[str, ...] = ("Intel", "AMD")
 
 _RE_CORES_THREADS = re.compile(r"【\s*(\d+)\s*核\s*/\s*(\d+)\s*緒\s*】")  # 【14核/20緒】
-# 基礎時脈：3.5GHz 或 4.2G（Hz 可省略）；取第一個命中（基礎時脈先於增壓時脈出現）
-_RE_BASE_GHZ = re.compile(r"(\d+(?:\.\d+)?)\s*G(?:Hz)?", re.IGNORECASE)
+# 基礎時脈：3.5GHz 或 4.2G；取第一個命中（基礎時脈先於增壓時脈出現）。
+# 限定「小數 + G」或「整數 + GHz」兩形，避免型號尾綴誤配
+# （如 AMD 5600G/5500GT 的 "5600G" 不得被讀成 5600GHz 時脈）。
+_RE_BASE_GHZ = re.compile(
+    r"(\d+(?:\.\d+)?)\s*GHz|(\d+\.\d+)\s*G",
+    re.IGNORECASE,
+)
 _RE_TURBO_GHZ = re.compile(r"[↑⬆]\s*(\d+(?:\.\d+)?)\s*G(?:Hz)?", re.IGNORECASE)  # (↑5.1G)
 _RE_TDP_W = re.compile(r"(\d+)\s*W(?!\w)", re.IGNORECASE)  # /125W（GHz 內無裸 W，不誤配）
 _RE_SOCKET = re.compile(r"\b(LGA\s*\d+|AM\d+)\b", re.IGNORECASE)  # LGA1700 / AM5（CPU/主機板共用）
@@ -99,7 +104,9 @@ def _parse_cpu(name: str) -> Spec:
         extra["threads"] = int(m.group(2))
     m = _RE_BASE_GHZ.search(name)
     if m:
-        extra["base_ghz"] = float(m.group(1))
+        # 兩個分支只會命中其一（整數+GHz 或 小數+G），取非 None 者
+        value = m.group(1) if m.group(1) is not None else m.group(2)
+        extra["base_ghz"] = float(value)
     m = _RE_TURBO_GHZ.search(name)
     if m:
         extra["turbo_ghz"] = float(m.group(1))
@@ -123,7 +130,8 @@ _GPU_BRANDS: tuple[str, ...] = (
 )
 # 晶片：RTX 4060 / GTX 1650 / RX 6600 XT / RTX 4070 SUPER / Arc A770
 _GPU_CHIP_RE = re.compile(
-    r"\b(RTX\s*PRO|RADEON|RTX|GTX|RX|ARC)\s*(\d{3,4}\w*(?:\s*(?:Ti|Super|XT))?)\b",
+    r"\b(RTX\s*PRO|RADEON|RTX|GTX|RX|ARC)\s*(\d{3,4}\w*(?:\s*(?:Ti|Super|XT))?)\b"
+    r"|\bARC\s*A\s*(\d{3})\b",
     re.IGNORECASE,
 )
 _GPU_VRAM_RE = re.compile(r"\b(\d{1,3})\s*G\s*B?\b", re.IGNORECASE)  # 8G / 12GB
@@ -138,7 +146,10 @@ def _parse_gpu(name: str) -> Spec:
     extra: dict[str, Any] = {}
     m = _GPU_CHIP_RE.search(rest)
     if m:
-        extra["chip"] = f"{m.group(1).upper()} {m.group(2)}".strip()
+        if m.group(3):  # Intel Arc A770 形式（ARC 後接 A + 數字）
+            extra["chip"] = f"Arc A{m.group(3)}"
+        else:
+            extra["chip"] = f"{m.group(1).upper()} {m.group(2)}".strip()
     m = _GPU_VRAM_RE.search(rest)
     if m:
         extra["vram_gb"] = int(m.group(1))
@@ -161,12 +172,17 @@ _RAM_BRANDS: tuple[str, ...] = (
 )
 _RE_RAM_SPEC = re.compile(r"\b(DDR[0-9])\b", re.IGNORECASE)  # DDR5 / DDR4
 _RE_RAM_CLOCK = re.compile(r"\bDDR[0-9]\s*[-/]?\s*(\d+)\b", re.IGNORECASE)  # DDR5-5600 → 5600
+_RE_RAM_GB_MULT = re.compile(r"(\d+)\s*GB\s*[*×x]\s*(\d+)\b", re.IGNORECASE)  # 8GB*2 → 16
 _RE_RAM_GB = re.compile(r"(\d+)\s*GB\b", re.IGNORECASE)  # 16GB（優先）
 _RE_RAM_G = re.compile(r"(\d+)\s*G(?:\s*\*\s*(\d+))?\b", re.IGNORECASE)  # 16G / 8G*2
 
 
 def _ram_capacity_gb(name: str) -> int | None:
-    """容量：優先取 N GB；無則取 N G，含乘式（8G*2 → 16）。"""
+    """容量：優先取乘式（8GB*2 → 16）、次取 N GB（16GB(8G*2) → 16）、
+    無則取 N G 含乘式（8G*2 → 16）。"""
+    m = _RE_RAM_GB_MULT.search(name)
+    if m:
+        return int(m.group(1)) * int(m.group(2))
     m = _RE_RAM_GB.search(name)
     if m:
         return int(m.group(1))
