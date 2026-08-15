@@ -4,6 +4,7 @@
 //   → 每個測試前以 __resetItemsShared() 重置，讓各測試以獨立 stub fetch 驗證。
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useItems, parseItemsFile, ParseError, __resetItemsShared } from "@/composables/useItems"
+import { matchesCondition } from "@/utils/specFilter"
 import { makeItemsFile } from "@/testing/fixtures"
 import type { ItemsFile } from "@/types/item"
 
@@ -185,12 +186,61 @@ describe("parseItemsFile（純函數）", () => {
     expect(parsed.items[0].history).toEqual([{ d: "2026-08-15", p: 9990 }])
   })
 
+  it("items 非陣列 → ParseError", () => {
+    expect(() => parseItemsFile({ meta: { crawled_at: "x" }, items: "nope" })).toThrow(ParseError)
+  })
+
   it("缺 meta.crawled_at → ParseError", () => {
     expect(() => parseItemsFile({ items: [] })).toThrow(ParseError)
   })
 
-  it("items 非陣列 → ParseError", () => {
-    expect(() => parseItemsFile({ meta: { crawled_at: "x" }, items: "nope" })).toThrow(ParseError)
+  it("真資料 spec 形狀 {brand, model, extra:{...}} 平鋪為前端 ItemSpec（篩選/表格可用）", () => {
+    const parsed = parseItemsFile({
+      crawled_at: "2026-08-15T06:00:00Z",
+      items: [
+        {
+          id: "g1",
+          category: "顯示卡",
+          name: "技嘉 RTX3060 WINDFORCE OC 12G",
+          spec: {
+            brand: "技嘉",
+            model: "RTX3060 WINDFORCE OC 12G",
+            extra: { vram_gb: 12, chip: "RTX 3060", interface: "PCIe 4.0", length_mm: 198 },
+          },
+          history: [["2026-08-15", 7990]],
+        },
+        {
+          id: "g2",
+          category: "顯示卡",
+          name: "無品牌未解析卡",
+          spec: { brand: null, model: null, extra: {} }, // spec_parser 最少欄位
+          history: [["2026-08-15", 5990]],
+        },
+        {
+          id: "r1",
+          category: "記憶體",
+          name: "UMAX 單條32GB DDR5-4800/CL40",
+          spec: {
+            brand: "UMAX",
+            model: "單條32GB DDR5-4800/CL40",
+            extra: { capacity_gb: 32, spec: "DDR5", clock_mhz: 4800 }, // extra 含 spec 鍵
+          },
+          history: [["2026-08-15", 10900]],
+        },
+      ],
+    })
+    expect(parsed.items[0].spec).toEqual({
+      brand: "技嘉",
+      model: "RTX3060 WINDFORCE OC 12G",
+      vram_gb: 12,
+      chip: "RTX 3060",
+      interface: "PCIe 4.0",
+      length_mm: 198,
+    })
+    expect(parsed.items[0].spec.extra).toBeUndefined() // 巢狀 extra 鍵移除
+    expect(parsed.items[1].spec).toEqual({}) // null 值剔除（最少欄位商品）
+    expect(parsed.items[2].spec).toEqual({ brand: "UMAX", model: "單條32GB DDR5-4800/CL40", capacity_gb: 32, spec: "DDR5", clock_mhz: 4800 })
+    expect(matchesCondition(parsed.items[0], { id: "vram_gb-12", field: "vram_gb", op: ">=", value: 12, label: "VRAM≥12G", unit: "G" })).toBe(true)
   })
 
   it("單筆缺 name → ParseError", () => {

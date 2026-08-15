@@ -77,6 +77,24 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v)
 }
 
+/** 真資料 spec 形狀相容（crawler spec_parser 產出 {brand, model, extra:{...}}）：
+ *  將 extra 內結構化欄位（vram_gb/chip/cores/…）平鋪至頂層，成為前端 ItemSpec
+ *  （{brand, model, vram_gb, ...}）；null/undefined/空字串剔除（ItemSpec 契約不含 null），
+ *  extra 巢狀鍵本身移除。無 extra 的舊形狀（平鋪欄位）原樣保留。 */
+function normalizeSpec(spec: Record<string, unknown>): Item["spec"] {
+  const out: Record<string, string | number | undefined> = {}
+  const merge = (src: Record<string, unknown>): void => {
+    for (const [k, v] of Object.entries(src)) {
+      if (v === null || v === undefined || v === "") continue
+      out[k] = v as string | number
+    }
+  }
+  merge(spec)
+  if (isRecord(spec.extra)) merge(spec.extra)
+  delete out.extra
+  return out
+}
+
 /** shape 驗證：接受兩種頂層形狀（前端契約相容）——
  *  ① 001 items.json：{ meta: { crawled_at, source }, items }
  *  ② 002 items.v{n}.json 快照：{ crawled_at, items }（頂層無 meta 巢狀）
@@ -101,7 +119,7 @@ export function parseItemsFile(raw: unknown): ItemsFile {
     for (const key of ["id", "name", "category"] as const) {
       if (typeof it[key] !== "string") throw new ParseError(`items[${i}].${key} 缺失或非字串`)
     }
-    const spec = isRecord(it.spec) ? (it.spec as Item["spec"]) : {}
+    const spec = isRecord(it.spec) ? normalizeSpec(it.spec) : {}
     const status = it.status === "gone" ? "gone" : "in_stock"
     const history = (Array.isArray(it.history) ? it.history : []).map((pt, j): PricePoint => {
       if (!Array.isArray(pt) || pt.length < 2 || typeof pt[0] !== "string" || typeof pt[1] !== "number") {

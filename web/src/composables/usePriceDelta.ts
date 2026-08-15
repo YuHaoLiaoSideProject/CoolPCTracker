@@ -53,6 +53,7 @@ export function specChipTexts(spec: ItemSpec, category: string): string[] {
     push("", spec.chipset)
   } else if (category === "記憶卡") {
     push("", spec.capacity_gb != null ? `${spec.capacity_gb}GB` : undefined)
+    push("", spec.capacity) // 真資料 spec_parser 產出為字串 token（如 "128GB"）
   } else if (category === "套裝/準系統") {
     push("", spec.brand)
     push("", spec.wattage_w != null ? `${spec.wattage_w}W` : undefined)
