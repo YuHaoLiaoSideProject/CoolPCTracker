@@ -30,6 +30,9 @@ data/*
 # Frontend (web/)
 web/node_modules/
 
+# Reports（使用者決定不納入版本控制）
+PROJECT-REPORT.md
+
 # OS / editor
 .DS_Store
 Thumbs.db
