@@ -1,0 +1,2004 @@
+{
+  "method": "手機版 m-list.php 9 分類頁 vs 桌面版 evaluate.php 單次快照比對；子分類以正規化名稱對齊，商品以正規化名稱差集比對；G=9 兩來源皆套用「記憶卡」子分類過濾後才比對",
+  "fetched_at": "2026-08-15T16:38:16+00:00",
+  "categories": {
+    "套裝/準系統": {
+      "mobile_count": 157,
+      "desktop_count": 180,
+      "both": 157,
+      "mobile_only": 0,
+      "desktop_only": 23,
+      "mobile_only_items": [],
+      "desktop_only_items": [
+        "Raymii HALO-MAX2-1M 白色 (單螢幕 / 氣壓式)承載27KG/15-57吋/USB3.0*2) $2799↘",
+        "Raymii HALO-MAX2-1M 黑色 (單螢幕 / 氣壓式)承載27KG/15-57吋/USB3.0*2) $2799↘",
+        "Raymii LS-140-M1 RGB 黑色 (單螢幕 /氣壓式) 承載12KG / 17-35吋 )$2399↘",
+        "Raymii LS-140-M2 RGB 黑色 (雙螢幕 /氣壓式) 承載12KG / 17-35吋 )$3899↘",
+        "Raymii LS-43-OP (單螢幕/穿夾兩用/氣壓式/銀色 )承載9KG /17-32吋 外箱擠壓 $2199↘",
+        "Raymii LS-67-M1 (單螢幕 / 穿夾兩用 /機械彈簧) 承載11KG / 17-35吋/白色 $2299↘",
+        "Raymii LS-67-M1 (單螢幕 / 穿夾兩用 /機械彈簧) 承載11KG / 17-35吋/黑色 $2299↘",
+        "Raymii LS5U (單螢幕/穿夾兩用/高負重氣壓/17-43吋/承載18KG) $2,539↘",
+        "【主機搭購】Acer Nitro VG240Y P6〈1H1P/IPS/144Hz/含喇叭〉$2688↘",
+        "【主機搭購】AOC 25B40HM〈1A1H/VA/100Hz〉",
+        "【主機搭購】AOPEN 16PM1Q J〈15.6吋/1H2C/IPS/含喇叭〉",
+        "【主機搭購】BenQ GW2790〈2H1P/IPS/100Hz/含喇叭〉.光智慧2.0 $3988↘",
+        "【主機搭購】MSI G242L E14〈1H1P/IPS/144Hz〉$2690↘",
+        "【主機搭購】MSI MAG 272F〈1H1P/IPS/200Hz〉$3390↘",
+        "【主機搭購】MSI PRO MP242 E14C〈1H1C/IPS/144Hz/含喇叭/Type-C連接埠〉$2588↘",
+        "【主機搭購】MSI PRO MP272 E14C〈1H1C/IPS/144Hz/含喇叭/Type-C連接埠〉$2888↘",
+        "【主機搭購】三星 Odyssey G5 S27FG502EC〈1H1P/IPS/180Hz/HDR10〉可升降旋轉",
+        "【主機搭購】三星 S3 S27D300GAC〈1A1H/IPS/100Hz〉",
+        "【螢幕搭購】BenQ ERGO ARM BSH01 黑色 (單螢幕/穿夾兩用/底座加固板/承載20KG)",
+        "【螢幕搭購】BenQ ERGO ARM BSH02 白色 (單螢幕/穿夾兩用/底座加固板/承載20KG)",
+        "威世波 WST-MNT001 鋁合金螢幕支架 夾桌式/承載9.5KG/17-35吋【暗夜黑】$3280↘",
+        "威世波 WST-MNT002 鋁合金螢幕支架 夾桌式/承載9.5KG/17-35吋【冰川銀】$3280↘",
+        "威世波 WST-MNT003 鋁合金螢幕支架 夾桌式/承載9.5KG/17-35吋【冰雪白】$3280↘"
+      ],
+      "desktop_only_sources": {
+        "【主機搭購螢幕促銷專區】": 23
+      }
+    },
+    "劈發價組合區": {
+      "mobile_count": 86,
+      "desktop_count": 96,
+      "both": 86,
+      "mobile_only": 0,
+      "desktop_only": 9,
+      "mobile_only_items": [],
+      "desktop_only_items": [
+        "Cougar 電競組合包(Cougar Ultimus EX 鍵盤+Minos T1 滑鼠鼠墊組)原價2490",
+        "Razer CS2 組合包(Huntsman V3 Pro鍵盤+Viper V3 Pro滑鼠+Gigantus(大)鼠墊)原價16490",
+        "Razer Minecraft 組合包(BlackWidow V4 X鍵盤+Cobra滑鼠+Gigantus(中)鼠墊+Kraken V4 X耳機)",
+        "Razer 電競組合包(Ornata V3X 鍵盤+Essential 滑鼠+BlackShark V2 X 耳機)原價4929",
+        "亞碩(Power Master)超優質組合套餐(Km-11天蠍座 +G502 滑鼠鼠墊組)原價1980",
+        "微星 優質三件組組合包(GK20鍵盤+GM320滑鼠+GD21鼠墊)原價2219",
+        "微星 超值三件組組合包(GK20鍵盤+GM08滑鼠+GD21鼠墊)原價2219",
+        "華碩 ROG暑期電競組合(Scope II X青軸鍵盤+Harpe Mini Core滑鼠+Delta S Core耳麥)原價8370",
+        "華碩 TUF電競組合(K3 Gen II青軸鍵盤+M4 Wireless無線滑鼠+H1 Gen II耳麥)原價5670"
+      ],
+      "desktop_only_sources": {
+        "【超級CP電競組合包】": 9
+      }
+    },
+    "CPU": {
+      "mobile_count": 48,
+      "desktop_count": 48,
+      "both": 47,
+      "mobile_only": 0,
+      "desktop_only": 0,
+      "mobile_only_items": [],
+      "desktop_only_items": [],
+      "desktop_only_sources": {}
+    },
+    "主機板": {
+      "mobile_count": 373,
+      "desktop_count": 373,
+      "both": 372,
+      "mobile_only": 0,
+      "desktop_only": 0,
+      "mobile_only_items": [],
+      "desktop_only_items": [],
+      "desktop_only_sources": {}
+    },
+    "記憶體": {
+      "mobile_count": 216,
+      "desktop_count": 230,
+      "both": 216,
+      "mobile_only": 0,
+      "desktop_only": 14,
+      "mobile_only_items": [],
+      "desktop_only_items": [
+        "Synology 2年延長保固(EW201) 須與NAS一同購買並期限註冊/支援型號 請點→",
+        "Synology DX525【5Bay】擴充櫃(適用25系列：DS1825+, DS1525+, DS925+, DS725+)",
+        "Synology E10G22-T1-Mini 10GbE 網路模組(適用DS923+/DS723+/DS1522+/DS1525+)",
+        "Synology HAT3300 4TB PLUS系列(3.5吋/5400轉/三年保固)【限搭NAS主機】",
+        "Synology HAT3300 6TB PLUS系列(3.5吋/5400轉/三年保固)【限搭NAS主機】",
+        "Synology HAT3310 12TB PLUS系列(3.5吋/7200轉/三年保固)【限搭NAS主機】",
+        "Synology HAT3310 16TB PLUS系列(3.5吋/7200轉/三年保固)【限搭NAS主機】",
+        "Synology HAT3320 20TB PLUS系列(3.5吋/7200轉/三年保固)【限搭NAS主機】",
+        "Synology HAT3320 8TB PLUS系列(3.5吋/7200轉/三年保固)【限搭NAS主機】",
+        "Synology RAM D4ES02-4G (適用:DS923+/DS723+)支援型號→",
+        "Synology RAM D4ES03-8G (適用:DS925+/DS725+/DS1525+/DS1825+)支援型號→",
+        "Synology RAM D4ES04-4G (適用:DS925+/DS725+)支援型號→",
+        "Synology RAM D4NS01-4G (適用:DS225+/DS425+)支援型號→",
+        "Synology SNV3410 400G M.2 2280 NVMe PCIe 讀:3000/寫:750/五年保固"
+      ],
+      "desktop_only_sources": {
+        "群暉 Synology【原廠擴充配件/儲存硬碟/記憶體】": 14
+      }
+    },
+    "SSD": {
+      "mobile_count": 171,
+      "desktop_count": 189,
+      "both": 171,
+      "mobile_only": 0,
+      "desktop_only": 18,
+      "mobile_only_items": [],
+      "desktop_only_items": [
+        "伽利略【PCI-E 1X】M.2 NVMe SSD 1埠 轉接卡【M2PE42】",
+        "伽利略【PCI-E 4X】M.2 NVMe SSD 1埠 轉接卡【M2PE41】",
+        "伽利略【PCI-E 5.0 X1】M.2 NVMe SSD 1埠 轉接卡【M2PE51】",
+        "伽利略【PCI-E 5.0 X4】M.2 NVMe SSD 1埠 轉接卡【M2PE54】",
+        "利民 HR-09 2280 SSD 固態硬碟散熱器/6 mm熱導管/電鍍鰭片/單雙面皆適用",
+        "利民 HR-10 2280 PRO DIGITAL(白) SSD散熱器/4導管/溫度,傳輸速度監控/3cm風扇/一年",
+        "利民 HR-10 2280 PRO DIGITAL(黑) SSD散熱器/4導管/溫度,傳輸速度監控/3cm風扇/一年",
+        "利民 HR-10 2280 PRO SSD 固態硬碟散熱器/4導管/3CM PWM風扇/單雙面皆適用/一年",
+        "利民 M.2 2280 PRO SSD 固態硬碟散熱片/鋁合金+8 mm純銅導管/單雙面皆適用",
+        "利民 M.2 2280 TYPE A B SSD 固態硬碟散熱片/鋁合金/單雙面皆適用",
+        "喬思伯 M.2-6(紅) 固態硬碟散熱器/2280/鋁合金/單雙面皆適用",
+        "喬思伯 M201(銀) 固態硬碟散熱器/2280/格柵式鋁合金散熱片/單雙面皆適用",
+        "喬思伯 M201(黑) 固態硬碟散熱器/2280/格柵式鋁合金散熱片/單雙面皆適用",
+        "喬思伯 M202(灰) 固態硬碟散熱器/2280/巧克力造型全鋁散熱塊/單雙面皆適用",
+        "喬思伯 M202(黑) 固態硬碟散熱器/2280/巧克力造型全鋁散熱塊/單雙面皆適用",
+        "華碩 HYPER M.2 X16 GEN 4 CARD (支援 4個 M.2 SSD/NVMe/限NVMe/PCIe 模式)",
+        "華碩 HYPER M.2 X16 GEN 5 CARD (支援 4個 M.2 SSD/NVMe/限NVMe/PCIe 模式)",
+        "銀欣 ECM21-E【PCI-E 4X】M.2 NVMe SSD 1埠 免螺絲 轉接卡"
+      ],
+      "desktop_only_sources": {
+        "M.2 SSD PCI-E 擴充卡": 7,
+        "M.2 SSD散熱片": 11
+      }
+    },
+    "HDD": {
+      "mobile_count": 89,
+      "desktop_count": 89,
+      "both": 89,
+      "mobile_only": 0,
+      "desktop_only": 0,
+      "mobile_only_items": [],
+      "desktop_only_items": [],
+      "desktop_only_sources": {}
+    },
+    "記憶卡": {
+      "mobile_count": 54,
+      "desktop_count": 54,
+      "both": 54,
+      "mobile_only": 0,
+      "desktop_only": 0,
+      "mobile_only_items": [],
+      "desktop_only_items": [],
+      "desktop_only_sources": {}
+    },
+    "顯示卡": {
+      "mobile_count": 255,
+      "desktop_count": 278,
+      "both": 255,
+      "mobile_only": 0,
+      "desktop_only": 23,
+      "mobile_only_items": [],
+      "desktop_only_items": [
+        "Antec 顯示卡直立套件(白) 基本款 含PCI-E 5.0延長線/200mm/1年保",
+        "Antec 顯示卡直立套件(黑) 基本款 含PCI-E 5.0延長線/200mm/1年保",
+        "Montech VGM 2 直立式顯卡套件(白) 通用型/含PCI-E 4.0延長線/200mm",
+        "Phanteks PCI-E 4.0 X16 90度延長線/白色/220mm(PH-CBRS4.0_FL22_WT01)",
+        "Phanteks PCI-E 4.0 X16 90度延長線/黑色/220mm(PH-CBRS4.0_FL22)",
+        "Phanteks PCI-E 4.0 X16 90度延長線/黑色/600mm(PH-CBRS4.0_FL60_BK01)",
+        "Phanteks Premium 顯卡直立套件 白(PCI-E 4.0)/30度可旋轉設計(PGPUKT4.0_DWT01)",
+        "Phanteks Premium 顯卡直立套件 白(PCI-E 5.0)/30度可旋轉設計(PGPUKT5.0_DWT01)",
+        "Phanteks Premium 顯卡直立套件 黑(PCI-E 5.0)/30度可旋轉設計(PGPUKT5.0_DBK01)",
+        "Phanteks 通用型顯卡直立套件 白(PCI-E 4.0)/220mm(PH-VGPUKT4.0_03R_WT)",
+        "Phanteks 通用型顯卡直立套件 黑(PCI-E 4.0)/220mm(PH-VGPUKT4.0_03R)",
+        "喬思伯 A50 灰 顯卡垂直支架 通用型/PCI-E 5.0/175mm/3mm鋁合金/1年保",
+        "喬思伯 A50 白 顯卡垂直支架 通用型/PCI-E 5.0/175mm/3mm鋁合金/1年保",
+        "酷碼 PCI-E 4.0 X16 延長線 V2(白色)/200mm/90度/抗干擾(MCA-U002R-WPCI40-200)",
+        "酷碼 PCI-E 4.0 X16 延長線 V2(白色)/300mm/90度/抗干擾(MCA-U002R-WPCI40-300)",
+        "酷碼 PCI-E 5.0 X16 延長線(白) 200mm/90度/抗電磁干擾(MCA-U000C-WPCI50-200)",
+        "酷碼 PCI-E 5.0 X16 延長線(白) 300mm/90度/抗電磁干擾(MCA-U000C-WPCI50-300)",
+        "酷碼 PCI-E 5.0 X16 延長線(黑) 200mm/90度/抗電磁干擾(MCA-U000C-KPCI50-200)",
+        "酷碼 PCI-E 5.0 X16 延長線(黑) 300mm/90度/抗電磁干擾(MCA-U000C-KPCI50-300)",
+        "酷碼 通用型垂直顯卡支架套件 ARGB版(PCIe 4.0) X,Z軸雙向(MCA-U004R-AVGBST-00)",
+        "酷碼 通用型垂直顯卡支架套件 V3(PCIe 4.0) 黑色/X,Z軸雙向調整(MCA-U000R-KFVK03)",
+        "酷碼 通用型垂直顯卡支架套件 V3(PCIe 5.0) 白色/X,Z軸雙向調整(MCA-U000C-WFVK03)",
+        "酷碼 通用型垂直顯卡支架套件 V3(PCIe 5.0) 黑色/X,Z軸雙向調整(MCA-U000C-KFVK03)"
+      ],
+      "desktop_only_sources": {
+        "PCIe 延長排線、顯示卡轉接架": 23
+      }
+    }
+  },
+  "totals": {
+    "mobile": 1449,
+    "desktop": 1537
+  },
+  "g9_verification": {
+    "category": "記憶卡",
+    "mobile": {
+      "kept": 54,
+      "filtered": 157,
+      "kept_all_have_keyword": true,
+      "filtered_none_have_keyword": true,
+      "filtered_subcategories": [
+        "2.5吋 - Seagate 隨身2.5吋硬碟 (保固內原廠資料救援)",
+        "2.5吋 - Toshiba 隨身2.5吋硬碟",
+        "2.5吋 - 創見 隨身2.5吋硬碟",
+        "2.5吋 - 威剛 隨身2.5吋硬碟",
+        "3.5吋 - Seagate 行動3.5吋硬碟 (保固內原廠資料救援)",
+        "Micron 隨身SSD碟 Type-C介面",
+        "Seagate 隨身SSD碟 Type-C介面",
+        "三星 Samsung 隨身SSD碟 Type-C介面",
+        "威剛 隨身SSD碟 Type-C介面",
+        "海盜船 隨身SSD碟 Type-C介面",
+        "致態 隨身SSD碟 Type-C介面",
+        "金士頓 隨身SSD碟 Type-C介面",
+        "隨身碟 Type-A",
+        "隨身碟 Type-C",
+        "隨身碟 Type-C+A 雙介面",
+        "高速隨身碟"
+      ]
+    },
+    "desktop": {
+      "kept": 54,
+      "filtered": 157,
+      "kept_all_have_keyword": true,
+      "filtered_none_have_keyword": true,
+      "filtered_subcategories": [
+        "2.5吋 - Seagate 隨身2.5吋硬碟 (保固內原廠資料救援)",
+        "2.5吋 - Toshiba 隨身2.5吋硬碟",
+        "2.5吋 - 創見 隨身2.5吋硬碟",
+        "2.5吋 - 威剛 隨身2.5吋硬碟",
+        "3.5吋 - Seagate 行動3.5吋硬碟 (保固內原廠資料救援)",
+        "Micron 隨身SSD碟 Type-C介面",
+        "Seagate 隨身SSD碟 Type-C介面",
+        "三星 Samsung 隨身SSD碟 Type-C介面",
+        "威剛 隨身SSD碟 Type-C介面",
+        "海盜船 隨身SSD碟 Type-C介面",
+        "致態 隨身SSD碟 Type-C介面",
+        "金士頓 隨身SSD碟 Type-C介面",
+        "隨身碟 Type-A",
+        "隨身碟 Type-C",
+        "隨身碟 Type-C+A 雙介面",
+        "高速隨身碟"
+      ]
+    }
+  },
+  "unmapped_desktop": [
+    {
+      "label": "PAD 智慧平板",
+      "count": 5
+    },
+    {
+      "label": "遊戲掌機",
+      "count": 9
+    },
+    {
+      "label": "筆電搭購電競周邊優惠專區",
+      "count": 8
+    },
+    {
+      "label": "筆電展示出清專區 (保固憑發票購買日起算，展示機無七日新品瑕疵換新)",
+      "count": 18
+    },
+    {
+      "label": "宏碁 Acer 筆電館-全館刷卡分期零利率(3)",
+      "count": 2
+    },
+    {
+      "label": "15吋 Acer宏碁 Aspire 7 系列",
+      "count": 2
+    },
+    {
+      "label": "14吋 Acer宏碁 Aspire Lite 系列",
+      "count": 4
+    },
+    {
+      "label": "15吋 Acer宏碁 Aspire Lite 系列",
+      "count": 5
+    },
+    {
+      "label": "16吋 Acer宏碁 Aspire Lite 系列",
+      "count": 2
+    },
+    {
+      "label": "17吋 Acer宏碁 Aspire Lite 系列",
+      "count": 2
+    },
+    {
+      "label": "15.6吋 Acer宏碁 Aspire Spin 系列",
+      "count": 2
+    },
+    {
+      "label": "16吋 Acer宏碁 Nitro 電競機",
+      "count": 2
+    },
+    {
+      "label": "14吋 Acer宏碁 Nitro V 電競機",
+      "count": 1
+    },
+    {
+      "label": "15吋 Acer宏碁 Nitro V 電競機",
+      "count": 3
+    },
+    {
+      "label": "16吋 Acer宏碁 Nitro V 電競機",
+      "count": 4
+    },
+    {
+      "label": "16吋 Acer宏碁 Nitro Lite 電競機",
+      "count": 4
+    },
+    {
+      "label": "14吋 Acer宏碁 Predator Helios Neo 14 電競機〈官網登錄送一年延保〉",
+      "count": 2
+    },
+    {
+      "label": "16吋 Acer宏碁 Predator Helios Neo 16 電競機〈官網登錄送一年延保〉",
+      "count": 4
+    },
+    {
+      "label": "16吋 Acer宏碁 Predator Helios Neo 16S AI 電競機〈官網登錄送一年延保〉",
+      "count": 4
+    },
+    {
+      "label": "14吋 Acer宏碁 Swift Lite 系列",
+      "count": 5
+    },
+    {
+      "label": "16吋 Acer宏碁 Swift Lite 系列",
+      "count": 3
+    },
+    {
+      "label": "14吋 Acer宏碁 Swift Go 系列",
+      "count": 4
+    },
+    {
+      "label": "16吋 Acer宏碁 Swift Go 系列",
+      "count": 3
+    },
+    {
+      "label": "14吋 Acer宏碁 Swift 14 系列",
+      "count": 2
+    },
+    {
+      "label": "14吋 Acer宏碁 Swift Air 系列",
+      "count": 3
+    },
+    {
+      "label": "16吋 Acer宏碁 Swift Air 系列",
+      "count": 5
+    },
+    {
+      "label": "14吋/16吋 Acer宏碁 Swift Edge 系列 〈頂級超輕量工作生活筆電〉",
+      "count": 1
+    },
+    {
+      "label": "15吋 Lenovo IdeaPad Slim 3 系列",
+      "count": 2
+    },
+    {
+      "label": "16吋 Lenovo IdeaPad Slim 3 系列",
+      "count": 2
+    },
+    {
+      "label": "13吋/14吋 Lenovo IdeaPad Slim 5 系列",
+      "count": 1
+    },
+    {
+      "label": "14吋 Lenovo IdeaPad Pro 5 系列",
+      "count": 1
+    },
+    {
+      "label": "14吋 Lenovo Yoga Slim 7 / Yoga Pro 7 系列",
+      "count": 4
+    },
+    {
+      "label": "15吋 Lenovo LOQ 系列",
+      "count": 6
+    },
+    {
+      "label": "15吋 Lenovo Legion 5 系列",
+      "count": 1
+    },
+    {
+      "label": "華碩 ASUS 筆電館-全館刷卡分期零利率(3)",
+      "count": 7
+    },
+    {
+      "label": "華碩 ROG 二十載淬鍊不凡 / ROG SAGA 特展 / 2026 限量特展",
+      "count": 7
+    },
+    {
+      "label": "13 吋 華碩 ProArt 系列〈打造全新 AI 體驗、提升工作效率〉",
+      "count": 1
+    },
+    {
+      "label": "14 吋 華碩 Zenbook 系列 / 高通Qualcomm系列",
+      "count": 13
+    },
+    {
+      "label": "16 吋 華碩 Zenbook 系列 / 高通Qualcomm系列",
+      "count": 3
+    },
+    {
+      "label": "14吋 華碩 Vivobook GO / Vivobook / Vivobook 14 Flip 系列",
+      "count": 12
+    },
+    {
+      "label": "15 吋 華碩 VivoBook GO / VivoBook 系列",
+      "count": 11
+    },
+    {
+      "label": "16 吋 華碩 Vivobook / V16 蒼藍戰魂 系列",
+      "count": 9
+    },
+    {
+      "label": "17 吋 華碩 Vivobook 系列",
+      "count": 2
+    },
+    {
+      "label": "18 吋 華碩 Vivobook 系列",
+      "count": 1
+    },
+    {
+      "label": "14 吋 華碩 TUF Gaming / ROG 電競系列",
+      "count": 5
+    },
+    {
+      "label": "15 吋 華碩 TUF Gaming 電競系列",
+      "count": 2
+    },
+    {
+      "label": "16 吋 華碩 TUF Gaming / ROG / Zephyrus 電競系列",
+      "count": 21
+    },
+    {
+      "label": "17 吋 華碩 TUF Gaming / ROG 電競系列",
+      "count": 2
+    },
+    {
+      "label": "18 吋 華碩 TUF Gaming / ROG 電競系列",
+      "count": 9
+    },
+    {
+      "label": "14吋 DELL戴爾 Inspiron 7000 Plus 系列 〈高性能創作筆電〉",
+      "count": 1
+    },
+    {
+      "label": "14吋 戴爾 DELL Base 系列",
+      "count": 4
+    },
+    {
+      "label": "14吋 戴爾 DELL Pro Base 系列",
+      "count": 6
+    },
+    {
+      "label": "15吋 戴爾 DELL Base 系列",
+      "count": 2
+    },
+    {
+      "label": "16吋 戴爾 DELL Pro Base 系列",
+      "count": 4
+    },
+    {
+      "label": "14吋 戴爾 DELL Pro Plus 系列",
+      "count": 1
+    },
+    {
+      "label": "14吋 戴爾 DELL Pro Essential 系列",
+      "count": 2
+    },
+    {
+      "label": "16吋 戴爾 DELL Alienware 系列",
+      "count": 3
+    },
+    {
+      "label": "15.6吋 捷元 ZEUS 系列",
+      "count": 4
+    },
+    {
+      "label": "16吋 捷元 AI Pro 系列",
+      "count": 1
+    },
+    {
+      "label": "18吋 捷元 ZEUS 18G 系列",
+      "count": 1
+    },
+    {
+      "label": "16吋 技嘉 GIGABYTE AERO X16 AI筆電",
+      "count": 7
+    },
+    {
+      "label": "16吋 技嘉 GIGABYTE EAGLE",
+      "count": 2
+    },
+    {
+      "label": "16吋 技嘉 GIGABYTE GAMING A16",
+      "count": 8
+    },
+    {
+      "label": "16 吋 技嘉 AORUS MASTER 16",
+      "count": 4
+    },
+    {
+      "label": "微星 MSI 筆電館-全館刷卡分期零利率(3)",
+      "count": 4
+    },
+    {
+      "label": "13 吋 微星 - 輕薄商務系列 Prestige",
+      "count": 3
+    },
+    {
+      "label": "14 吋 微星 - 輕薄商務系列 Modern S /Prestige / Commercial 效能商務AI系列 Venture",
+      "count": 6
+    },
+    {
+      "label": "15 吋 微星 - 輕薄美型系列 Modern / VenturePro",
+      "count": 5
+    },
+    {
+      "label": "16 吋 微星 - 輕薄商務系列 Prestige / Modern S",
+      "count": 2
+    },
+    {
+      "label": "15 吋 微星 - 炫彩戰鬥系列 Cyborg MAX/Katana",
+      "count": 11
+    },
+    {
+      "label": "16 吋 微星 - 極致龍魂系列 Pulse/Crosshair MAX/Stealth/Raider MAX",
+      "count": 14
+    },
+    {
+      "label": "17 吋 微星 - 巔峰效能系列 Cyborg/Katana/Crosshair",
+      "count": 5
+    },
+    {
+      "label": "18 吋 微星 - 極致炫彩系列 Vector/Crosshair/Stealth/Raider/Titan 電競霸主",
+      "count": 4
+    },
+    {
+      "label": "16吋 LG Gram -榮獲金氏世界紀錄最輕16吋筆電",
+      "count": 2
+    },
+    {
+      "label": "16 吋 LG Gram Pro 最新的處理器，領航著速度的先驅",
+      "count": 5
+    },
+    {
+      "label": "17 吋 LG Gram 高科技奈米碳鎂通過美國軍規測試",
+      "count": 1
+    },
+    {
+      "label": "14 吋 HP OmniBook 3",
+      "count": 1
+    },
+    {
+      "label": "16 吋 HP OmniBook 3",
+      "count": 1
+    },
+    {
+      "label": "17 吋 HP OmniBook 3",
+      "count": 1
+    },
+    {
+      "label": "14 吋 HP OmniBook 5 Flip 翻轉觸控筆電",
+      "count": 4
+    },
+    {
+      "label": "13 吋 HP OmniBook 7系列",
+      "count": 2
+    },
+    {
+      "label": "15吋 HP HyperX OMEN 潮競系列 /Victus 光影系列",
+      "count": 2
+    },
+    {
+      "label": "14 吋 HP惠普 ZBook Firefly 14 系列〈創意行動達人〉",
+      "count": 1
+    },
+    {
+      "label": "14吋 HP惠普 ZBook 8 G1i/G1a 14 系列",
+      "count": 1
+    },
+    {
+      "label": "16 吋 HP惠普 ZBook 8 G1i/G1a 14 系列",
+      "count": 1
+    },
+    {
+      "label": "筆電周邊",
+      "count": 1
+    },
+    {
+      "label": "快速充電器",
+      "count": 20
+    },
+    {
+      "label": "行動電源",
+      "count": 14
+    },
+    {
+      "label": "ID-COOLING 散熱器【2年保固】",
+      "count": 9
+    },
+    {
+      "label": "利民 Thermalright(索摩樂) 散熱器",
+      "count": 27
+    },
+    {
+      "label": "DEEPCOOL 九州風神【3年保固】",
+      "count": 15
+    },
+    {
+      "label": "銀欣 SILVERSTONE",
+      "count": 8
+    },
+    {
+      "label": "CoolerMaster 酷碼散熱器",
+      "count": 14
+    },
+    {
+      "label": "鎌刀 Scythe 散熱器【3年保固】",
+      "count": 11
+    },
+    {
+      "label": "Noctua 貓頭鷹 散熱器 【6年保固】",
+      "count": 23
+    },
+    {
+      "label": "威剛 XPG",
+      "count": 3
+    },
+    {
+      "label": "君主 Montech 散熱器",
+      "count": 6
+    },
+    {
+      "label": "快睿 CRYORIG 散熱器",
+      "count": 6
+    },
+    {
+      "label": "先馬 SAMA",
+      "count": 6
+    },
+    {
+      "label": "振華 Super Flower",
+      "count": 1
+    },
+    {
+      "label": "微星 MSI 散熱器",
+      "count": 2
+    },
+    {
+      "label": "全漢 FSP 散熱器",
+      "count": 7
+    },
+    {
+      "label": "大飛 darkFlash 散熱器",
+      "count": 2
+    },
+    {
+      "label": "創氪星系 TRYX 散熱器",
+      "count": 2
+    },
+    {
+      "label": "喬思伯 Jonsbo 散熱器",
+      "count": 11
+    },
+    {
+      "label": "高效能散熱膏",
+      "count": 10
+    },
+    {
+      "label": "矽膠導熱片",
+      "count": 2
+    },
+    {
+      "label": "筆記型專用散熱座",
+      "count": 7
+    },
+    {
+      "label": "特價 or 活動專區",
+      "count": 4
+    },
+    {
+      "label": "華碩 ASUS【0800到府 6年保固換新】保固內非人損漏液賠償！保固內非人損換新。",
+      "count": 25
+    },
+    {
+      "label": "微星 MSI (註冊享延保！保內到府收送，品質保證非人損漏液損害賠償！)",
+      "count": 8
+    },
+    {
+      "label": "君主 Montech",
+      "count": 14
+    },
+    {
+      "label": "美洲獅 COUGAR",
+      "count": 11
+    },
+    {
+      "label": "大飛 darkFlash",
+      "count": 7
+    },
+    {
+      "label": "ID-COOLING 一體式水冷",
+      "count": 6
+    },
+    {
+      "label": "威剛 XPG",
+      "count": 3
+    },
+    {
+      "label": "保銳 ENERMAX",
+      "count": 7
+    },
+    {
+      "label": "DEEPCOOL 九州風神",
+      "count": 9
+    },
+    {
+      "label": "Noctua 貓頭鷹",
+      "count": 4
+    },
+    {
+      "label": "鈦鉭科技 TCOMAS (本體6年保固/液晶2年)",
+      "count": 16
+    },
+    {
+      "label": "酷碼 Cooler Master(漏液損害賠償)",
+      "count": 11
+    },
+    {
+      "label": "幾何未來 Geometric Future",
+      "count": 6
+    },
+    {
+      "label": "先馬 SAMA",
+      "count": 6
+    },
+    {
+      "label": "安鈦克 ANTEC",
+      "count": 5
+    },
+    {
+      "label": "快睿 CRYORIG",
+      "count": 3
+    },
+    {
+      "label": "追風者 Phanteks",
+      "count": 6
+    },
+    {
+      "label": "恩傑 NZXT",
+      "count": 13
+    },
+    {
+      "label": "美商艾湃電競(首利) Apexgaming",
+      "count": 1
+    },
+    {
+      "label": "銀欣 SILVERSTONE",
+      "count": 6
+    },
+    {
+      "label": "利民 Thermalright(索摩樂)",
+      "count": 14
+    },
+    {
+      "label": "聯力工業 LIAN LI【6年/漏液依年限折舊/曲面屏3年】",
+      "count": 12
+    },
+    {
+      "label": "技嘉 GIGABYTE",
+      "count": 9
+    },
+    {
+      "label": "華擎 ASRock",
+      "count": 4
+    },
+    {
+      "label": "全漢 FSP",
+      "count": 4
+    },
+    {
+      "label": "創氪星系 TRYX【水冷/無光扇(6年) 螢幕/ARGB扇(2年)保固】",
+      "count": 12
+    },
+    {
+      "label": "喬思伯 JONSBO【立光代理】故障換新、漏液損害賠償！",
+      "count": 7
+    },
+    {
+      "label": "水冷套件-水冷液【客訂商品】",
+      "count": 1
+    },
+    {
+      "label": "19吋(1280*1024)(5:4)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "20吋(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 2
+    },
+    {
+      "label": "22吋(1920*1080)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 15
+    },
+    {
+      "label": "24吋(1920*1080)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 84
+    },
+    {
+      "label": "24吋(1920*1200)(16:10)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 5
+    },
+    {
+      "label": "24吋(2560*1440)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 2
+    },
+    {
+      "label": "24吋(2560*1600)(16:10)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 2
+    },
+    {
+      "label": "25吋(1920*1080)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 18
+    },
+    {
+      "label": "27吋(1920*1080)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 98
+    },
+    {
+      "label": "27吋(2560*1440)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 130
+    },
+    {
+      "label": "27吋(3840*2160)(4K 16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 66
+    },
+    {
+      "label": "27吋(5120*2880)(5K 16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 9
+    },
+    {
+      "label": "28吋(3840*2160)(4K 16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "28吋(3840*2160)(3:2)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "29吋(2560*1080)(21:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 2
+    },
+    {
+      "label": "32吋(1920*1080)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 17
+    },
+    {
+      "label": "32吋(2560*1440)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 18
+    },
+    {
+      "label": "32吋(3840*2160)(4K 16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 64
+    },
+    {
+      "label": "32吋(6016*3384)(6K 16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 3
+    },
+    {
+      "label": "34吋(2560*1080)(21:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "34吋(3440*1440)(21:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 34
+    },
+    {
+      "label": "37吋(3840*2160)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 3
+    },
+    {
+      "label": "39吋(5120*2160)(21:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "40吋(5120*2160)(21:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 2
+    },
+    {
+      "label": "43吋(3840*2160)(16:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 3
+    },
+    {
+      "label": "45吋(3440*1440)(21:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "45吋(5120x2160)(21:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "49吋(3840*1080)(32:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "49吋(5120*1440)(32:9)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 7
+    },
+    {
+      "label": "57吋(7680*2160)〈亮暗點保固視廠商保固條款而定〉",
+      "count": 1
+    },
+    {
+      "label": "觸控式螢幕、可攜式螢幕、遊戲TV",
+      "count": 35
+    },
+    {
+      "label": "ASUS 華碩投影機",
+      "count": 1
+    },
+    {
+      "label": "ACER 宏碁投影機",
+      "count": 2
+    },
+    {
+      "label": "BenQ 投影機",
+      "count": 10
+    },
+    {
+      "label": "螢幕掛燈",
+      "count": 5
+    },
+    {
+      "label": "投影機支撐架",
+      "count": 2
+    },
+    {
+      "label": "桌上型筆電支架/增高架",
+      "count": 6
+    },
+    {
+      "label": "螢幕支撐架",
+      "count": 65
+    },
+    {
+      "label": "特價 or 活動專區",
+      "count": 12
+    },
+    {
+      "label": "工業機架式 / NAS 機殼",
+      "count": 20
+    },
+    {
+      "label": "SFX 機殼專區",
+      "count": 23
+    },
+    {
+      "label": "華碩 ASUS 機殼",
+      "count": 37
+    },
+    {
+      "label": "君主 Montech 機殼",
+      "count": 57
+    },
+    {
+      "label": "視博通 Superchannel 機殼",
+      "count": 27
+    },
+    {
+      "label": "微星 MSI 機殼",
+      "count": 19
+    },
+    {
+      "label": "技嘉 GIGABYTE 機殼",
+      "count": 12
+    },
+    {
+      "label": "大飛 darkFlash 機殼",
+      "count": 22
+    },
+    {
+      "label": "美商艾湃電競(首利) Apexgaming【上市25年 \"首利\" 100%品牌】",
+      "count": 8
+    },
+    {
+      "label": "美洲獅 COUGAR 機殼",
+      "count": 37
+    },
+    {
+      "label": "亞碩國際 機殼",
+      "count": 1
+    },
+    {
+      "label": "先馬 SAMA 機殼",
+      "count": 7
+    },
+    {
+      "label": "旋剛 Sharkoon 機殼",
+      "count": 14
+    },
+    {
+      "label": "1st Player 首席玩家",
+      "count": 2
+    },
+    {
+      "label": "安鈦克 Antec 機殼",
+      "count": 40
+    },
+    {
+      "label": "火鳥 BitFenix 機殼",
+      "count": 9
+    },
+    {
+      "label": "HYTE 美國電競潮牌",
+      "count": 6
+    },
+    {
+      "label": "追風者 Phanteks 機殼",
+      "count": 31
+    },
+    {
+      "label": "Fractal Design 機殼",
+      "count": 52
+    },
+    {
+      "label": "酷碼 CoolerMaster 機殼",
+      "count": 58
+    },
+    {
+      "label": "幾何未來 Geometric Future 機殼",
+      "count": 17
+    },
+    {
+      "label": "威剛 XPG 機殼",
+      "count": 6
+    },
+    {
+      "label": "銀欣 SilverStone 機殼",
+      "count": 23
+    },
+    {
+      "label": "振華 Super Flower",
+      "count": 3
+    },
+    {
+      "label": "曜越 Thermaltake 機殼",
+      "count": 33
+    },
+    {
+      "label": "DEEPCOOL 九州風神",
+      "count": 13
+    },
+    {
+      "label": "保銳 ENERMAX 機殼",
+      "count": 3
+    },
+    {
+      "label": "迎廣 InWin 機殼",
+      "count": 19
+    },
+    {
+      "label": "恩傑 NZXT 機殼",
+      "count": 11
+    },
+    {
+      "label": "全漢 FSP 機殼",
+      "count": 14
+    },
+    {
+      "label": "聯力工業 LIAN LI 機殼",
+      "count": 32
+    },
+    {
+      "label": "創氪星系 TRYX",
+      "count": 5
+    },
+    {
+      "label": "喬思伯 JONSBO 機殼",
+      "count": 46
+    },
+    {
+      "label": "特價 or 活動專區",
+      "count": 14
+    },
+    {
+      "label": "特規 SFX SFX-L 電源供應器",
+      "count": 18
+    },
+    {
+      "label": "華碩 ASUS【0800到府收送】",
+      "count": 24
+    },
+    {
+      "label": "海韻 Seasonic",
+      "count": 30
+    },
+    {
+      "label": "台達 DELTA 最穩定的電源【保固憑原價屋發票/保貼】",
+      "count": 5
+    },
+    {
+      "label": "Apexgaming 美商艾湃電競【首利100%品牌，原價屋售出 3年快換】",
+      "count": 15
+    },
+    {
+      "label": "美洲獅 COUGAR 電源【偉訓30年品質保證】",
+      "count": 10
+    },
+    {
+      "label": "振華 Super Flower",
+      "count": 23
+    },
+    {
+      "label": "君主 Montech 【原廠兩年換新】",
+      "count": 17
+    },
+    {
+      "label": "銀欣 SilverStone【原價屋售出 2年快換】",
+      "count": 16
+    },
+    {
+      "label": "酷碼 Cooler Master",
+      "count": 18
+    },
+    {
+      "label": "威剛 XPG【保內原廠展服快換】",
+      "count": 14
+    },
+    {
+      "label": "保銳 ENERMAX【原價屋售出 2年快換】",
+      "count": 19
+    },
+    {
+      "label": "安鈦克 Antec 電源供應器 美國選購率第一【原價屋售出 2年快換!!】",
+      "count": 16
+    },
+    {
+      "label": "全漢 FSP 電源供應器【原價屋售出 2年快換 電供就是穩 !!】",
+      "count": 31
+    },
+    {
+      "label": "微星 MSI 【到府收件 兩年展服快換】",
+      "count": 17
+    },
+    {
+      "label": "DEEPCOOL 九州風神",
+      "count": 9
+    },
+    {
+      "label": "火鳥 BitFenix",
+      "count": 1
+    },
+    {
+      "label": "大飛 darkFlash",
+      "count": 4
+    },
+    {
+      "label": "恩傑 NZXT【原價屋售出 2年快換】",
+      "count": 7
+    },
+    {
+      "label": "華擎 ASRock",
+      "count": 5
+    },
+    {
+      "label": "技嘉 GIGABYTE",
+      "count": 11
+    },
+    {
+      "label": "曜越 Thermaltake【原價屋售出 3年快換 !!】",
+      "count": 4
+    },
+    {
+      "label": "聯力工業 LIAN LI",
+      "count": 4
+    },
+    {
+      "label": "機殼風扇 超值推薦",
+      "count": 13
+    },
+    {
+      "label": "華碩 ASUS 風扇/配件",
+      "count": 32
+    },
+    {
+      "label": "君主 Montech 風扇",
+      "count": 14
+    },
+    {
+      "label": "美洲獅 COUGAR 風扇",
+      "count": 8
+    },
+    {
+      "label": "振華 Super Flower 風扇",
+      "count": 11
+    },
+    {
+      "label": "威剛 XPG 風扇",
+      "count": 14
+    },
+    {
+      "label": "追風者 Phanteks 機殼風扇/配件",
+      "count": 22
+    },
+    {
+      "label": "大飛 darkFlash 風扇",
+      "count": 15
+    },
+    {
+      "label": "喬思伯 JONSBO 風扇",
+      "count": 28
+    },
+    {
+      "label": "利民 Thermalright 機殼風扇(索摩樂)【未列示型號請詢問】",
+      "count": 8
+    },
+    {
+      "label": "鎌刀 Scythe 機殼風扇【全品項三年保固】",
+      "count": 5
+    },
+    {
+      "label": "旋剛 Sharkoon 機殼風扇",
+      "count": 2
+    },
+    {
+      "label": "聯力 LIAN LI 機殼風扇/配件",
+      "count": 25
+    },
+    {
+      "label": "酷碼 CoolerMaster 機殼風扇",
+      "count": 10
+    },
+    {
+      "label": "恩傑 NZXT 機殼風扇/配件【未列示型號請詢問】",
+      "count": 10
+    },
+    {
+      "label": "海盜船 CORSAIR 機殼風扇/配件【未列示型號請詢問】",
+      "count": 2
+    },
+    {
+      "label": "曜越 Thermaltake 機殼風扇/配件",
+      "count": 6
+    },
+    {
+      "label": "貓頭鷹 Noctua 機殼風扇【保固六年】【未列示型號請詢問】",
+      "count": 21
+    },
+    {
+      "label": "轉接支架、擴充周邊",
+      "count": 9
+    },
+    {
+      "label": "控制器、集線器、分接線",
+      "count": 8
+    },
+    {
+      "label": "RGB燈條、發光套件",
+      "count": 16
+    },
+    {
+      "label": "火鳥 BitFenix 電源供應器線材",
+      "count": 1
+    },
+    {
+      "label": "銀欣 SilverStone 電源供應器線材【客訂】",
+      "count": 7
+    },
+    {
+      "label": "曜越 Thermaltake 電源供應器編織線 【客訂】",
+      "count": 1
+    },
+    {
+      "label": "【周邊活動熱賣專區】",
+      "count": 14
+    },
+    {
+      "label": "【超值入門款鍵盤滑鼠組】",
+      "count": 10
+    },
+    {
+      "label": "Ducky One X 系列",
+      "count": 4
+    },
+    {
+      "label": "Ducky OK-M 系列",
+      "count": 4
+    },
+    {
+      "label": "Ducky Origin 系列 機械式鍵盤 【台灣製造】",
+      "count": 14
+    },
+    {
+      "label": "華碩 ROG/TUF 鍵盤",
+      "count": 32
+    },
+    {
+      "label": "微星 鍵盤",
+      "count": 14
+    },
+    {
+      "label": "Cherry 原廠 機械式鍵盤",
+      "count": 58
+    },
+    {
+      "label": "Razer 鍵盤",
+      "count": 25
+    },
+    {
+      "label": "君主 Montech 鍵盤",
+      "count": 10
+    },
+    {
+      "label": "大飛 darkFlash 鍵盤",
+      "count": 3
+    },
+    {
+      "label": "Keychron 鍵盤",
+      "count": 24
+    },
+    {
+      "label": "Varmilo 鍵盤",
+      "count": 3
+    },
+    {
+      "label": "Lexking 雷斯特 機械式鍵盤",
+      "count": 5
+    },
+    {
+      "label": "Glorious 鍵盤",
+      "count": 3
+    },
+    {
+      "label": "美洲獅 Cougar 鍵盤",
+      "count": 4
+    },
+    {
+      "label": "亞碩(Power Master) 鍵盤",
+      "count": 5
+    },
+    {
+      "label": "Gigastone 鍵盤",
+      "count": 4
+    },
+    {
+      "label": "RK(ROYAL KLUDGE)機械式鍵盤",
+      "count": 7
+    },
+    {
+      "label": "首席玩家 1st Player 機械式鍵盤",
+      "count": 5
+    },
+    {
+      "label": "HyperX 鍵盤",
+      "count": 3
+    },
+    {
+      "label": "B.Friend 鍵盤",
+      "count": 7
+    },
+    {
+      "label": "海盜船 Corsair 鍵盤",
+      "count": 11
+    },
+    {
+      "label": "irocks 鍵盤",
+      "count": 68
+    },
+    {
+      "label": "羅技 鍵鼠組",
+      "count": 22
+    },
+    {
+      "label": "羅技 商務鍵盤",
+      "count": 24
+    },
+    {
+      "label": "羅技 電競鍵盤",
+      "count": 40
+    },
+    {
+      "label": "電競桌/升降桌 系列【客訂指送】",
+      "count": 32
+    },
+    {
+      "label": "華碩 ROG 電競椅【客訂指送】",
+      "count": 7
+    },
+    {
+      "label": "微星 龍魂電競椅【客訂指送】",
+      "count": 3
+    },
+    {
+      "label": "Cougar 電競椅【客訂指送】外島 離島無配送 偏遠地區需額外收運費",
+      "count": 46
+    },
+    {
+      "label": "亞碩(Power Master) 電競椅 外島 離島無配送 偏遠地區需額外收運費",
+      "count": 2
+    },
+    {
+      "label": "Fractal Design 電競椅",
+      "count": 4
+    },
+    {
+      "label": "威剛 XPG 電競椅 無電梯時物流司機商品無法搬運上樓服務 請見諒!!!",
+      "count": 2
+    },
+    {
+      "label": "irocks 電競椅【客訂指送】電競椅 無電梯時物流司機商品無法搬運上樓服務 請見諒!!!",
+      "count": 44
+    },
+    {
+      "label": "Razer 電競椅 [捷元代理-三年保固]",
+      "count": 12
+    },
+    {
+      "label": "Marsrhino 火星犀牛 電競椅/沙發 貨運司機沒有商品搬運上樓服務，請見諒！",
+      "count": 13
+    },
+    {
+      "label": "海盜船 電競椅【客訂指送】捷元代理",
+      "count": 5
+    },
+    {
+      "label": "ThunderX3 電競椅",
+      "count": 11
+    },
+    {
+      "label": "搖桿 遊戲周邊",
+      "count": 34
+    },
+    {
+      "label": "方向盤 方向盤支架 賽車座艙 賽車組套件組",
+      "count": 20
+    },
+    {
+      "label": "【周邊活動促銷專區】",
+      "count": 10
+    },
+    {
+      "label": "華碩 ROG 滑鼠",
+      "count": 26
+    },
+    {
+      "label": "華碩 TUF 滑鼠",
+      "count": 2
+    },
+    {
+      "label": "MSI 微星 滑鼠",
+      "count": 22
+    },
+    {
+      "label": "Razer 滑鼠",
+      "count": 35
+    },
+    {
+      "label": "SteelSeries 滑鼠",
+      "count": 3
+    },
+    {
+      "label": "EndGame Gear 滑鼠",
+      "count": 7
+    },
+    {
+      "label": "darkFlash 滑鼠",
+      "count": 8
+    },
+    {
+      "label": "櫻桃 Cherry 滑鼠",
+      "count": 3
+    },
+    {
+      "label": "Glorious 滑鼠",
+      "count": 6
+    },
+    {
+      "label": "Turtle Beach 滑鼠",
+      "count": 6
+    },
+    {
+      "label": "美洲獅 Cougar 滑鼠",
+      "count": 10
+    },
+    {
+      "label": "亞碩(Power Master) 滑鼠",
+      "count": 2
+    },
+    {
+      "label": "Gigastone 滑鼠",
+      "count": 6
+    },
+    {
+      "label": "HyperX 滑鼠",
+      "count": 9
+    },
+    {
+      "label": "Zowie 滑鼠",
+      "count": 7
+    },
+    {
+      "label": "海盜船 Corsair 滑鼠",
+      "count": 7
+    },
+    {
+      "label": "LEXMA 滑鼠",
+      "count": 7
+    },
+    {
+      "label": "irocks 滑鼠",
+      "count": 21
+    },
+    {
+      "label": "簡報器",
+      "count": 7
+    },
+    {
+      "label": "羅技 電競滑鼠",
+      "count": 45
+    },
+    {
+      "label": "羅技 商務滑鼠",
+      "count": 48
+    },
+    {
+      "label": "鼠墊 系列",
+      "count": 44
+    },
+    {
+      "label": "XP-PEN 數位繪圖板(1年保固)",
+      "count": 4
+    },
+    {
+      "label": "Wacom 數位繪圖板(1年保固)",
+      "count": 2
+    },
+    {
+      "label": "【網通促銷專區】",
+      "count": 2
+    },
+    {
+      "label": "智慧家庭 (Tapo T110 T100 須搭配 Tapo 智慧網關)",
+      "count": 10
+    },
+    {
+      "label": "電力線網路(HomePlug)",
+      "count": 2
+    },
+    {
+      "label": "內接式有線網路卡",
+      "count": 7
+    },
+    {
+      "label": "外接式有線網路卡",
+      "count": 8
+    },
+    {
+      "label": "10/100Mbps 集線器 / 交換器",
+      "count": 5
+    },
+    {
+      "label": "1Gb 集線器 / 交換器",
+      "count": 37
+    },
+    {
+      "label": "2.5Gb/10Gb 交換器",
+      "count": 12
+    },
+    {
+      "label": "整合式防火牆/網路VPN 路由器",
+      "count": 1
+    },
+    {
+      "label": "WIFI無線延伸/分享(簡易型)網路設備",
+      "count": 8
+    },
+    {
+      "label": "4G＆5G LTE 無線路由器/SIM卡",
+      "count": 15
+    },
+    {
+      "label": "單頻.無線路由器/AP基地台",
+      "count": 3
+    },
+    {
+      "label": "AC Wi-Fi 5 雙頻 系列無線路由器/AP基地台",
+      "count": 7
+    },
+    {
+      "label": "Wi-Fi 6 雙頻 / 三頻 系列無線路由器/AP基地台",
+      "count": 14
+    },
+    {
+      "label": "Wi-Fi 6E＆7 三頻 系列無線路由器/AP基地台",
+      "count": 32
+    },
+    {
+      "label": "Mesh網狀路由器 無線新技術",
+      "count": 39
+    },
+    {
+      "label": "Wi-Fi 4 單頻USB無線網卡",
+      "count": 3
+    },
+    {
+      "label": "Wi-Fi 5 AC/ Wi-FI 6&7 USB無線網卡",
+      "count": 32
+    },
+    {
+      "label": "內接式無線網卡",
+      "count": 6
+    },
+    {
+      "label": "USB 藍牙接收器",
+      "count": 6
+    },
+    {
+      "label": "室內 網路攝影機 (IP Camera) 都有支援雙向語音",
+      "count": 15
+    },
+    {
+      "label": "戶外 網路攝影機 (IP Camera) 都有支援雙向語音",
+      "count": 11
+    },
+    {
+      "label": "室內戶外兩用 網路攝影機 (IP Camera) 都有支援雙向語音",
+      "count": 8
+    },
+    {
+      "label": "華芸 Asustor",
+      "count": 17
+    },
+    {
+      "label": "QNAP 威聯通",
+      "count": 9
+    },
+    {
+      "label": "QNAP 威聯通【原廠擴充配件/交換器】",
+      "count": 5
+    },
+    {
+      "label": "群暉 Synology",
+      "count": 13
+    },
+    {
+      "label": "影像擷取卡/盒/器",
+      "count": 7
+    },
+    {
+      "label": "直播控制器",
+      "count": 1
+    },
+    {
+      "label": "【影音串流，歡樂無窮】",
+      "count": 1
+    },
+    {
+      "label": "外接音效卡",
+      "count": 3
+    },
+    {
+      "label": "內接音效卡",
+      "count": 3
+    },
+    {
+      "label": "【促銷強打活動】",
+      "count": 9
+    },
+    {
+      "label": "麥克風",
+      "count": 28
+    },
+    {
+      "label": "羅技 喇叭",
+      "count": 15
+    },
+    {
+      "label": "Ktnet 喇叭",
+      "count": 5
+    },
+    {
+      "label": "Razer 喇叭",
+      "count": 4
+    },
+    {
+      "label": "Creative 創新未來 喇叭",
+      "count": 12
+    },
+    {
+      "label": "華碩 ROG ROG/TUF 耳麥 喇叭",
+      "count": 18
+    },
+    {
+      "label": "MSI 微星 耳麥",
+      "count": 6
+    },
+    {
+      "label": "Razer 耳麥",
+      "count": 29
+    },
+    {
+      "label": "Vivo 耳機",
+      "count": 2
+    },
+    {
+      "label": "Cherry 耳機",
+      "count": 5
+    },
+    {
+      "label": "Gigastone 耳機",
+      "count": 6
+    },
+    {
+      "label": "HyperX 耳麥",
+      "count": 25
+    },
+    {
+      "label": "Fractal Design 耳麥",
+      "count": 2
+    },
+    {
+      "label": "SteelSeries 賽睿 耳麥",
+      "count": 14
+    },
+    {
+      "label": "海盜船 耳麥",
+      "count": 8
+    },
+    {
+      "label": "羅技 耳麥",
+      "count": 47
+    },
+    {
+      "label": "終極DVD燒錄器 SATA介面",
+      "count": 1
+    },
+    {
+      "label": "USB DVD外接燒錄器",
+      "count": 5
+    },
+    {
+      "label": "USB 外接藍光COMBO燒錄器",
+      "count": 1
+    },
+    {
+      "label": "USB 外接藍光燒錄器",
+      "count": 2
+    },
+    {
+      "label": "高速 M.2外接盒",
+      "count": 27
+    },
+    {
+      "label": "2.5吋 硬碟外接盒",
+      "count": 11
+    },
+    {
+      "label": "3.5吋 硬碟外接盒",
+      "count": 8
+    },
+    {
+      "label": "磁碟陣列外接盒",
+      "count": 5
+    },
+    {
+      "label": "M.2 PCIe 外接硬碟座",
+      "count": 6
+    },
+    {
+      "label": "3.5吋 / 2.5吋 外接硬碟座",
+      "count": 9
+    },
+    {
+      "label": "USB3.2 Gen1 HUB",
+      "count": 30
+    },
+    {
+      "label": "Docking Station",
+      "count": 3
+    },
+    {
+      "label": "5.25\" 內接式讀卡機",
+      "count": 1
+    },
+    {
+      "label": "USB2.0 讀卡機",
+      "count": 4
+    },
+    {
+      "label": "USB3.2 Gen1 讀卡機",
+      "count": 4
+    },
+    {
+      "label": "視訊鏡頭",
+      "count": 24
+    },
+    {
+      "label": "【機車用可攜式-行車記錄器】",
+      "count": 2
+    },
+    {
+      "label": "CyberPower 碩天科技 不斷電系統UPS【監控軟體須至官網下載】原廠2年保固(含電池)",
+      "count": 6
+    },
+    {
+      "label": "Eaton 伊頓飛瑞 不斷電系統UPS",
+      "count": 9
+    },
+    {
+      "label": "科風 不斷電系統UPS (一年保固)",
+      "count": 6
+    },
+    {
+      "label": "Apc 施耐德電機 不斷電系統UPS【全美最大UPS】原廠2年保固(含電池)",
+      "count": 4
+    },
+    {
+      "label": "連供噴墨 / 點陣式印表機",
+      "count": 6
+    },
+    {
+      "label": "Thunderbolt 擴充卡",
+      "count": 2
+    },
+    {
+      "label": "USB40G 擴充卡",
+      "count": 1
+    },
+    {
+      "label": "USB20G 擴充卡",
+      "count": 1
+    },
+    {
+      "label": "USB10G 擴充卡",
+      "count": 1
+    },
+    {
+      "label": "USB5G 擴充卡",
+      "count": 3
+    },
+    {
+      "label": "SATA 擴充卡",
+      "count": 2
+    },
+    {
+      "label": "RS-232 / Parallel (印表機埠) 擴充卡",
+      "count": 2
+    },
+    {
+      "label": "RJ-45 網路線材",
+      "count": 41
+    },
+    {
+      "label": "硬碟排線",
+      "count": 1
+    },
+    {
+      "label": "Type-C 轉接/線材",
+      "count": 58
+    },
+    {
+      "label": "Thunderbolt 線材",
+      "count": 1
+    },
+    {
+      "label": "HDMI 轉接/線材",
+      "count": 62
+    },
+    {
+      "label": "Display port 轉接/線材",
+      "count": 37
+    },
+    {
+      "label": "DVI 頭/線材",
+      "count": 5
+    },
+    {
+      "label": "其他 轉接/線材",
+      "count": 16
+    },
+    {
+      "label": "外接轉接線",
+      "count": 8
+    },
+    {
+      "label": "USB延長線",
+      "count": 5
+    },
+    {
+      "label": "電源多孔排插",
+      "count": 10
+    },
+    {
+      "label": "KVM SWITCH 切換器",
+      "count": 11
+    },
+    {
+      "label": "影音分配器",
+      "count": 9
+    },
+    {
+      "label": "影音切換器",
+      "count": 5
+    },
+    {
+      "label": "Microsoft Windows 11 隨機版 (序號類商品一經售出不接受退貨)",
+      "count": 5
+    },
+    {
+      "label": "Microsoft Windows 11 彩盒版(序號類商品一經售出不接受退貨)",
+      "count": 6
+    },
+    {
+      "label": "Microsoft Office 實體彩盒版 (序號類商品一經售出不接受退貨)",
+      "count": 4
+    },
+    {
+      "label": "Microsoft Office ESD 數位下載版(序號類商品一經售出不接受退貨)",
+      "count": 2
+    },
+    {
+      "label": "防毒軟體 卡巴斯基 kaspersky(序號類商品一經售出不接受退貨)",
+      "count": 4
+    },
+    {
+      "label": "禮物卡【數位下載版 - 捷元、聯強代理】(序號類商品一經售出不接受退貨)",
+      "count": 2
+    },
+    {
+      "label": "福利品【已非新品不符合快換原則】-請網路下單",
+      "count": 16
+    }
+  ],
+  "diff_summary": {
+    "CPU": {
+      "both": 47,
+      "mobile_only": 0,
+      "desktop_only": 0
+    },
+    "HDD": {
+      "both": 89,
+      "mobile_only": 0,
+      "desktop_only": 0
+    },
+    "SSD": {
+      "both": 171,
+      "mobile_only": 0,
+      "desktop_only": 18
+    },
+    "主機板": {
+      "both": 372,
+      "mobile_only": 0,
+      "desktop_only": 0
+    },
+    "劈發價組合區": {
+      "both": 86,
+      "mobile_only": 0,
+      "desktop_only": 9
+    },
+    "套裝/準系統": {
+      "both": 157,
+      "mobile_only": 0,
+      "desktop_only": 23
+    },
+    "記憶卡": {
+      "both": 54,
+      "mobile_only": 0,
+      "desktop_only": 0
+    },
+    "記憶體": {
+      "both": 216,
+      "mobile_only": 0,
+      "desktop_only": 14
+    },
+    "顯示卡": {
+      "both": 255,
+      "mobile_only": 0,
+      "desktop_only": 23
+    }
+  },
+  "conclusion": {
+    "coverage_complete": false,
+    "total_mobile": 1449,
+    "total_desktop": 1537,
+    "desktop_only_total": 87,
+    "mobile_only_total": 0,
+    "unmapped_desktop_groups": 422,
+    "notes": [
+      "名稱以正規化後比對（NFKC/casefold/空白收縮 + 桌面裝飾剝離），價格不參與比對（兩來源非同時快照，價格差異不列入本 spike 結論）。",
+      "G=9 過濾驗證：被過濾項目子分類均不含「記憶卡」、保留項目均含「記憶卡」（兩來源一致）。",
+      "僅桌面版項目全部來自手機版頁面不存在的配件/促銷區段（如 PCIe 延長線、SSD 散熱片、NAS 配件、主機搭購螢幕、組合包），核心分類子分類無漏品。"
+    ]
+  }
+}

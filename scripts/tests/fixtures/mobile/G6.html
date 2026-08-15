@@ -1,0 +1,369 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=big5">
+<title>記憶體 RAM 報價</title>
+<style>
+body{margin:0;overflow:auto;background:url(img/backbg.png) repeat-x}
+img{border:0}
+input{border-radius:9px;-moz-border-radius:9px;-webkit-border-radius:9px;-khtml-border-radius:9px;background-color:#ffc}
+.Tbl *{font-size:30pt}
+button th{font-size:30pt;padding:3 12 3 12}
+#Tot{color:blue;font-size:34pt}
+.t span{font-size:32pt}
+.t,.Q table{width:800}
+td{padding:1}
+.Q thead{background-color:#999;width:800}
+.Q tbody{background-color:#ccc;width:800}
+.Q td,.Q th{cursor:pointer;width:800}
+.Q th{font-size:32pt;color:#222;padding-left:54;padding-top:6;padding-bottom:8;text-align:left;font-weight:900}
+.Q td{font-size:28pt;color:#333;padding-left:70;padding-top:6;padding-bottom:8;border-top:black solid 1px}
+.Q th img{margin-left:-50;border:0}
+.Q td img{margin-left:-40;margin-right:2}
+.d{font-size:28pt}
+.h{display:none}
+.b{color:blue}
+.g{color:green}
+.r{color:red}
+.s{padding:6 9 1 9;cursor:pointer}
+.t td{font-size:36pt;color:#ccc;padding:0;cursor:pointer}
+.Q .y, .Q .z{cursor:not-allowed;color:#fff}
+.Q .y{padding-top:0;border-top:0}
+</style>
+<script>
+function Mon(a){
+a.onmouseout=new Function('this.style.color=""')
+a.style.color="white"}
+function Pull(a){
+var tby=a.parentNode.parentNode.nextSibling
+if (tby.className=="h"){
+  tby.className=""
+  a.children[0].src="m.gif"
+}else{
+  tby.className="h"
+  a.children[0].src="p.gif"}
+}
+function A(a){
+var S=a.firstChild.nextSibling.nodeValue
+a.style.backgroundColor="gold"
+if (user.Rmail.value){
+  if (confirm("將【"+S+"】加到清單？")){
+    user.mlist.value=S.substring(0,S.lastIndexOf(","))
+    user.cond.value=2
+    user.submit()}
+}else alert("請先輸入您正確的 Email 後，\n才可以將商品加到自己查價清單");
+a.style.backgroundColor=""
+}
+function chkmail(){
+var filter=/^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i
+var S=user.email.value, b=S.indexOf("<"), e=S.indexOf(">");
+if ((b!=-1)&&(e!=-1)) S=S.substring(b+1,e);
+user.cond.value=1
+user.Rmail.value=""
+if (S.length)
+  if (filter.test(S)){
+    user.Rmail.value=S
+    Doc.firstChild.nodeValue="清單累計金額："
+    user.submit()
+  }else{
+    alert(S+"\n請輸入正確的 Email !");
+    Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+    Doc.firstChild.nodeValue="輸入email才可建立清單"
+    user.submit()
+ }
+else{
+  Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+  Doc.firstChild.nodeValue="輸入email才可建立清單"
+  user.submit()
+ }
+}
+function Choose(){
+iMode=(iMode) ? 0 : 1
+if (iMode==0){
+  document.mImg.src= "m.gif"
+  Ifrm.style.display=""
+}else{
+  document.mImg.src= "p.gif"
+  Ifrm.style.display="none"
+}
+return false
+}
+function validate(evt){
+  var theEvent = evt || window.event
+  var keyC = theEvent.keyCode || theEvent.which
+//  var regex = /[0-9]/
+  if (keyC==13) return false
+}
+function init(){
+chkmail()
+iMode=1
+}
+</script>
+</head>
+<body bgcolor=white onload="init()" onkeydown="return validate(event)">
+<center>
+<table cellspacing=0 cellpadding=0 height=128 border=0 class=Tbl>
+<form name=user method=post target=ifrm action="my.php" onsubmit="ifrm.location.replace('my.php?email='+this.email+'&Rmail='+this.Rmail+'&cond='+this.cond+'&mlist='+this.mlist);return false">
+<tr><td rowspan=2 onclick="location.replace('./')" style="cursor:pointer"><img src="img/edit_undo.png">
+<td><input type="Email" name="email" size="21" maxlength="36" placeholder="有email才可建立清單" onChange="chkmail()" value=''><td rowspan=2 onclick="return Choose()" style="cursor:pointer;background:url(img/doc_fav.png) right no-repeat"><table cellspacing=0 cellpadding=0 border=0 height=128><tr><td width=136 style="color:red;font-size:62pt;font-weight:900" align=center id=mItem><td valign=top style="padding-top:2"><img name=mImg src=p.gif></table></td></tr>
+<tr><td id=Doc nowrap>輸入email才可建立清單<b id=Tot></b><input type=hidden name=Rmail><input type=hidden name=cond><input type=hidden name=mlist></tr>
+</form>
+</table>
+<span id=Ifrm style="display:none"><iframe name=ifrm frameborder=0 height=200 width=830></iframe></span>
+<div><table background=img/navbg1.png cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td nowrap style="padding-top:14;padding-bottom:10">&nbsp;<b>記憶體 RAM</b></tr></table></div>
+<span class=Q>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 桌上型記憶體 DDR5 單條</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 單條32GB DDR5-4800/CL40, $10900↗$12000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 單條8GB DDR5-5600/CL46, $3250↗$3550</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX 單條16GB DDR5-5600/CL46, $6300 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX 單條32GB DDR5-5600/CL46, $12600 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 單條8GB DDR5-5600/CL46 (AD5U56008G-S), $3799↗$3999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 單條16GB DDR5-4000/CL32 (AD5U400016G-S), $5499 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 單條16GB DDR5-4800/CL40 (AD5U480016G-S), $5250↗$5999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 單條16GB DDR5-5600/CL46 (AD5U560016G-S), $6299↗$6999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 單條16GB DDR5-5600/CL46 LancerBlade矮 黑(AX5U5600C4616G-SLABBK), $6399↗$7299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 單條16GB DDR5-6000/CL48 LancerBlade矮 黑(AX5U6000C4816G-SLABBK), $6499↗$7499</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 單條32GB DDR5-5600/CL46 (AD5U560032G-S), $13599 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 單條16GB DDR5-5600/CL46, $7150↗$7500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 單條32GB DDR5-5600/CL46, $14800↗$15500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 單條8GB DDR5-5600(CL36) FURY Beast (獸獵者), $4300↗$4800</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 單條16GB DDR5-5600(CL36) FURY Beast (獸獵者), $7500↗$7550</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 單條16GB DDR5-6000(CL30) FURY Beast Black (獸獵者), $7500↗$8800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>KLEVV(科賦) 單條16GB DDR5-5600/CL46, $6250</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial 單條16GB DDR5 5600/CL46 (原生顆粒), $6399↗$6999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial 單條32GB DDR5 5600/CL46 (原生顆粒), $11999↗$13999</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 桌上型記憶體 DDR5 雙通道</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 16GB(雙通8GB*2) DDR5 5600/CL46 含散熱片, $6350↗$6999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 32GB(雙通16GB*2) DDR5 5600/CL46 含散熱片, $11800↗$12300</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 64GB(雙通32GB*2) DDR5 5600/CL46 含散熱片, $22500↗$25200</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 64GB(雙通32GB*2) DDR5 6000/CL30 含散熱片, $23800↗$28500</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 黑(AX5U5600C4616G-DTLABBK), $14599 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 黑(AX5U5600C4616G-DTLABBK)~組裝價~, $12799 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 白(AX5U5600C4616G-DTLABWH), $14599 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 白(AX5U5600C4616G-DTLABWH)~組裝價~, $12799 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL48 LancerBlade矮 黑(AX5U6000C4816G-DTLABBK), $14999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL48 LancerBlade矮 白(AX5U6000C4816G-DTLABWH), $14999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL36 LancerBlade矮 黑(AX5U6000C3616G-DTLABBK), $13199↗$15999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL36 LancerBlade矮 白(AX5U6000C3616G-DTLABWH), $13199↗$15999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 LancerBlade矮 黑(AX5U6000C3016G-DTLABBK), $16999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 LancerBlade矮 白(AX5U6000C3016G-DTLABWH), $16999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL28 LancerBlade矮 白(AX5U6000C2816G-DTLABWH), $15799 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL36 LancerBlade矮RGB黑(AX5U6000C3616G-DTLABRBK), $13399↗$16299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL36 LancerBlade矮RGB白(AX5U6000C3616G-DTLABRWH), $13399↗$16299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 LancerBlade矮RGB黑(AX5U6000C3016G-DTLABRBK), $13599↗$17299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 LancerBlade矮RGB白(AX5U6000C3016G-DTLABRWH), $13599↗$17299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-5600/CL36 Lancer黑(AX5U5600C3616G-DCLABK), $12800↗$13800</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 Lancer黑(AX5U6000C3016G-DCLABK), $13599↗$17299</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 Lancer黑(AX5U6000C3016G-DCLABK)~組裝價~, $15299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 Lancer白(AX5U6000C3016G-DCLAWH), $13599↗$17299</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 Lancer白(AX5U6000C3016G-DCLAWH)~組裝價~, $15299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 Lancer RGB黑(AX5U6000C3016G-DCLARBK), $13999↗$17499</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL30 Lancer RGB白(AX5U6000C3016G-DCLARWH), $13999↗$17499</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6000/CL28 Lancer RGB黑(AX5U6000C2816G-DCLARBK), $14199↗$17499</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32G(雙通16G*2)D5-6400/CL32 LancerBlade矮 黑(AX5U6400C3216G-DTLABBK), $13999↗$16999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 64G(雙通32G*2)D5-5600/CL46 LancerBlade矮 黑(AX5U5600C4632G-DTLABBK), $25599↗$26999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 LancerBlade矮 黑(AX5U6000C3032G-DTLABBK), $35999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 LancerBlade矮 白(AX5U6000C3032G-DTLABWH), $35999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 LancerBlade矮RGB黑(AX5U6000C3032G-DTLABRBK), $27198↗$36299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 LancerBlade矮RGB白(AX5U6000C3032G-DTLABRWH), $27198↗$36299</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 Lancer黑(AX5U6000C3032G-DCLABK), $27599↗$36499</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 Lancer白(AX5U6000C3032G-DCLAWH), $27599↗$36499</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 Lancer RGB黑(AX5U6000C3032G-DCLARBK), $27999↗$36699</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 64G(雙通32G*2)D5-6000/CL30 Lancer RGB白(AX5U6000C3032G-DCLARWH), $27999↗$36699</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>Biwin 佰維 Black Opal HX100 48GB(雙通24GBx2) DDR5-6000 CL28 黑, $15999↗$21490</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>Biwin 佰維 Black Opal DW100 RGB 32GB(雙通16GBx2) DDR5-6000 CL28 黑, $14900↗$15990</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>Biwin 佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 黑, $16599↗$21890</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>Biwin 佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 白, $16599↗$21800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Origin code Vortex RGB 32GB(雙通16GBx2) DDR5-6200(CL26)銀(獨立風扇), $18690</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Origin code Vortex RGB 48GB(雙通24GBx2) DDR5-6000(CL26)銀(獨立風扇), $28490 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>KLEVV(科賦)64GB(雙通道32GB*2)DDR5 6000 CRAS V RGB/CL30 曜石黑, $27950 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>KLEVV(科賦)64GB(雙通道32GB*2)DDR5 6000 CRAS V RGB/CL30 晶燦白, $27950</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>KLEVV(科賦)32GB(雙通道16GB*2) DDR5 6400/CL32 CRAS V RGB 曜石黑, $14150</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>KLEVV(科賦)64GB(雙通道32GB*2) DDR5 6400/CL32 CRAS V RGB 曜石黑, $28300 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>KLEVV(科賦)64GB(雙通道32GB*2) DDR5 6400/CL32 CRAS V RGB 晶燦白, $28300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>KLEVV(科賦)32GB(雙通16GB*2) DDR5 6400/CL32 URBANE V RGB (低矮散熱), $14150</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>KLEVV(科賦)32GB(雙通16GB*2) DDR5 6400/CL30 URBANE V RGB (低矮散熱), $14350</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>KLEVV(科賦)48GB(雙通24GB*2) DDR5 6400/CL32 URBANE V RGB (低矮散熱), $19550</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB(雙通16GB*2) DDR5-5600/CL36 FURY Beast黑, $13900↗$16000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB(雙通16GB*2) DDR5-5600/CL36 FURY Beast白, $13900↗$16000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB(雙通16GB*2) DDR5-5600/CL36 FURY Beast RGB黑, $13990↗$16200</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB(雙通16GB*2) DDR5-6000/CL30 FURY Beast 黑 (獸獵者), $14300↗$16500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB(雙通16GB*2) DDR5-6000/CL30 FURY Beast 白 (獸獵者), $14300↗$16500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB(雙通16GB*2) DDR5-6000/CL30 FURY Beast RGB黑, $14500↗$16700</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 64GB(雙通32GB*2) DDR5-5600/CL36 FURY Beast 黑 (獸獵者), $28200↗$30600</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 64GB(雙通32GB*2) DDR5-5600/CL36 FURY Beast 白 (獸獵者), $28200↗$30600</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 64GB(雙通32GB*2) DDR5-6000/CL30 FURY Beast 黑 (獸獵者), $28600↗$32800</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 64GB(雙通32GB*2) DDR5-6000/CL30 FURY Beast 白 (獸獵者), $28600↗$32800</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial 64GB(雙通32GB*2) DDR5 5600/CL46(原生顆粒), $23999↗$27999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6000/CL36 黑色散熱片, $12800↗$14599</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6000/CL36 白色散熱片, $12800↗$14599</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6000/CL40 黑色散熱片, $26500↗$29199</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6000/CL40 白色散熱片, $26500↗$29199</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6400/CL38 黑色散熱片, $13800↗$14999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6400/CL38 白色散熱片, $13800↗$14999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6400/CL40 黑色散熱片, $28500↗$29999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6400/CL40 白色散熱片, $28500↗$29999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial PRO 超頻 96GB(雙通48GB*2) DDR5 5600/CL46 黑色散熱片, $25800↗$28500</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6000/CL36 灰(CMK32GX5M2E6000Z36), $13490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6000/CL36 灰RGB(CMH32GX5M2E6000Z36), $13800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6000/CL30 灰(CMK32GX5M2B6000Z30), $13490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6000/CL30 灰RGB(CMH32GX5M2B6000Z30K), $13990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6400/CL36 灰(CMK32GX5M2B6400Z36), $13900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6400/CL36 灰RGB(CMH32GX5M2B6400Z36), $14300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6400/CL32 灰(CMK32GX5M2B6400Z32)AI, $14000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 32G(16G*2)DDR5-6400/CL32 灰RGB(CMH32GX5M2B6400Z32), $14500</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 64G(32G*2)DDR5-6400/CL42 黑(CMK64GX5M2B6400C42), $29900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 VENGEANCE 96G(48G*2)DDR5-6000/CL36 灰(CMK96GX5M2E6000Z36), $36500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>海盜船 VENGEANCE 128G(64G*2)DDR5-6000/CL40 黑(CMK128GX5M2D6000C40), $59900↗$81000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>海盜船 VENGEANCE 128G(64G*2)DDR5-6400/CL42 黑(CMK128GX5M2B6400C42), $59900↗$81000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>海盜船 DOMINATOR TITANIUM 32G(16G*2) D5-6000/CL30 灰RGB(CMP32GX5M2B6000Z30), $19200</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>海盜船 DOMINATOR TITANIUM 32G(16G*2) D5-7200/CL34 黑RGB(CMP32GX5M2X7200C34), $17800 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>海盜船 DOMINATOR TITANIUM 32G(16G*2) D5-7200/CL34 白RGB(CMP32GX5M2X7200C34W), $17800 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇Flare X5 烈焰槍32GB(雙通16G*2)D5-6000 CL28黑(F5-6000J2836G16GX2-FX5), $19500</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇Flare X5 烈焰槍32GB(雙通16G*2)D5-6000 CL28白(F5-6000J2836G16GX2-FX5W), $19500</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>芝奇Flare X5烈焰槍 64GB(雙通32G*2)D5-6000/CL30黑(F5-6000J3040G32GX2-FX5), $37900 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>芝奇Flare X5烈焰槍 64GB(雙通32G*2)D5-6000/CL30白(F5-6000J3040G32GX2-FX5W), $37900 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇Flare X5 烈焰槍64GB(雙通32G*2)D5-6000 CL28黑(F5-6000J2836G32GX2-FX5), $37500↗$38900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇Flare X5 烈焰槍128GB(雙通64G*2)D5-6000 CL34黑(F5-6000J3444F64GX2-FX5), $85000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 Ripjaws S5焰刃32GB(雙通16G*2)D5-6000/CL36黑( F5-6000J3636F16GX2-RS5K), $14500↗$15500</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>芝奇 Ripjaws S5焰刃32GB(雙通16G*2)D5-6000/CL30黑(F5-6000J3040F16GX2-RS5K), $15500 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 Ripjaws S5焰刃64GB(雙通32G*2)D5-6000/C36黑(F5-6000J3636F32GX2-RS5K), $29000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 Ripjaws S5焰刃64GB(雙通32G*2)D5-6000/CL30白(F5-6000J3040G32GX2-RS5W), $29000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 RipjawsM5 RGB焰刃32GB(16G*2)D5-6000/CL36黑(F5-6000J3636F16GX2-RM5RK), $15000↗$16000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 RipjawsM5 RGB焰刃32GB(16G*2)D5-6000/CL36白(F5-6000J3636F16GX2-RM5RW), $15000↗$16000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 烈焰槍RGB 64GB(雙通32G*2)D5-6000/CL36黑(F5-6000J3636F32GX2-RM5NRK), $29300↗$34000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 烈焰槍RGB 64GB(雙通32G*2)D5-6000/CL36白(F5-6000J3636F32GX2-RM5NRW), $29300↗$34000</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>芝奇 幻鋒戟RGB 32GB(雙通16G*2) D5-6000/CL30黑( F5-6000J3040F16GX2-TZ5RK), $14500 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 幻鋒戟RGB 32GB(雙通16G*2) D5-6400/CL32黑( F5-6400J3239G16GX2-TZ5RK), $18000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 幻鋒戟RGB 32GB(雙通16G*2) D5-6400/CL32白( F5-6400J3239G16GX2-TZ5RW), $18000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 幻鋒戟RGB 32GB(雙通16G*2) D5-7200/CL34黑(F5-7200J3445G16GX2-TZ5RK), $19400↘$14900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 幻鋒戟RGB 32GB(雙通16G*2) D5-7200/CL34白(F5-7200J3445G16GX2-TZ5RW), $19400↘$14900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 幻鋒戟RGB 64GB(雙通32G*2) D5-6000/CL30白(F5-6000J3040G32GX2-TZ5RW), $29000</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>芝奇 幻鋒戟RGB 64GB(雙通32G*2) D5-6400/CL32黑(F5-6400J3239G32GX2-TZ5RK), $33000 <i>Hot！</i></tr>
+<tr><td disabled class=y>&#x21AA; 加送 Intel i7-14700 【20核/28緒】2.1GHz(↑5.4G)/UHD770/65W（現賺 NT$11,800）</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>芝奇 幻鋒戟RGB 64GB(雙通32G*2) D5-6400/CL32白(F5-6400J3239G32GX2-TZ5RW), $33000 <i>Hot！</i></tr>
+<tr><td disabled class=y>&#x21AA; 加送 Intel i7-14700 【20核/28緒】2.1GHz(↑5.4G)/UHD770/65W（現賺 NT$11,800）</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 焰鋒戟RGB 32GB(雙通16GB*2) D5-6000/CL30黑(F5-6000J3038F16GX2-TZ5NR), $18200↗$19400</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 焰鋒戟RGB 64GB(雙通32GB*2)D5-6000/CL30黑(F5-6000J3040G32GX2-TZ5NR), $32000↗$37000</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>芝奇 焰鋒戟RGB 64GB(雙通32GB*2)D5-6000/CL30白(F5-6000J3040G32GX2-TZ5NRW), $37000 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 焰鋒戟RGB 32GB(雙通16GB*2)D5-6400/CL30黑(F5-6400J3039G16GX2-TZ5NR), $19800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 焰鋒戟RGB 32GB(雙通16GB*2)D5-6400/CL30白(F5-6400J3039G16GX2-TZ5NRW), $19800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 焰鋒戟RGB 32GB(雙通16GB*2)D5-7200/CL34黑(F5-7200J3445G16GX2-TZ5NR), $19800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 焰鋒戟RGB 128GB(雙通64GB*2)D5-6000/CL34黑(F5-6000J3444F64GX2-TZ5NR), $86500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 皇家戟RGB 64GB(雙通32GB*2)D5-6000/CL28銀(F5-6000J2836G32GX2-TR5NS), $39900↗$42900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 皇家戟RGB 32GB(雙通16GB*2)D5-7200/CL34銀(F5-7200J3445G16GX2-TR5S), $19900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>芝奇 皇家戟RGB 64GB(雙通32GB*2)D5-6400/CL32銀(F5-6400J3239G32GX2-TR5S), $38500</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 筆記型記憶體 DDR5</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX NB 16GB DDR5 4800/CL40, $5700↗$5999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX NB 32GB DDR5 4800/CL40, $9999↗$11000</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX NB 8GB DDR5 5600/CL46, $3399↗$3700</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX NB 16GB DDR5 5600/CL46, $6300 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX NB 32GB DDR5 5600/CL46, $11900↗$12500</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 NB 32GB DDR5-4800/CL40 (AD5S480032G-S), $11000 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 NB 8GB DDR5-5600/CL46 (AD5S56008G-S), $3799↗$3999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 NB 16GB DDR5-5600/CL46 (AD5S560016G-S), $6299↗$6999</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 NB 32GB DDR5-5600/CL46 (AD5S560032G-S), $12599↗$13599</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓 NB 16GB DDR5 5600(KVR56S46BS8-16)/CL46, $7300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓 NB 32GB DDR5 5600(KVR56S46BD8-32)/CL46, $14700</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial NB 16GB DDR5 5600/CL46, $6150↗$6999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>美光 Micron Crucial NB 32GB DDR5 5600/CL46, $13999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>美光 Micron Crucial NB 64GB DDR5 5600/CL46), $23999↗$27999</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 筆記型記憶體 DDR5 雙通道</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>美光 Micron Crucial NB 雙通16G*2 DDR5 5600/CL46, $11400</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>美光 Micron Crucial NB 雙通64G*2 DDR5 5600/CL46, $41999</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 桌上型記憶體 DDR4</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 8GB DDR4-2400(1024*8)CL17, $1950</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 8GB DDR4-2666(1024*8)CL19, $1980</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 8GB DDR4-3200(1024*8)超頻CL16, $1990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 16GB DDR4-2400(1024*8)CL17, $3500</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 16GB DDR4-2666(1024*8)CL19, $3500</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 16GB DDR4-2666(2048*8)(CL19, $3500</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 16GB DDR4-3200(1024*8)超頻CL16, $3600</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 16GB DDR4-3200(2048*8)超頻CL16, $3600</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 16GB DDR4-3200(1024*8)CL22, $3900↘$3190</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 32GB DDR4-3200(2048*8)CL22, $7150↗$7800</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 32GB DDR4-3200(2048*8)超頻CL16, $7150↗$7800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛 8GB DDR4-3200(AD4U320038G22-SGN)(1024*8), $2299</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛 16GB DDR4-3200(AD4U3200316G22-SGN)(1024*8), $4599</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 16GB DDR4-3200/CL16 XPG D10超頻 黑(AX4U3200316G16A-SB10)(1024*8), $4699 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>威剛 32GB DDR4-3200(AD4U3200732G22-SGN)(2048*8), $8999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 8GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/8)(1024*8), $2990↗$3200</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 8GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/8)(1024*8)~搭機價~, $2700↗$2900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 16GB DDR4-3200(KVR32N22S8/16)(2048*8), $4700↗$6150</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 16GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/16)(2048*8), $5500↗$6150</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB DDR4-3200(KVR32N22D8/32)(2048*8), $12000↗$14500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB DDR4-3200(KVR32N22D8/32)(2048*8)~搭機價~, $9999↗$12000</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>金士頓 32GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/32)(2048*8), $9450 <i>Hot！</i></tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 桌上型記憶體 DDR4 雙通道</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 32GB(雙通16GB*2) DDR4-2666含散熱片(1024*8)CL19, $7100↗$7300</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 32GB(雙通16GB*2) DDR4-2666含散熱片(2048*8)CL19, $7100↗$7300</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX 32GB(雙通16GB*2) DDR4-3200超頻CL16含散熱片(1024*8)CL16, $7500 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 32GB(雙通16GB*2) DDR4-3200超頻CL16含散熱片(2048*8)CL16, $7150↗$7500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX 64GB(雙通32GB*2) DDR4-3200含散熱片(2048*8) CL22, $17300↘$17200</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>威剛 32GB(雙通16G*2) D4-3200/CL16 D10超頻 黑(AX4U3200316G16A-DB10)(1024*8), $7199↗$7700</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 16GB(雙通8GB*2) DDR4-3200 FURY Beast(獸獵)(KF432C16BBK2/16), $6500↗$6600</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>金士頓 32GB(雙通16GB*2) DDR4-3200 (獸獵者)(KF432C16BBK2/32)(2048*8), $9000↗$9500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL Ripjaws V 32GB(雙通16GB*2) D4-3600 CL18 黑 F4-3600C18D-32GVK, $8700↘$7500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL Ripjaws V 32GB(雙通16GB*2) D4-4000 CL18 黑 F4-4000C18D-32GVK, $8800↘$7600</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL 幻光戟 16GB(雙通8GB*2) D4-3200 CL16 黑銀 F4-3200C16D-16GTZR, $4500↘$4300</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL 幻光戟 32GB(雙通16GB*2) D4-3200 CL16 黑銀 F4-3200C16D-32GTZR, $8888↘$7900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL 幻光戟 32GB(雙通16GB*2) D4-3600 CL16 黑銀 F4-3600C16D-32GTZRC, $9890↘$8500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL 皇家戟 32GB(雙通16GB*2) D4-3200 CL16 銀 F4-3200C16D-32GTRS, $9990↘$8500</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL 焰光戟 32GB(雙通16GB*2) D4-3200 F4-3200C16D-32GTZN[For AMD], $9200↘$7950</tr>
+<tr><td onclick=A(this) class=b><img src=img/d.gif>芝奇 G.SKILL 焰光戟 32GB(雙通16GB*2) D4-3600 F4-3600C16D-32GTZNC[For AMD], $9890↘$8600 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>芝奇 G.SKILL 燄光戟 32GB(雙通16GB*2) D4-4000 F4-4000C18D-32GTZN[FOR R5000], $9990↘$8700</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 筆記型記憶體 DDR4</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX NB 8GB DDR4-2400(1024*8), $1950</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX NB 8GB DDR4-2666(1024*8), $1980</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX NB 8GB DDR4-3200(1024*8), $1990 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX NB 16GB DDR4-2400(1024*8), $3850↘$3750</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>UMAX NB 16GB DDR4-2666(1024*8), $3850↘$3750</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX NB 16GB DDR4-3200(1024*8), $3950 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX NB 32GB DDR4-3200(2048*8), $8500 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛 NB 8GB DDR4-3200(AD4S320038G22-SGN)(1024*8), $2299</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛 NB 16GB DDR4-3200(AD4S3200316G22-SGN)(1024*8), $4599</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓 NB 8GB DDR4-3200(KVR32S22S8/8)(1024*8), $3300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓 NB 16GB DDR4-3200(KVR32S22S8/16)(2048*8), $6350</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓 NB 32GB DDR4-3200(KVR32S22D8/32)(2048*8), $14000</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 桌上型記憶體 DDR3</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 8GB DDR3-1600(512*8), $679</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>UMAX 16GB(雙通道8G*2)DDR3-1600含散熱片(512*8), $1339</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 筆記型記憶體 DDR3</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>UMAX NB 8GB DDR3L-1600 低電壓(512*8), $679 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓 NB 8GB DDR3L-1600 低電壓(KVR16LS11/8)(512*8), $1600</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 伺服器專用記憶體 DDR5 ECC DIMM</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓32GB 5600MT/s D5 ECC CL46 DIMM 2Rx8 Hynix A(KSM56E46BD8KM/32HA), $29900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 伺服器專用記憶體 DDR5 RDIMM</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓16GB 5600MT/s D5 ECC Reg CL46 DIMM 1R*8 Hynix A Rambus(KSM56R46BS8/16HA), $15700</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓32GB 5600MT/s D5 ECC Reg CL46 DIMM 2R*8 Hynix A Rambus(KSM56R46BD8/32HA), $31000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓96GB 6400MT/s D5 ECC Reg CL52 DIMM 2R*4 Micron C(KSM64R52BD4/96MC), $125000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛32GB 5600MT/s D5 ECC Reg CL46 DIMM 2R*8 Hynix A die (AD5R560032G20-SHYA), $33999</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>威剛64GB 5600MT/s D5 ECC Reg CL46 DIMM 2R*4 Hynix A die (AD5R560064G40-SHYA), $81999</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 伺服器專用記憶體 DDR4 RDIMM</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓32GB 3200MHz D4 ECC Reg CL22 DIMM 2R*8 Hynix C Rambus (KSM32RD8/32HD), $15200</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>金士頓64GB 3200MHz D4 ECC Reg CL22 DIMM 2R*4 Hynix C Rambus (KSM32RD4/64HCR), $22900</tr>
+</td></tbody></table>
+</span>
+<div><table background="img/navbg1.png" cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td><span class=r>紅-熱賣</span> <span class=g>綠-價格異動</span> <span class=b>藍-熱賣+價異</span><br><span>原價屋 2026年8月15日17:29 更新</span></tr></table></div>
+<div style="padding:12px;background:url(img/backbgr.png) repeat-x;background-position:left bottom" align=center>
+<span class=s><img src=img/info.png onclick="top.location.href='http://www.coolpc.com.tw/phpBB2/portal_pages.php?page=6'"</span>
+<span class=s><img src=img/vga12.png onclick="top.location.href='http://www.coolpc.com.tw/4k.php'"</span>
+<span class=s><img src=img/fb.png onclick="top.location.href='http://www.facebook.com/pages/yuan-jia-wucoolpc/169635866411766#!/pages/yuan-jia-wucoolpc/169635866411766?v=wall'"></span>
+<span class=s><img src=img/pcc.png onclick="top.location.href='/evaluate.php'"></span>
+</div>
+</center>
+<table width=100% height=100% bgcolor=black id=sending style="position:fixed;top:0;left:0;height:100vh;display:none;opacity:0.92;-moz-opacity:0.92;-khtml-opacity:0.92;filter:alpha(opacity=92);">
+<tr><th align=center valign=middle><img src="img/gif-load.gif"><p style="font-size:28pt;color:white">傳送原價屋中...</p></td></tr>
+</table>
+</body>
+</html>

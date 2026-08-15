@@ -1,0 +1,248 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=big5">
+<title>劈發價組合區 報價</title>
+<style>
+body{margin:0;overflow:auto;background:url(img/backbg.png) repeat-x}
+img{border:0}
+input{border-radius:9px;-moz-border-radius:9px;-webkit-border-radius:9px;-khtml-border-radius:9px;background-color:#ffc}
+.Tbl *{font-size:30pt}
+button th{font-size:30pt;padding:3 12 3 12}
+#Tot{color:blue;font-size:34pt}
+.t span{font-size:32pt}
+.t,.Q table{width:800}
+td{padding:1}
+.Q thead{background-color:#999;width:800}
+.Q tbody{background-color:#ccc;width:800}
+.Q td,.Q th{cursor:pointer;width:800}
+.Q th{font-size:32pt;color:#222;padding-left:54;padding-top:6;padding-bottom:8;text-align:left;font-weight:900}
+.Q td{font-size:28pt;color:#333;padding-left:70;padding-top:6;padding-bottom:8;border-top:black solid 1px}
+.Q th img{margin-left:-50;border:0}
+.Q td img{margin-left:-40;margin-right:2}
+.d{font-size:28pt}
+.h{display:none}
+.b{color:blue}
+.g{color:green}
+.r{color:red}
+.s{padding:6 9 1 9;cursor:pointer}
+.t td{font-size:36pt;color:#ccc;padding:0;cursor:pointer}
+.Q .y, .Q .z{cursor:not-allowed;color:#fff}
+.Q .y{padding-top:0;border-top:0}
+</style>
+<script>
+function Mon(a){
+a.onmouseout=new Function('this.style.color=""')
+a.style.color="white"}
+function Pull(a){
+var tby=a.parentNode.parentNode.nextSibling
+if (tby.className=="h"){
+  tby.className=""
+  a.children[0].src="m.gif"
+}else{
+  tby.className="h"
+  a.children[0].src="p.gif"}
+}
+function A(a){
+var S=a.firstChild.nextSibling.nodeValue
+a.style.backgroundColor="gold"
+if (user.Rmail.value){
+  if (confirm("將【"+S+"】加到清單？")){
+    user.mlist.value=S.substring(0,S.lastIndexOf(","))
+    user.cond.value=2
+    user.submit()}
+}else alert("請先輸入您正確的 Email 後，\n才可以將商品加到自己查價清單");
+a.style.backgroundColor=""
+}
+function chkmail(){
+var filter=/^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i
+var S=user.email.value, b=S.indexOf("<"), e=S.indexOf(">");
+if ((b!=-1)&&(e!=-1)) S=S.substring(b+1,e);
+user.cond.value=1
+user.Rmail.value=""
+if (S.length)
+  if (filter.test(S)){
+    user.Rmail.value=S
+    Doc.firstChild.nodeValue="清單累計金額："
+    user.submit()
+  }else{
+    alert(S+"\n請輸入正確的 Email !");
+    Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+    Doc.firstChild.nodeValue="輸入email才可建立清單"
+    user.submit()
+ }
+else{
+  Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+  Doc.firstChild.nodeValue="輸入email才可建立清單"
+  user.submit()
+ }
+}
+function Choose(){
+iMode=(iMode) ? 0 : 1
+if (iMode==0){
+  document.mImg.src= "m.gif"
+  Ifrm.style.display=""
+}else{
+  document.mImg.src= "p.gif"
+  Ifrm.style.display="none"
+}
+return false
+}
+function validate(evt){
+  var theEvent = evt || window.event
+  var keyC = theEvent.keyCode || theEvent.which
+//  var regex = /[0-9]/
+  if (keyC==13) return false
+}
+function init(){
+chkmail()
+iMode=1
+}
+</script>
+</head>
+<body bgcolor=white onload="init()" onkeydown="return validate(event)">
+<center>
+<table cellspacing=0 cellpadding=0 height=128 border=0 class=Tbl>
+<form name=user method=post target=ifrm action="my.php" onsubmit="ifrm.location.replace('my.php?email='+this.email+'&Rmail='+this.Rmail+'&cond='+this.cond+'&mlist='+this.mlist);return false">
+<tr><td rowspan=2 onclick="location.replace('./')" style="cursor:pointer"><img src="img/edit_undo.png">
+<td><input type="Email" name="email" size="21" maxlength="36" placeholder="有email才可建立清單" onChange="chkmail()" value=''><td rowspan=2 onclick="return Choose()" style="cursor:pointer;background:url(img/doc_fav.png) right no-repeat"><table cellspacing=0 cellpadding=0 border=0 height=128><tr><td width=136 style="color:red;font-size:62pt;font-weight:900" align=center id=mItem><td valign=top style="padding-top:2"><img name=mImg src=p.gif></table></td></tr>
+<tr><td id=Doc nowrap>輸入email才可建立清單<b id=Tot></b><input type=hidden name=Rmail><input type=hidden name=cond><input type=hidden name=mlist></tr>
+</form>
+</table>
+<span id=Ifrm style="display:none"><iframe name=ifrm frameborder=0 height=200 width=830></iframe></span>
+<div><table background=img/navbg1.png cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td nowrap style="padding-top:14;padding-bottom:10">&nbsp;<b>劈發價組合區</b></tr></table></div>
+<span class=Q>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 套裝必搭優惠專區</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 戰略組合包(GK20鍵盤+Versa 300無線滑鼠+GD21鼠墊+Maestro 300耳機)原價5109, $2890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】羅技 G512 機械式鍵盤, $1790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】羅技 G502 X 高效能電競滑鼠, $1390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】羅技 MK200 USB鍵盤滑鼠組, $499</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】TP-LINK Archer TX10UB Nano (AX900 / Wi-Fi 6 / Wi-Fi 藍牙5.3 二合一), $499</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】TP-LINK Archer TBE400E ( BE6500 / Wi-Fi 7 / 雙天線 / 藍牙5.4 / PCI-E), $1190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】華碩 USB-AC58 (AC1300 / Wi-Fi 5 / 高增益雙天線 / 三年換新), $799</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】華碩 PCE-BE6500 (BE6500 / Wi-Fi 7 / 雙天線 / 支援三頻＆藍牙5.4 / PCI-E), $1399</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>【套裝搭購優惠】華碩 USB-BE92 Nano (BE6500 / Wi-Fi 7 /三頻 / 隱藏天線 / 三年換新), $1499</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 酷！PC 限量優惠套裝主機【預載最新 Windows 11！所有驅動一次到位，開機即用】</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【特戰】- 黑 R5 5500X3D/B550/16G DDR4/1TB SSD/RX5060Ti 8G/750W電供, $33900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【英豪】- 黑 I5-14400/B760/16G DDR4/1TB SSD/RX5060Ti 8G/750W電供, $35900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【永夜】 Ultra 7 270K Plus/Z890/32G DDR5/1TB SSD/RTX5070/850W電供, $62900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 地平線六專案酷！PC【藍寶堅尼】【瑪莎拉蒂】</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td disabled class=z>&#x2764; 購買地平線六任一專案機，加碼贈 XBOX 無線控制器，隨機不挑色</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【藍寶堅尼】R7 7800X3D/B850/32G DDR5/1TB SSD/RTX5060/650W電供, $49900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【瑪莎拉蒂】R7 7800X3D/B850/32G DDR5/1TB SSD/RTX5060TI 8G/650W電供, $52900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 極致美背無極線！酷！PC 背插系列主機</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td disabled class=z>&#x2764; 購買酷！PC【魅力四射】、【魅力無窮】系列加碼送 技嘉AORUS雕妹公仔盲盒*1</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 7700/B850/32G DDR5/1TB SSD/RTX5060TI/750W電供, $55900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 7800X3D/B850/32G DDR5/1TB SSD/RTX5060TI/750W電供, $59300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 9700X/B850/32G DDR5/1TB SSD/RTX5060TI/750W電供, $59300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 9800X3D/B850/32G DDR5/1TB SSD/RTX5060TI/750W電供, $64700</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 7700/B850/32G DDR5/1TB SSD/RTX5070/750W電供, $63400</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 7800X3D/B850/32G DDR5/1TB SSD/RTX5070/750W電供, $66800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 9700X/B850/32G DDR5/1TB SSD/RTX5070/750W電供, $66800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力四射】R7 9800X3D/B850/32G DDR5/1TB SSD/RTX5070/750W電供, $72200</tr>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 7700/B850/32G DDR5/1TB SSD/RX9060XT/750W電供, $54900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 7800X3D/B850/32G DDR5/1TB SSD/RX9060XT/750W電供, $58300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 9700X/B850/32G DDR5/1TB SSD/RX9060XT/750W電供, $58300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 9800X3D/B850/32G DDR5/1TB SSD/RX9060XT/750W電供, $63700</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 7700/B850/32G DDR5/1TB SSD/RX9070/750W電供, $61200</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 7800X3D/B850/32G DDR5/1TB SSD/RX9070/750W電供, $64600</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 9700X/B850/32G DDR5/1TB SSD/RX9070/750W電供, $64600</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【魅力無窮】R7 9800X3D/B850/32G DDR5/1TB SSD/RX9070/750W電供, $70000</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 酷！PC × 鋁殼專案系列特仕機</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【鋁行者二代-急凍】R7 7700/B850/32G DDR5/1TB/RTX5060TI 16G/750W電供, $50900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【鋁行者二代-酷寒】Ultra 7 265KF/Z890/32G DDR5/1TB SSD/RTX5060/750W電供, $47900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 酷！PC × 靜音專案系列特仕機</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【偵查兵】R7 9800X3D/X870/32G DDR5/1TB SSD/RTX5060/850W電供, $52900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【偵查兵】R7 9800X3D/X870/32G DDR5/1TB SSD/RTX5070/850W電供, $67900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【狙擊手】Ultra 7 270K Plus/Z890/32G DDR5/1TB SSD/RTX5060/850W電供, $50900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【狙擊手】Ultra 7 270K Plus/Z890/32G DDR5/1TB SSD/RTX5070/850W電供, $65900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 酷！PC × ITX專案系列小主機</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【外燃機-蒸氣版】R5 7500F/B650/16G DDR5/1TB SSD/RX7650/850W電供, $32900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【外燃機-動力版】R7 7700/B650/32G DDR5/1TB SSD/RTX5060/850W電供, $44900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【外燃機-高壓版】R7 7700/B650/32G DDR5/1TB SSD/RTX5070/850W電供, $57900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【內燃機-二行程】U5 225F/B860/16G DDR5/1TB SSD/RX7650/850W電供, $32900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【內燃機-四行程】U5 245KF/B860/32G DDR5/1TB SSD/RTX5060/850W電供, $44900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【內燃機-噴射版】U7 270K/B860/32G DDR5/1TB SSD/RTX5070/850W電供, $64900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 華碩 × 酷！PC 精選套裝主機【預載最新 Windows 11！所有驅動一次到位，開機即用】</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【領航員】R5 7500F/B650/32G DDR5/1TB SSD/RX9070XT 16G/原廠機殼/750W電供, $51900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【領航員】R7 7700/B650/32G DDR5/1TB SSD/RX9070XT 16G/原廠機殼/750W電供, $53900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【黑豹】 Ultra 5 225/B860/16G DDR5/512G SSD/原廠機殼/650W原廠電供, $17900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【黑豹】 Ultra 5 225/B860/16G DDR5/512G/RTX5060/原廠機殼/650W原廠電供, $32900</tr>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【觀星台】R7 7700/X870/32G DDR5/1TB/RTX5060Ti 16G/750W電供, $52900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【飛行石】Ultra 5 245KF/Z890/32G DDR5/1TB/RTX5060Ti 16G/750W電供, $54900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【奇異博士】Ultra 5 245KF/B860/16G DDR5/1TB SSD/RTX5060/750W電供, $35900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【酷寒戰士】R7 7700/B650/16G DDR5/1TB SSD/RTX5060/750W電供, $34900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【猛毒】Ultra 5 245KF/B860/16G DDR5/1TB SSD/RX9060XT/750W電供, $37900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【鷹眼】R7 7700/B650/16G DDR5/1TB SSD/RX9060XT/750W電供, $36900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩【R5管理者】R5 3400G / A520 / 8G DDR4 / 512G SSD, $9990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩【I5管理者】I5-12400 / H610 / 8G DDR4 / 512G SSD, $13900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【守望者】Ultra 5 225/H810/16G DDR5/512GB SSD/650W電供, $16900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 技嘉 × 酷！PC 精選套裝主機【預載最新 Windows 11！所有驅動一次到位，開機即用】</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【仙境遊俠-黑】Ultra 5 225/16G DDR5/512G SSD/550W, $16900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【仙境遊俠-白】Ultra 5 225/16G DDR5/512G SSD/550W, $16900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【烈空坐】R5 5500X3D/B550/16G DDR4/1TB SSD/RTX5060/原廠機殼/750W電供, $31900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【烈空坐】R5 5500X3D/B550/16G DDR4/1TB SSD/RTX5060TI/原廠機殼/750W電供, $34900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【卡比獸】I5-14400F/B760/16G DDR4/1TB SSD/RTX5060/原廠機殼/750W電供, $31900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【卡比獸】I5-14400F/B760/16G DDR4/1TB SSD/RTX5060TI/原廠機殼/750W電供, $34900</tr>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【屠龍刀】U5 250KF Plus/B860/16G DDR5/1TB SSD/RTX5060/850W電供, $41900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【屠龍刀】U5 250KF Plus/B860/16G DDR5/1TB SSD/RTX5070/850W電供, $55900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【屠龍刀】U7 270K Plus/B860/16G DDR5/1TB SSD/RTX5060/850W電供, $46100</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【屠龍刀】U7 270K Plus/B860/16G DDR5/1TB SSD/RTX5070/850W電供, $60100</tr>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【倚天劍】R7 7700/B850/16G DDR5/1TB SSD/RTX5060/850W電供, $40900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【倚天劍】R7 7700/B850/16G DDR5/1TB SSD/RTX5070/850W電供, $54900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【倚天劍】R7 7800X3D/B850/16G DDR5/1TB SSD/RTX5060/850W電供, $43700</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【倚天劍】R7 7800X3D/B850/16G DDR5/1TB SSD/RTX5070/850W電供, $57700</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【倚天劍】R7 9800X3D/B850/16G DDR5/1TB SSD/RTX5060/850W電供, $49800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【倚天劍】R7 9800X3D/B850/16G DDR5/1TB SSD/RTX5070/850W電供, $63800</tr>
+<tr><td disabled class=z>&#x2764; 購買幻獸任一專案機，回函發票，即可索取《$20美元Steam序號》，數量有限，送完為止</tr>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【混沌幻獸】- 黑色 R5 7500F/B650/16G DDR5/1TB/RTX5060/650W電供, $33900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【混沌幻獸】- 白色 R5 7500F/B650/16G DDR5/1TB/RTX5060/650W電供, $33900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【聖光幻獸】- 黑色 R7 7700/B650/16G DDR5/1TB/RTX5060TI/650W電供, $41900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【聖光幻獸】- 白色 R7 7700/B650/16G DDR5/1TB/RTX5060TI/650W電供, $41900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【電競PARTY】R7 7800X3D/B850/32G DDR5/1TB SSD/RTX5070/750W電供, $63900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【電競PARTY】R7 7800X3D/B850/32G DDR5/1TB SSD/RX9070/750W電供, $58900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【電競PARTY】R7 9800X3D/B850/32G DDR5/1TB SSD/RTX5070/750W電供, $69800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【電競PARTY】R7 9800X3D/B850/32G DDR5/1TB SSD/RX9070/750W電供, $64800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【狂歡PARTY】R7 7700/B850/16G DDR5/1TB SSD/RTX5060/650W電供, $39900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【狂歡PARTY】R7 7700/B850/16G DDR5/1TB SSD/RX9060/650W電供, $41900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【夏日PARTY】U5 250KF/B860/16G DDR5/1TB SSD/RTX5060/650W電供, $39900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【夏日PARTY】U5 250KF/B860/16G DDR5/1TB SSD/RTX9060/650W電供, $42900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 微星 × 酷！PC 精選套裝主機【預載最新 Windows 11！所有驅動一次到位，開機即用】</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【價格調整公告】因應NVIDIA顯示卡成本調漲，自8/3起，部分套裝主機陸續調整售價.</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【智多星】Ultra 5 225/H810/16G/512GB SSD/原廠機殼/500W原廠電供, $16490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【凱薩】Ultra 5 225F/B860/16G/1TB SSD/RTX5060/原廠機殼/650W電供, $33900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷！PC【亞瑟】R7 7700/B650/16G/1TB SSD/RTX5060/原廠機殼/650W電供, $36900</tr>
+</td></tbody></table>
+</span>
+<div><table background="img/navbg1.png" cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td><span class=r>紅-熱賣</span> <span class=g>綠-價格異動</span> <span class=b>藍-熱賣+價異</span><br><span>原價屋 2026年8月15日17:29 更新</span></tr></table></div>
+<div style="padding:12px;background:url(img/backbgr.png) repeat-x;background-position:left bottom" align=center>
+<span class=s><img src=img/info.png onclick="top.location.href='http://www.coolpc.com.tw/phpBB2/portal_pages.php?page=6'"</span>
+<span class=s><img src=img/vga12.png onclick="top.location.href='http://www.coolpc.com.tw/4k.php'"</span>
+<span class=s><img src=img/fb.png onclick="top.location.href='http://www.facebook.com/pages/yuan-jia-wucoolpc/169635866411766#!/pages/yuan-jia-wucoolpc/169635866411766?v=wall'"></span>
+<span class=s><img src=img/pcc.png onclick="top.location.href='/evaluate.php'"></span>
+</div>
+</center>
+<table width=100% height=100% bgcolor=black id=sending style="position:fixed;top:0;left:0;height:100vh;display:none;opacity:0.92;-moz-opacity:0.92;-khtml-opacity:0.92;filter:alpha(opacity=92);">
+<tr><th align=center valign=middle><img src="img/gif-load.gif"><p style="font-size:28pt;color:white">傳送原價屋中...</p></td></tr>
+</table>
+</body>
+</html>

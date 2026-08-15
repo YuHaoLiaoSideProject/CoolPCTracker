@@ -1,0 +1,227 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=big5">
+<title>傳統內接硬碟 HDD 報價</title>
+<style>
+body{margin:0;overflow:auto;background:url(img/backbg.png) repeat-x}
+img{border:0}
+input{border-radius:9px;-moz-border-radius:9px;-webkit-border-radius:9px;-khtml-border-radius:9px;background-color:#ffc}
+.Tbl *{font-size:30pt}
+button th{font-size:30pt;padding:3 12 3 12}
+#Tot{color:blue;font-size:34pt}
+.t span{font-size:32pt}
+.t,.Q table{width:800}
+td{padding:1}
+.Q thead{background-color:#999;width:800}
+.Q tbody{background-color:#ccc;width:800}
+.Q td,.Q th{cursor:pointer;width:800}
+.Q th{font-size:32pt;color:#222;padding-left:54;padding-top:6;padding-bottom:8;text-align:left;font-weight:900}
+.Q td{font-size:28pt;color:#333;padding-left:70;padding-top:6;padding-bottom:8;border-top:black solid 1px}
+.Q th img{margin-left:-50;border:0}
+.Q td img{margin-left:-40;margin-right:2}
+.d{font-size:28pt}
+.h{display:none}
+.b{color:blue}
+.g{color:green}
+.r{color:red}
+.s{padding:6 9 1 9;cursor:pointer}
+.t td{font-size:36pt;color:#ccc;padding:0;cursor:pointer}
+.Q .y, .Q .z{cursor:not-allowed;color:#fff}
+.Q .y{padding-top:0;border-top:0}
+</style>
+<script>
+function Mon(a){
+a.onmouseout=new Function('this.style.color=""')
+a.style.color="white"}
+function Pull(a){
+var tby=a.parentNode.parentNode.nextSibling
+if (tby.className=="h"){
+  tby.className=""
+  a.children[0].src="m.gif"
+}else{
+  tby.className="h"
+  a.children[0].src="p.gif"}
+}
+function A(a){
+var S=a.firstChild.nextSibling.nodeValue
+a.style.backgroundColor="gold"
+if (user.Rmail.value){
+  if (confirm("將【"+S+"】加到清單？")){
+    user.mlist.value=S.substring(0,S.lastIndexOf(","))
+    user.cond.value=2
+    user.submit()}
+}else alert("請先輸入您正確的 Email 後，\n才可以將商品加到自己查價清單");
+a.style.backgroundColor=""
+}
+function chkmail(){
+var filter=/^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i
+var S=user.email.value, b=S.indexOf("<"), e=S.indexOf(">");
+if ((b!=-1)&&(e!=-1)) S=S.substring(b+1,e);
+user.cond.value=1
+user.Rmail.value=""
+if (S.length)
+  if (filter.test(S)){
+    user.Rmail.value=S
+    Doc.firstChild.nodeValue="清單累計金額："
+    user.submit()
+  }else{
+    alert(S+"\n請輸入正確的 Email !");
+    Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+    Doc.firstChild.nodeValue="輸入email才可建立清單"
+    user.submit()
+ }
+else{
+  Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+  Doc.firstChild.nodeValue="輸入email才可建立清單"
+  user.submit()
+ }
+}
+function Choose(){
+iMode=(iMode) ? 0 : 1
+if (iMode==0){
+  document.mImg.src= "m.gif"
+  Ifrm.style.display=""
+}else{
+  document.mImg.src= "p.gif"
+  Ifrm.style.display="none"
+}
+return false
+}
+function validate(evt){
+  var theEvent = evt || window.event
+  var keyC = theEvent.keyCode || theEvent.which
+//  var regex = /[0-9]/
+  if (keyC==13) return false
+}
+function init(){
+chkmail()
+iMode=1
+}
+</script>
+</head>
+<body bgcolor=white onload="init()" onkeydown="return validate(event)">
+<center>
+<table cellspacing=0 cellpadding=0 height=128 border=0 class=Tbl>
+<form name=user method=post target=ifrm action="my.php" onsubmit="ifrm.location.replace('my.php?email='+this.email+'&Rmail='+this.Rmail+'&cond='+this.cond+'&mlist='+this.mlist);return false">
+<tr><td rowspan=2 onclick="location.replace('./')" style="cursor:pointer"><img src="img/edit_undo.png">
+<td><input type="Email" name="email" size="21" maxlength="36" placeholder="有email才可建立清單" onChange="chkmail()" value=''><td rowspan=2 onclick="return Choose()" style="cursor:pointer;background:url(img/doc_fav.png) right no-repeat"><table cellspacing=0 cellpadding=0 border=0 height=128><tr><td width=136 style="color:red;font-size:62pt;font-weight:900" align=center id=mItem><td valign=top style="padding-top:2"><img name=mImg src=p.gif></table></td></tr>
+<tr><td id=Doc nowrap>輸入email才可建立清單<b id=Tot></b><input type=hidden name=Rmail><input type=hidden name=cond><input type=hidden name=mlist></tr>
+</form>
+</table>
+<span id=Ifrm style="display:none"><iframe name=ifrm frameborder=0 height=200 width=830></iframe></span>
+<div><table background=img/navbg1.png cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td nowrap style="padding-top:14;padding-bottom:10">&nbsp;<b>傳統內接硬碟 HDD</b></tr></table></div>
+<span class=Q>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 3.5吋 SATA3 傳統碟</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 2TB (128M/5400轉/3年保) (DT02ABA200) 裝機版【限搭機】, $4990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 2TB【P300系列】(256M/7200轉/3年保) (HDWD320UZSVA)【限搭機】, $5790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 4TB【P300系列】(128M/5400轉/3年保) (HDWD240UZSVA)【限搭機】, $6790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 4TB【X300系列】(512M/7200轉/3年保) (HDWR740UZSVA)【限搭機】, $8890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 6TB【X300系列】(512M/7200轉/3年保) (HDWR760UZSVA)【限搭機】, $10990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 4TB【新梭魚】(256M/5400轉/3年保) (ST4000DM004)【限搭機】, $6250</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 8TB【新梭魚】(256M/5400轉/3年保) (ST8000DM004)【限搭機】, $10890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 24TB【新梭魚】(512M/7200轉/2年保) (ST24000DM001)【限搭機】, $27890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 1TB【藍標】(64M/5400轉/3年保) (WD10EARZ)【限搭機】, $4890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 2TB【藍標】(256M/7200轉/3年保) (WD20EZBX)【限搭機】, $5890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 3TB【藍標】(128M/5400轉/3年保) (WD30EZZX), $6390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 4TB【藍標】(128M/5400轉/3年保) (WD40EZZX)【限搭機】, $6890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 6TB【藍標】(256M/5400轉/3年保) (WD60EZAX)【限搭機】, $9090</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 8TB【藍標】(256M/5640轉/3年保) (WD80EAAZ )【限搭機】, $11890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 10TB【藍標】(512M/7200轉/3年保) (WD100EAGZ)【限搭機】, $14890</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 3.5吋 SATA3 監控碟</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 2TB【S300系列】【監控型】128MB/5400轉/3年保 (HDWT720UZSVA)【限搭機】, $5790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 4TB【S300系列】【監控型】256MB/5400轉/3年保 (HDWT840UZSVA)【限搭機】, $7790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 6TB【S300系列】【監控型】256MB/5400轉/3年保 (HDWT860UZSVA)【限搭機】, $9790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 4TB【S300 Pro系列】【監控型】512MB/7200轉/5年保 (HDWTA40UZSVA)【限搭機】, $9490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 6TB【S300 Pro系列】【監控型】512MB/7200轉/5年保 (HDWTA60UZSVA) 【限搭機】, $11390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 8TB【S300 Pro系列】【監控型】512MB/7200轉/5年保 (HDWTA80UZSVA)【限搭機】, $13900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 4TB【監控鷹】(256M/5400轉/3年保/3年 Rescue) (ST4000VX016)【限搭機】, $6850</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 6TB【監控鷹】(256M/5400轉/3年保/3年 Rescue) (ST6000VX009)【限搭機】, $10350</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 8TB【監控鷹AI】(256M/7200轉/5年保/3年 Rescue) (ST8000VE001)【限搭機】, $13390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 10TB【監控鷹AI】(256M/7200轉/5年保/3年 Rescue) (ST10000VE001)【限搭機】, $15390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 20TB【監控鷹AI】(512M/7200轉/5年保/3年 Rescue) (ST20000VE003)【限搭機】, $27890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 2TB【紫標】64M/5400轉/3年保 (WD23PURZ)【限搭機】, $6090</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 3TB【紫標】128M/5400轉/3年保 (WD34PURZ)【限搭機】, $6690</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 6TB【紫標】256M/5400轉/3年保 (WD64PURZ)【限搭機】, $9890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 8TB【紫標PRO】256M/7200轉/5年保 (WD8002PURP)【限搭機】, $14290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 10TB【紫標PRO】512M/7200轉/5年保 (WD102PURP)【限搭機】, $17490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 12TB【紫標PRO】512M/7200轉/5年保 (WD122PURP)【限搭機】, $19890</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 3.5吋 SATA3 NAS碟</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 4TB【NAS碟】512M/7200轉/3年保 (HDWG740AZSTC)【限搭機】, $9590</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 6TB【NAS碟】512M/7200轉/3年保 (HDWG760AZSTA)【限搭機】, $12290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 8TB【NAS碟】512M/7200轉/3年保 (HDWG780AZSTA)【限搭機】, $14390</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Toshiba 10TB【NAS碟】512M/7200轉/3年保 (HDWG71AAZSTA)【限搭機】, $16700 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 12TB【NAS碟】512M/7200轉/3年保 (HDWG51CAZSTA)【限搭機】, $18900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 14TB【NAS碟】512M/7200轉/3年保 (HDWG51EAZSTA)【限搭機】, $22700</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Toshiba 16TB【NAS碟】512M/7200轉/3年保 (HDWG51GAZSTA)【限搭機】, $24700 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Toshiba 18TB【NAS碟】512M/7200轉/3年保 (HDWG51JAZSTA)【限搭機】, $26700 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Toshiba 20TB【NAS碟】512M/7200轉/3年保 (HDWG62AAZSTA)【限搭機】, $29700 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 22TB【NAS碟】512M/7200轉/3年保 (HDWG62CAZSTA)【限搭機】, $33000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 2TB【那嘶狼】256M/5400轉/3年保/3年 Rescue (ST2000VN003)【限搭機】, $5550</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 4TB【那嘶狼】256M/5400轉/3年保/3年 Rescue (ST4000VN006)【少量到貨】, $6950</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 6TB【那嘶狼】256M/5400轉/3年保/3年 Rescue (ST6000VN006)【限搭機】, $10450</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 8TB【那嘶狼】256M/5400轉/3年保/3年 Rescue (ST8000VN002)【限搭機】, $11890 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 10TB【那嘶狼】256M/7200轉/3年保/3年 Rescue (ST10000VN000)【限搭機】, $13890 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 12TB【那嘶狼】256M/7200轉/3年保3年 Rescue (ST12000VN0008)【限搭機】, $16390 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 4TB【那嘶狼 PRO】256M/7200轉/5年保/3年 Rescue (ST4000NT001)【限搭機】, $8450</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 8TB【那嘶狼 PRO】256M/7200轉/5年保/3年 Rescue (ST8000NT001)【限搭機】, $11890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 10TB【那嘶狼 PRO】256M/7200轉/5年保/3年 Rescue (ST10000NT001)【限搭機】, $15390</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 12TB【那嘶狼 PRO】256M/7200轉/5年保/3年 Rescue (ST12000NT001)【限搭機】, $17890 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 16TB【那嘶狼 PRO】256M/7200轉/5年/3年 Rescue (ST16000NT001)【限搭機】, $22890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 20TB【那嘶狼 PRO】256M/7200轉/5年/3年 Rescue (ST20000NT001)【限搭機】, $27890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 24TB【那嘶狼 PRO】512M/7200轉/5年/3年 Rescue (ST24000NT002), $32890</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 28TB【那嘶狼 PRO】512M/7200轉/5年/3年 Rescue (ST28000NT000)【限搭機】, $37890 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 30TB【那嘶狼 PRO】512M/7200轉/5年/3年 Rescue (ST30000NT011)【限搭機】, $39890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 32TB【那嘶狼 PRO】512M/7200轉/5年/3年 Rescue (ST32000NT000)【限搭機】, $41890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 2TB【紅標Plus】64M/5400轉/3年保 (WD20EFPX)【限搭機】, $6190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 4TB【紅標Plus】128M/5400轉/3年保 (WD40EFZZ)【限搭機】, $7890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 8TB【紅標Plus】256M/5640轉/3年保 (WD80EFPX)【限搭機】, $13490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 12TB【紅標PRO】512M/7200轉/5年保 (WD122KFBX)【限搭機】, $19890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 16TB【紅標PRO】512M/7200轉/5年保 (WD161KFGX)【限搭機】, $26890</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 3.5吋 SATA3 企業碟</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 4TB【企業級】512M/7200轉/5年保 (MG10ADA400E)【限搭機】, $11500</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 8TB【企業級】512MB/7200轉/5年保 (MG10ADA800E)【限搭機】, $18700</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Toshiba 12TB【企業級】512MB/7200轉/5年保 (MG09ACA12TE)【限搭機】, $21200</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 8TB【EXOS企業碟】256MB/7200轉/5年保 (ST8000NM017B)【限搭機】, $14390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 10TB【EXOS企業碟】256MB/7200轉/5年保 (ST10000NM0017B)【限搭機】, $16390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 12TB【EXOS企業碟】512MB/7200轉/5年保 (ST12000NM002H)【限搭機】, $18890</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 16TB【EXOS企業碟】512MB/7200轉/5年保 (ST16000NM002H)【限搭機】, $23890 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 20TB【EXOS企業碟】512MB/7200轉/5年保 (ST20000NM002H)【限搭機】, $28890 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Seagate 24TB【EXOS企業碟】512MB/7200轉/5年保 (ST24000NM002H), $33890 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 30TB【EXOS企業碟】512MB/7200轉/5年保 (ST30000NM004K)【限搭機】, $40890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 32TB【EXOS企業碟】512MB/7200轉/5年保 (ST32000NM004K)【限搭機】, $42890</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】Seagate 造型一卡通 ～限量!!送完為止</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 8TB【Ultrastar DC HA340】256MB/7200轉/5年保 (WUS721208BLE6L4)【限搭機】, $15290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 20TB【Ultrastar DC HC560】512MB/7200轉/5年保 (WUH722020BLE6L4)【限搭機】, $33490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 26TB【Ultrastar DC HC590】512MB/7200轉/5年保 (WUH722626ALE6L4)【限搭機】, $43490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 4TB【金標】256MB/7200轉/5年保 (WD4004FRYZ)【限搭機】, $9890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 8TB【金標】256MB/7200轉/5年保 (WD8005FRYZ)【限搭機】, $15290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 10TB【金標】512MB/7200轉/5年保 (WD103KRYZ)【限搭機】, $18490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 12TB【金標】512MB/7200轉/5年保 (WD122KRYZ)【限搭機】, $21490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 16TB【金標】512MB/7200轉/5年保 (WD161KRYZ)【限搭機】, $28490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 18TB【金標】512MB/7200轉/5年保 (WD181KRYZ)【限搭機】, $29890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 20TB【金標】512MB/7200轉/5年保 (WD203KRYZ), $33490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 24TB【金標】512MB/7200轉/5年保 (WD242KRYZ)【限搭機】, $39890</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 26TB【金標】512MB/7200轉/5年保 (WD261KRYZ), $43490</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 2.5吋 SATA3 筆記型</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>Toshiba 2TB (2.5吋/5400轉/128M/9.5mm/2年保) (MQ04ABD200)【限搭機】, $6590 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>Seagate 2TB【新梭魚】(2.5吋/5400轉/128M/7mm/2年保) (ST2000LM015)【限搭機】, $4390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>WD 2TB【藍標】(2.5吋/5400轉/128M/7mm/2年保) (WD20SPZX)【限搭機】, $6690</tr>
+</td></tbody></table>
+</span>
+<div><table background="img/navbg1.png" cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td><span class=r>紅-熱賣</span> <span class=g>綠-價格異動</span> <span class=b>藍-熱賣+價異</span><br><span>原價屋 2026年8月15日17:29 更新</span></tr></table></div>
+<div style="padding:12px;background:url(img/backbgr.png) repeat-x;background-position:left bottom" align=center>
+<span class=s><img src=img/info.png onclick="top.location.href='http://www.coolpc.com.tw/phpBB2/portal_pages.php?page=6'"</span>
+<span class=s><img src=img/vga12.png onclick="top.location.href='http://www.coolpc.com.tw/4k.php'"</span>
+<span class=s><img src=img/fb.png onclick="top.location.href='http://www.facebook.com/pages/yuan-jia-wucoolpc/169635866411766#!/pages/yuan-jia-wucoolpc/169635866411766?v=wall'"></span>
+<span class=s><img src=img/pcc.png onclick="top.location.href='/evaluate.php'"></span>
+</div>
+</center>
+<table width=100% height=100% bgcolor=black id=sending style="position:fixed;top:0;left:0;height:100vh;display:none;opacity:0.92;-moz-opacity:0.92;-khtml-opacity:0.92;filter:alpha(opacity=92);">
+<tr><th align=center valign=middle><img src="img/gif-load.gif"><p style="font-size:28pt;color:white">傳送原價屋中...</p></td></tr>
+</table>
+</body>
+</html>

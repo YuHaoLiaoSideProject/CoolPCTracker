@@ -1,0 +1,385 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=big5">
+<title>套裝主機 AIO主機 報價</title>
+<style>
+body{margin:0;overflow:auto;background:url(img/backbg.png) repeat-x}
+img{border:0}
+input{border-radius:9px;-moz-border-radius:9px;-webkit-border-radius:9px;-khtml-border-radius:9px;background-color:#ffc}
+.Tbl *{font-size:30pt}
+button th{font-size:30pt;padding:3 12 3 12}
+#Tot{color:blue;font-size:34pt}
+.t span{font-size:32pt}
+.t,.Q table{width:800}
+td{padding:1}
+.Q thead{background-color:#999;width:800}
+.Q tbody{background-color:#ccc;width:800}
+.Q td,.Q th{cursor:pointer;width:800}
+.Q th{font-size:32pt;color:#222;padding-left:54;padding-top:6;padding-bottom:8;text-align:left;font-weight:900}
+.Q td{font-size:28pt;color:#333;padding-left:70;padding-top:6;padding-bottom:8;border-top:black solid 1px}
+.Q th img{margin-left:-50;border:0}
+.Q td img{margin-left:-40;margin-right:2}
+.d{font-size:28pt}
+.h{display:none}
+.b{color:blue}
+.g{color:green}
+.r{color:red}
+.s{padding:6 9 1 9;cursor:pointer}
+.t td{font-size:36pt;color:#ccc;padding:0;cursor:pointer}
+.Q .y, .Q .z{cursor:not-allowed;color:#fff}
+.Q .y{padding-top:0;border-top:0}
+</style>
+<script>
+function Mon(a){
+a.onmouseout=new Function('this.style.color=""')
+a.style.color="white"}
+function Pull(a){
+var tby=a.parentNode.parentNode.nextSibling
+if (tby.className=="h"){
+  tby.className=""
+  a.children[0].src="m.gif"
+}else{
+  tby.className="h"
+  a.children[0].src="p.gif"}
+}
+function A(a){
+var S=a.firstChild.nextSibling.nodeValue
+a.style.backgroundColor="gold"
+if (user.Rmail.value){
+  if (confirm("將【"+S+"】加到清單？")){
+    user.mlist.value=S.substring(0,S.lastIndexOf(","))
+    user.cond.value=2
+    user.submit()}
+}else alert("請先輸入您正確的 Email 後，\n才可以將商品加到自己查價清單");
+a.style.backgroundColor=""
+}
+function chkmail(){
+var filter=/^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i
+var S=user.email.value, b=S.indexOf("<"), e=S.indexOf(">");
+if ((b!=-1)&&(e!=-1)) S=S.substring(b+1,e);
+user.cond.value=1
+user.Rmail.value=""
+if (S.length)
+  if (filter.test(S)){
+    user.Rmail.value=S
+    Doc.firstChild.nodeValue="清單累計金額："
+    user.submit()
+  }else{
+    alert(S+"\n請輸入正確的 Email !");
+    Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+    Doc.firstChild.nodeValue="輸入email才可建立清單"
+    user.submit()
+ }
+else{
+  Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+  Doc.firstChild.nodeValue="輸入email才可建立清單"
+  user.submit()
+ }
+}
+function Choose(){
+iMode=(iMode) ? 0 : 1
+if (iMode==0){
+  document.mImg.src= "m.gif"
+  Ifrm.style.display=""
+}else{
+  document.mImg.src= "p.gif"
+  Ifrm.style.display="none"
+}
+return false
+}
+function validate(evt){
+  var theEvent = evt || window.event
+  var keyC = theEvent.keyCode || theEvent.which
+//  var regex = /[0-9]/
+  if (keyC==13) return false
+}
+function init(){
+chkmail()
+iMode=1
+}
+</script>
+</head>
+<body bgcolor=white onload="init()" onkeydown="return validate(event)">
+<center>
+<table cellspacing=0 cellpadding=0 height=128 border=0 class=Tbl>
+<form name=user method=post target=ifrm action="my.php" onsubmit="ifrm.location.replace('my.php?email='+this.email+'&Rmail='+this.Rmail+'&cond='+this.cond+'&mlist='+this.mlist);return false">
+<tr><td rowspan=2 onclick="location.replace('./')" style="cursor:pointer"><img src="img/edit_undo.png">
+<td><input type="Email" name="email" size="21" maxlength="36" placeholder="有email才可建立清單" onChange="chkmail()" value=''><td rowspan=2 onclick="return Choose()" style="cursor:pointer;background:url(img/doc_fav.png) right no-repeat"><table cellspacing=0 cellpadding=0 border=0 height=128><tr><td width=136 style="color:red;font-size:62pt;font-weight:900" align=center id=mItem><td valign=top style="padding-top:2"><img name=mImg src=p.gif></table></td></tr>
+<tr><td id=Doc nowrap>輸入email才可建立清單<b id=Tot></b><input type=hidden name=Rmail><input type=hidden name=cond><input type=hidden name=mlist></tr>
+</form>
+</table>
+<span id=Ifrm style="display:none"><iframe name=ifrm frameborder=0 height=200 width=830></iframe></span>
+<div><table background=img/navbg1.png cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td nowrap style="padding-top:14;padding-bottom:10">&nbsp;<b>套裝主機 AIO主機</b></tr></table></div>
+<span class=Q>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA DGX Spark</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 此商品為專業性產品，新品換新/故障檢測會交由原廠做判定檢測，不便之處敬請見諒！</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS Ascent QSFP 連接線【現貨】, $3990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE AI TOP NVIDIA ConnectX-7 連接線【現貨】, $3990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI EdgeXpert QSFP 連接線【現貨】, $3990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>NVIDIA DGX Spark Cable 40 CM ConnectX-7 連接線【現貨】, $5250</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS Ascent GX10 GB10 / 128G / Gen4 1TB SSD【現貨】, $175900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS Ascent GX10 GB10 / 128G / Gen5 4TB SSD【現貨】, $245900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI EdgeXpert GB10 / 128G / Gen5 4TB SSD【現貨】, $209900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ALTOS BrainSphere GB10 F1 GB10 / 128G / Gen4 4TB SSD【現貨】, $210000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE AI TOP ATOM G4 GB10 / 128G / Gen4 4TB SSD【現貨】, $239000</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 微星 MSI 限量大全套</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>微星魔龍姬-大全配(B850主機板/5070TI顯卡/850W電源/360水冷/主題機殼/魔龍姬公仔), $62990</tr>
+<tr><td disabled class=y>&#x21AA; 微星 獨家限量打造-魔龍姬 特仕版，獨特IP設計，再送限量公仔 - 剩餘3 請把握</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 華碩 ASUS 品牌主機專區</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; ASUS ROG 系列電競主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS ROG【GM700TZ-R9800X149W】R7 9800X3D / 16G / 1T / 850W電供 / 水冷, $50990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS ROG【GM1000TY-R9800X009X8】9800X3D / 32G / 2T / 5080 / 1000W電供【訂】, $199990</tr>
+<tr><td disabled class=z>&#x2764; ASUS TUF 系列電競主機</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>ASUS【H-T500MV-13420H269W6】i5-13420H / 16G / 1T / WIN11 / 5060 / 330W電供, $41990↘$40888</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-T500MV-05210H111W5】C5 210H / 16G / 512G / WIN11 / 3050 / 330W電供, $32900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-T500MV-05210H151W55】C5 210H / 16G / 1T / WIN11 / 5050 / 330W電供, $39990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-T500MV-05210H015W6T】C5 210H / 16G / 1T / WIN11 / 5060Ti / 500W電供, $47990</tr>
+<tr><td disabled class=z>&#x2764; ASUS 15公升主機(中型、小於一般家用主機)</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-S503MER-714700001X】i7-14700 / 16G / 1T / WIN11 P / 500W電供, $46990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-V501MV-03100U0250A】C3 100U / 8G / 512G / NON-OS / 白 / 180W電供, $16990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-V501MV-03100U010WB】C3 100U / 8G / 512G / WIN11 / 黑 / 180W電供, $19990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-V501MV-05210H0480B】C5 210H / 8G / 1T / NON-OS / 黑 / 330W電供, $21990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-V501MV-09270H003WB】C9 270H / 16G / 1T / WIN11 / 黑 / 330W電供, $36990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-V501MV-09270H003WB】+ 華碩 DUAL-RTX5060-O8G, $42990</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 ASUS【H-V501MV-09270H003WB】就送 ASUS PS102 加長版滑鼠墊</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-V501MV-09270H001XB】C9 270H / 16G / 1T / WIN11 P / 黑 / 330W電供, $39990</tr>
+<tr><td disabled class=z>&#x2764; ASUS 27公升主機(一般常見家用主機大小)</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-S500TER-514500009W】i5-14500 / 8G / 512G / WIN11 / 500W電供, $26990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-S500TER-514500036W】i5-14500 / 16G / 512G / WIN11 / 500W電供, $32990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【H-S500TER-514500002X】i5-14500 / 8G / 512G / WIN11 P / 500W電供, $33990</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 微星 MSI 電競主機專區</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【買就送】買 MSI 電競主機 任一型號就送 MSI Maestro 300 電競耳麥</tr>
+<tr><td disabled class=z>&#x2764; MSI 14代 電競主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NTA5【3208TW】i5-14400F / 16G / 1T / WIN11 / RTX 3050, $35900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NVK5【3078TW】i5-14400F / 16G / 1T / WIN11 / RTX 5050, $36900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NVL5【2895TW】i5-14400F / 16G / 1T / WIN11 / RTX 5060, $42900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Infinite S3 14NVM5【3282TW】i5-14400F / 16G / 1T / WIN11 / RTX 5060 Ti 8G, $45900↘$44900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NVN5【2880TW】i5-14400F / 16G / 1T / WIN11 / RTX 5060 Ti 16G, $48900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NVN5【3272TW】i5-14400F / 16G / 1T / WIN11 / RTX 5060 Ti 16G, $48900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NVL7【2898TW】i7-14700F / 32G / 1T / WIN11 / RTX 5060, $56900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NVP7【3247TW】i7-14700F / 32G / 2T / WIN11 / RTX 5070, $74900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite S3 14NVR7【3207TW】i7-14700F / 32G / 1T / WIN11 / RTX 5070 Ti【訂】, $99900</tr>
+<tr><td disabled class=z>&#x2764; MSI AMD 電競主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Infinite Z3 7NVRR7【671TW】R7 7800X3D / 32G / 2T / WIN11 / RTX 5070Ti【訂】, $109900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 技嘉 Gigabyte 主機專區</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS PRIME 3【AP3A5N6-5104】 R5 9500F / 16G / 1T / WIN11 / 5060, $51900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 AORUS PRIME 3【AP3A5N6-5104】送 技嘉 Km6300 鍵鼠組</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS PRIME 5【AP5A7N7T-5100】 R7 9700X / 32G / 2T / WIN11 / 5070Ti, $109000</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 AORUS PRIME 5【AP5A7N7T-5100】送 技嘉x米家電腦喇叭！</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS PRIME 5【AP5A7N8-5103】 R7 9800X3D / 32G / 2T / WIN11 / 5080【訂】, $129000</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 AORUS PRIME 5【AP5A7N8-5103】送 技嘉x米家電腦喇叭！</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 華碩 ASUS NUC 迷你小主機 系列</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; ※由於華碩原廠政策，非整機產品外觀皆無ASUS Logo字樣，購買請注意。※</tr>
+<tr><td disabled class=z>&#x2764; ASUS NUC Pro 準系統</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買 ASUS NUC 15 Pro 準系統 加購 美光 NB 16G D5-5600 (一台限購1), $4499 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 15 Pro【RNUC15CRHI300009】i3-100U / 黑 (RAM.DISK.OS選購), $9900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 15 Pro【RNUC15CRHC500009】Core 5 210H / 黑 (RAM.DISK.OS選購), $13799</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 15 Pro【RNUC15CRHC700009】Core 7 240H / 黑 (RAM.DISK.OS選購), $18099</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 15 Pro【RNUC15CRHU500009】U5 225H / 黑 (DISK.RAM.OS選購), $16299</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 15 Pro【RNUC15CRHU700009】U7 255H / 黑 (RAM.DISK.OS選購), $21999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買 ASUS NUC 16 Pro 準系統 加購 美光 NB 16G D5-6400 (一台限購1), $4999 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 16 Pro【RNUC16GDKU560009】U5 325 / 黑 (DISK.RAM.OS選購), $18999</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 16 Pro【RNUC16GDKU760009】U7 356H / 黑 (DISK.RAM.OS選購), $23999</tr>
+<tr><td disabled class=z>&#x2764; ASUS NUC Pro Plus 準系統</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買 ASUS NUC DDR5系列準系統 加購 美光 NB 16G D5-5600 (一台限購1), $4499 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 14 Pro Plus【RNUC14RVSU700009I】U7 155H / 白(RAM.DISK.OS選購), $20999</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 15 Pro Plus【RNUC15CRSU700009】U7 255H / 白(RAM.DISK.OS選購), $23799</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 15 Pro Plus【RNUC15CRSU900009】U9 285H / 白(RAM.DISK.OS選購), $25999</tr>
+<tr><td disabled class=z>&#x2764; ASUS NUC Pro Plus 迷你小主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 14 Pro Plus【RNUC14RVSU9068A9】U9 185H / 16G / 512G / WIN 11 / 白, $32900</tr>
+<tr><td disabled class=z>&#x2764; ASUS NUC Pro AI 迷你小主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS NUC 14 Pro AI【RNUC14LNKU909AN9】U9 288V / 32G / 2TB / WIN 11, $47405</tr>
+<tr><td disabled class=z>&#x2764; ROG NUC 小主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS ROG NUC 20週年【RNUC16JNK9X8ADA9】U9 290HX Plus / 64G / 2T / 5090, $199920</tr>
+<tr><td disabled class=y>&#x21AA; 買 ROG NUC【RNUC16JNK9X8ADA9】送ROG SAGA OMNI Edition 20 黑金限量公仔</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 華碩 ASUS 小主機專區</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS UGen300 M2 8G AI 加速器【訂】, $5880</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS UGen300 USB AI 加速器【訂】, $6380</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【PN43-100UMZA】Intel N100 / 8G / 128G / WIN 11 Pro, $15990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【PN55-430FPNA】Ryzen AI R5 430 / 16G / 512G / WIN 11, $38990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS ROG【GR70-N90026AN】R9 9955HX3D / 32G / 2T / RTX5070【訂】, $124900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 微星 MSI 迷你小主機 / 準系統 / 主機 系列</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; MSI CUBI 準系統</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI N ADL【264BTW】Intel N200 準系統 (RAM.DISK.OS選購) / 黑色, $7990</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI N ADL【264BTW】送 MSI 自動摺疊傘</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI 5 1MA【486BTW】Intel Core 5 120U (RAM.DISK.OS選購), $12900</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買 MSI CUBI 5 1M 準系統 加購 美光 NB 16G D5-5600 (一台限購1), $3999 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI 5 1M【446BTW】Intel Core 5 120U (RAM.DISK.OS選購), $12900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI 5 1M【446BTW】送 MSI 自動摺疊傘</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI 5 1M【448BTW】Intel Core 7 150U (RAM.DISK.OS選購), $15900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI 5 1M【448BTW】送 MSI 自動摺疊傘</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買 MSI CUBI Z AI 準系統 加購 美光 NB 16G D5-5600 (一台限購1), $3999 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI Z AI 8M【011BTW】AMD R5 8645HS (RAM.DISK.OS選購), $14900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI Z AI 8M【011BTW】送 MSI 自動摺疊傘</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI Z AI 8M【009BTW】AMD R7 8845HS (RAM.DISK.OS選購), $17900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI Z AI 8M【009BTW】送 MSI 自動摺疊傘</tr>
+<tr><td disabled class=z>&#x2764; MSI CUBI NUC AI 準系統</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買 MSI CUBI NUC AI 準系統 加購 美光 NB 16G D5-5600 (一台限購1), $3999 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI NUC AI 1UMG【039BTW】Intel Core 5 125H (RAM.DISK.OS選購), $13900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI NUC AI 1UMG【039BTW】送 MSI PRO 磁吸式支架行動電源</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI NUC AI+ 3MG【018BTW】Intel Core Ultra 5 322 (RAM.DISK.OS選購), $16900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI NUC AI+ 3MG【017BTW】Intel Core Ultra 7 355 (RAM.DISK.OS選購), $19900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI NUC AI+ 3MG【016BTW】Intel Core Ultra 9 386H (RAM.DISK.OS選購), $25900</tr>
+<tr><td disabled class=z>&#x2764; MSI PRO DP 準系統</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI PRO DP21 14M【248BTW】Intel H610(CPU.RAM.DISK選購), $5490</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI【248BTW】送 MSI PRO 無線鍵鼠組</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【組合優惠】MSI PRO DP21【248BTW】+ 威剛 NB 16G-5600 + 威剛 710 512G SSD, $12500 <i>Hot！</i></tr>
+<tr><td disabled class=y>&#x21AA; ※此組合不含 CPU 請自行選購※</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI【248BTW】組合 送 MSI PRO 無線鍵鼠組</tr>
+<tr><td disabled class=z>&#x2764; MSI CUBI 小主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI N ADL【283TW】Intel N100 / 8G / 128G / WIN11 Pro, $10900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI N ADL【286TW】Intel N200 / 8G / 128G / WIN11 Pro, $11900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI CUBI 5 1MA【653TW】Core 3 100U / 8G / 512G / WIN11, $22900↘$19900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI CUBI 5 1MA【655TW】Core 5 120U / 16G / 1T / WIN11 Pro, $30900↘$29900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI 5 1M【607TW】Core 3 100U / 8G / 512G / WIN11, $19900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI 5 1M【607TW】送 MSI PRO 無線鍵鼠組 Copilot 白</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI 5 1M【619TW】Core 5 120U / 16G / 1T / WIN11 Pro, $29900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI 5 1M【619TW】送 MSI PRO 無線鍵鼠組 Copilot 白</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI 5 1M【605TW】Core 7 150U / 16G / 1T / WIN11 Pro, $36900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI CUBI 5 1M【605TW】送 MSI PRO 無線鍵鼠組 Copilot 白</tr>
+<tr><td disabled class=z>&#x2764; MSI CUBI NUC AI 小主機</tr>
+<tr><td disabled class=z>&#x2764; MSI CUBI NUC 支援 HDMI CEC功能，可透過螢幕電源按鈕同時啟動主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI CUBI NUC AI+ 2MG【032TW】Intel Core Ultra 9 288V / 32G / 2TB / WIN11 Pro, $45900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 CUBI NUC AI+ 2MG【032TW】送 MSI PRO 有線鍵鼠組 黑 + 充電器組</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI CUBI NUC AI+ 3MG【011TW】Intel Core Ultra 5 322 / 16G / 512G / WIN11 Pro, $35900↘$33900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI CUBI NUC AI+ 3MG【010TW】Intel Core Ultra 7 355 / 16G / 1TB / WIN11 Pro, $39900↘$38900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI CUBI NUC AI+ 3MG【009TW】Intel Core Ultra 9 386H / 32G / 1TB / WIN11 Pro, $52900↘$49900</tr>
+<tr><td disabled class=z>&#x2764; MSI PRO DP 主機</tr>
+<tr><td disabled class=z>&#x2764; MSI PRO DP21 2.3L 迷你商務主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI PRO DP21 14M【1232TW】G7400 / 8G / 128G / WIN11 Pro, $14900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 MSI PRO DP21 14M【1232TW】送 MSI PRO MP272 E14C 獨家款螢幕</tr>
+<tr><td disabled class=z>&#x2764; MSI PRO DP80 商務主機</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO DP80 AI A2G【248TW】Core Ultra 5 225 / 16G / 1T / WIN11 Pro, $37900↘$35900</tr>
+<tr><td disabled class=z>&#x2764; MSI PRO DP180 商務主機</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI PRO DP180 14A【1429TW】G7400 / 8G / 128G / WIN11 Pro, $14900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI PRO DP180 14A【459TW】i7-14700 / 16G / 1TB / WIN11 Pro, $32900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO DP180 AI 8HG【1474TW】Core Ultra 5 225 / 16G / 512GB / WIN11, $31900↘$29900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO DP180 AI 8HG【1475TW】Core Ultra 5 225 / 16G / 1TB / WIN11 Pro, $36900↘$34900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO DP180 AI 8HG【1476TW】Core Ultra 7 265 / 16G / 1TB / WIN11 Pro, $40900↘$38900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 技嘉 GIGABYTE BRIX 超微型電腦</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 技嘉 Brix 迷你準系統</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE BRIX【BRi7H-1355】i7-1355U (RAM/DISK/OS選購), $14000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE BRIX【GB-BTIP-N150】N150 (RAM/DISK/OS選購), $5999</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE BRIX【GB-BTIP-N250】N250 (RAM/DISK/OS選購), $6999</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE BRIX【GB-BRU5-225H】U5 225H (RAM/DISK/OS選購), $15999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買【GB-BRU5-225H】加購 美光 P310 1TB M.2 SSD 享優惠價(1台限購1), $2999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買【GB-BRU5-225H】加購 美光 NB 8G DDR5-5600 *兩支 (1台限購1組), $3999 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE BRIX【GB-BRU7-255H】U7 255H (RAM/DISK/OS選購), $19999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買【GB-BRU7-255H】加購 美光 P310 1TB M.2 SSD 享優惠價(1台限購1), $2999 <i>Hot！</i></tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買【GB-BRU7-255H】加購 美光 NB 8G DDR5-5600 *兩支 (1台限購1組), $3999 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>GIGABYTE BRIX【GB-BER7-8840】R7 8840U (RAM/DISK/OS選購), $16999</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>【加購優惠】買【GB-BER7-8840】加購 美光 P310 1TB M.2 SSD 享優惠價(1台限購1), $2999 <i>Hot！</i></tr>
+<tr><td disabled class=z>&#x2764; 技嘉 Brix 迷你小主機</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>GIGABYTE BRIX R7 PRO 8840U / 32G / 2T / WIN11 Pro, $37999 <i>Hot！</i></tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 GIGABYTE BRIX R7 PRO 8840U 整機 就送 技嘉 Km6300 鍵鼠組</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 華擎 ASRock 迷你準系統</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; ASRock DeskMini＆DeskMeet 配件</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini VESA Mount 後背架, $230</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini USB2.0 二埠擴充線, $250</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini＆DeskMeet Intel 3168 WiFi + BT4.2 無線模組, $550</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini＆DeskMeet AX210 WiFi 6E M.2 無線網卡 (M.2 2230), $1150</tr>
+<tr><td disabled class=z>&#x2764; ASRock DeskMini</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini X300 2.5G【AMD準系統】內含CPU風扇 (不含CPU/RAM/DISK), $5190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini X600 USB4【AMD準系統】內含CPU風扇 (不含CPU/RAM/DISK), $6190</tr>
+<tr><td disabled class=z>&#x2764; 原價屋獨家X600 規格，內含WiFi 網卡</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini X600W USB4【AMD準系統】含CPU風扇 (不含CPU/RAM/DISK), $6790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini B760 黑【INTEL準系統】(不含CPU/RAM/DISK), $6690</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMini B860 黑【INTEL準系統】(不含CPU/RAM/DISK), $6790</tr>
+<tr><td disabled class=z>&#x2764; ASRock DeskMeet</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMeet X600【AMD準系統】(不含CPU/RAM/DISK) 適用8000/7000S, $6690</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskMeet B760【INTEL準系統】(不含CPU/RAM/DISK) 適用12/13/14代, $7390</tr>
+<tr><td disabled class=z>&#x2764; ASRock DeskSlim</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASRock DeskSlim X600【AMD準系統】(不含CPU/RAM/DISK), $7290</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 宏碁 ACER 迷你準系統 / 小主機</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; ACER 迷你準系統</tr>
+<tr><td disabled class=z>&#x2764; 【買就送】買 ACER 迷你準系統 就送 ACER Predator Galea 330 真無線耳機！</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ACER RB102【DT.BP5TA.001】U7 155H / 白 (RAM.DISK.OS選購), $17690</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 ACER【DT.BP5TA.001】送 宇瞻 Apacer PA3480 512G M.2 SSD</tr>
+<tr><td disabled class=z>&#x2764; ACER 迷你小主機</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>ACER RB102【DT.BQSTA.001】Core Ultra 5 225H / 16G / 1T / WIN11 Pro, $39900↘$34900</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ACER RB102【DT.BQTTA.001】Core Ultra 7 255H / 16G / 1T / WIN11 Pro, $43900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 微星 MSI AIO 主機</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 【買就送】買 微星 AIO 全系列商品 送 MSI 自動傘 + MSI 行動電源 + MSI 充電器+線</tr>
+<tr><td disabled class=z>&#x2764; MSI AIO Modern 系列</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Modern AM242 1M【1078TW】23.8吋 / Core 3 100U / 8G / 512G / WIN11 / 白, $26900↘$24900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Modern AM242 1M【1059TW】23.8吋 / Core 5 120U / 8G / 1T / WIN11 / 白, $30900↘$28900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Modern AM242 1M【1060TW】23.8吋 / Core 5 120U / 8G / 1T / WIN11 / 黑, $30900↘$28900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Modern AM242 1M【1058TW】23.8吋 / Core 7 150U / 16G / 1T / WIN11 Pro / 白, $39900↘$37900</tr>
+<tr><td disabled class=z>&#x2764; MSI AIO Modern 可升降系列</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Modern AM272P 1M【860TW】27吋 / Core 3 100U / 8G / 512G / WIN11 / 白, $28900↘$26900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Modern AM272P 1M【859TW】27吋 / Core 5 120U / 8G / 1T / WIN11 / 白, $32900↘$30900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI Modern AM272P 1M【857TW】27吋 / Core 7 150U / 16G / 1T / WIN11 Pro / 白, $41900↘$39900</tr>
+<tr><td disabled class=z>&#x2764; MSI AIO Modern 系列-可觸控</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI Modern AM242TP 1M【1061TW】23.8吋 / Core 7 150U / 16G / 1T / WIN 11 P / 白, $43900</tr>
+<tr><td disabled class=z>&#x2764; MSI AIO PRO 系列</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP242P 14M【1202TW】23.8吋 / G7400 / 8G / 128G / WIN11 Pro / 白, $19900↘$17900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP242P 14M【625TW】23.8吋 / i3-14100 / 8G / 512G / WIN11 / 白, $27900↘$24900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP242P 14M【624TW】23.8吋 / i5-14400 / 8G / 512G / WIN11 / 白, $30900↘$28900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP242P 14M【619TW】23.8吋 / i5-14400 / 8G / 512G / WIN11 / 黑, $30900↘$28900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP242P 14M【626TW】23.8吋 / i7-14700 / 16G / 1TB / WIN11 Pro / 白, $40900↘$39900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP272P 14M【634TW】27吋 / i3-14100 / 8G / 512G / WIN11 / 白, $28900↘$26900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP272P 14M【633TW】27吋 / i5-14400 / 8G / 512G / WIN11 / 白, $32900↘$30900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP272P 14M【632TW】27吋 / i5-14400 / 8G / 512G / WIN11 / 黑, $32900↘$30900</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>MSI PRO AP272P 14M【497TW】27吋 / i7-14700 / 16G / 1TB / WIN11 Pro / 白, $42900↘$40900</tr>
+<tr><td disabled class=z>&#x2764; MSI AIO PRO 系列-可觸控</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>MSI PRO AP222T 14MA【660TW】21.5吋 / G7400 / 8G / 128G / WIN11 Pro / 白, $22900</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 華碩 ASUS AIO 主機</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; ASUS AIO-無觸控</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V440VAK-131WPC003W】23.8吋 / i3-1315U / 16G / 512G / WIN11 / 白, $19990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V440VAK-134WPC003W】23.8吋 / i5-13420H / 16G / 1T / WIN11 / 白, $26990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V440VAK-10UWPC001W】23.8吋 / Core 3 100U / 16G / 512G / WIN11 / 白, $27990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V440VAK-210HWPC002W】23.8吋 / Core 5 210H / 16G / 1T / WIN11 / 白, $35990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V470VAK-10UWPE004W】27吋 / Core 3 100U / 16G / 512G / WIN11 / 白, $29990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V470VAK-210HWPE001W】27吋 / Core 5 210H / 16G / 1T / WIN11 / 白, $37990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V470VAK-240HWPE002W】27吋 / Core 7 240H / 16G / 1T / WIN11 / 白, $39990</tr>
+<tr><td disabled class=z>&#x2764; ASUS AIO-可觸控</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【V440VAT-210HWPD001W】23.8吋 / Core 5 210H / 16G / 1T / WIN11 / 白, $38990</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>ASUS【V470VAT-210HWPF001W】27吋 / Core 5 210H / 16G / 1T / WIN11 / 白, $41990↘$39990</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>ASUS【V470VAT-240HWPF001W】27吋 / Core 7 240H / 32G / 1T / WIN11 / 白, $54990↘$49990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS【VM670KA-350WPF002W】27吋 / Ryzen AI 7 350 / 16G / 1T / WIN11 / 白, $45990</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> Terra AIO 主機</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>Terra AIO PC 2710HA 27吋 / Core Ultra 5 225 / 16G / 1T▼下殺到 8/31 23:59, $24900↘$23900</tr>
+<tr><td disabled class=y>&#x21AA; 【買就送】買 Terra AIO 送 Terra 後背包</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> 智慧眼鏡</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>ASUS AirVision M1 智慧眼鏡, $10888 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS ROG XREAL R1 N 瞳距（57-66mm）/隨附控制底座, $26990</tr>
+<tr><td disabled class=z>&#x2764; 買 ASUS XREAL R1 送ASUS ROG Strix Impact III Wireless 無線滑鼠 售價$1690</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ASUS ROG XREAL R1 B 瞳距（66-75mm）/隨附控制底座, $26990</tr>
+<tr><td disabled class=z>&#x2764; 買 ASUS XREAL R1 送ASUS ROG Strix Impact III Wireless 無線滑鼠 售價$1690</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> HTC VR</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; HTC VIVE 主機 (VR/MR虛擬實境)</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>HTC VIVE Focus Vision, $34900</tr>
+<tr><td disabled class=z>&#x2764; HTC VIVE 周邊</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>HTC VIVE 定位器3.0, $3800</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>HTC VIVE 自定位追蹤器【訂】, $6250</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>HTC VIVE 自定位追蹤器 3+1組合【訂】, $18900</tr>
+</td></tbody></table>
+</span>
+<div><table background="img/navbg1.png" cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td><span class=r>紅-熱賣</span> <span class=g>綠-價格異動</span> <span class=b>藍-熱賣+價異</span><br><span>原價屋 2026年8月15日17:29 更新</span></tr></table></div>
+<div style="padding:12px;background:url(img/backbgr.png) repeat-x;background-position:left bottom" align=center>
+<span class=s><img src=img/info.png onclick="top.location.href='http://www.coolpc.com.tw/phpBB2/portal_pages.php?page=6'"</span>
+<span class=s><img src=img/vga12.png onclick="top.location.href='http://www.coolpc.com.tw/4k.php'"</span>
+<span class=s><img src=img/fb.png onclick="top.location.href='http://www.facebook.com/pages/yuan-jia-wucoolpc/169635866411766#!/pages/yuan-jia-wucoolpc/169635866411766?v=wall'"></span>
+<span class=s><img src=img/pcc.png onclick="top.location.href='/evaluate.php'"></span>
+</div>
+</center>
+<table width=100% height=100% bgcolor=black id=sending style="position:fixed;top:0;left:0;height:100vh;display:none;opacity:0.92;-moz-opacity:0.92;-khtml-opacity:0.92;filter:alpha(opacity=92);">
+<tr><th align=center valign=middle><img src="img/gif-load.gif"><p style="font-size:28pt;color:white">傳送原價屋中...</p></td></tr>
+</table>
+</body>
+</html>

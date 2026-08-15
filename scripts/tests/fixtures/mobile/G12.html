@@ -1,0 +1,460 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=big5">
+<title>顯示卡 VGA 報價</title>
+<style>
+body{margin:0;overflow:auto;background:url(img/backbg.png) repeat-x}
+img{border:0}
+input{border-radius:9px;-moz-border-radius:9px;-webkit-border-radius:9px;-khtml-border-radius:9px;background-color:#ffc}
+.Tbl *{font-size:30pt}
+button th{font-size:30pt;padding:3 12 3 12}
+#Tot{color:blue;font-size:34pt}
+.t span{font-size:32pt}
+.t,.Q table{width:800}
+td{padding:1}
+.Q thead{background-color:#999;width:800}
+.Q tbody{background-color:#ccc;width:800}
+.Q td,.Q th{cursor:pointer;width:800}
+.Q th{font-size:32pt;color:#222;padding-left:54;padding-top:6;padding-bottom:8;text-align:left;font-weight:900}
+.Q td{font-size:28pt;color:#333;padding-left:70;padding-top:6;padding-bottom:8;border-top:black solid 1px}
+.Q th img{margin-left:-50;border:0}
+.Q td img{margin-left:-40;margin-right:2}
+.d{font-size:28pt}
+.h{display:none}
+.b{color:blue}
+.g{color:green}
+.r{color:red}
+.s{padding:6 9 1 9;cursor:pointer}
+.t td{font-size:36pt;color:#ccc;padding:0;cursor:pointer}
+.Q .y, .Q .z{cursor:not-allowed;color:#fff}
+.Q .y{padding-top:0;border-top:0}
+</style>
+<script>
+function Mon(a){
+a.onmouseout=new Function('this.style.color=""')
+a.style.color="white"}
+function Pull(a){
+var tby=a.parentNode.parentNode.nextSibling
+if (tby.className=="h"){
+  tby.className=""
+  a.children[0].src="m.gif"
+}else{
+  tby.className="h"
+  a.children[0].src="p.gif"}
+}
+function A(a){
+var S=a.firstChild.nextSibling.nodeValue
+a.style.backgroundColor="gold"
+if (user.Rmail.value){
+  if (confirm("將【"+S+"】加到清單？")){
+    user.mlist.value=S.substring(0,S.lastIndexOf(","))
+    user.cond.value=2
+    user.submit()}
+}else alert("請先輸入您正確的 Email 後，\n才可以將商品加到自己查價清單");
+a.style.backgroundColor=""
+}
+function chkmail(){
+var filter=/^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i
+var S=user.email.value, b=S.indexOf("<"), e=S.indexOf(">");
+if ((b!=-1)&&(e!=-1)) S=S.substring(b+1,e);
+user.cond.value=1
+user.Rmail.value=""
+if (S.length)
+  if (filter.test(S)){
+    user.Rmail.value=S
+    Doc.firstChild.nodeValue="清單累計金額："
+    user.submit()
+  }else{
+    alert(S+"\n請輸入正確的 Email !");
+    Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+    Doc.firstChild.nodeValue="輸入email才可建立清單"
+    user.submit()
+ }
+else{
+  Tot.innerHTML=mItem.innerHTML=user.Rmail.value=""
+  Doc.firstChild.nodeValue="輸入email才可建立清單"
+  user.submit()
+ }
+}
+function Choose(){
+iMode=(iMode) ? 0 : 1
+if (iMode==0){
+  document.mImg.src= "m.gif"
+  Ifrm.style.display=""
+}else{
+  document.mImg.src= "p.gif"
+  Ifrm.style.display="none"
+}
+return false
+}
+function validate(evt){
+  var theEvent = evt || window.event
+  var keyC = theEvent.keyCode || theEvent.which
+//  var regex = /[0-9]/
+  if (keyC==13) return false
+}
+function init(){
+chkmail()
+iMode=1
+}
+</script>
+</head>
+<body bgcolor=white onload="init()" onkeydown="return validate(event)">
+<center>
+<table cellspacing=0 cellpadding=0 height=128 border=0 class=Tbl>
+<form name=user method=post target=ifrm action="my.php" onsubmit="ifrm.location.replace('my.php?email='+this.email+'&Rmail='+this.Rmail+'&cond='+this.cond+'&mlist='+this.mlist);return false">
+<tr><td rowspan=2 onclick="location.replace('./')" style="cursor:pointer"><img src="img/edit_undo.png">
+<td><input type="Email" name="email" size="21" maxlength="36" placeholder="有email才可建立清單" onChange="chkmail()" value=''><td rowspan=2 onclick="return Choose()" style="cursor:pointer;background:url(img/doc_fav.png) right no-repeat"><table cellspacing=0 cellpadding=0 border=0 height=128><tr><td width=136 style="color:red;font-size:62pt;font-weight:900" align=center id=mItem><td valign=top style="padding-top:2"><img name=mImg src=p.gif></table></td></tr>
+<tr><td id=Doc nowrap>輸入email才可建立清單<b id=Tot></b><input type=hidden name=Rmail><input type=hidden name=cond><input type=hidden name=mlist></tr>
+</form>
+</table>
+<span id=Ifrm style="display:none"><iframe name=ifrm frameborder=0 height=200 width=830></iframe></span>
+<div><table background=img/navbg1.png cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td nowrap style="padding-top:14;padding-bottom:10">&nbsp;<b>顯示卡 VGA</b></tr></table></div>
+<span class=Q>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA / AMD 顯示卡周邊配件</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 ROG Herculx 顯示卡支撐架 /氣泡水平儀/ARGB燈效/2年(機殼需配置電源倉), $1290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 ROG Herculx 白色版 顯示卡支撐架 /氣泡水平儀/ARGB燈效/2年(機殼需配置電源倉), $1390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷碼 VGA Holder 顯卡用支架 千斤頂顯卡支撐架/(0005-KUH00), $490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷碼 ARGB 強化玻璃 顯卡支撐架(MCA-U000R-GSBTG-00), $790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>酷碼 ATLAS ARGB 顯卡支撐架 /無限鏡面強化玻璃/鋁製支架, $1390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 MPG ARGB 顯卡支撐架 黑 磁吸式底座/90度可旋轉設計, $790</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 MPG ARGB 顯卡支撐架 白 磁吸式底座/90度可旋轉設計, $790</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> INTEL Arc B580 顯示卡</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 ARC B580 Challenger 12G OC(2740MHz/25cm/雙風扇/註三年), $8990</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> INTEL Arc Pro B70 專業級顯示卡</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 ARC PRO B70 Creator 32G(2540MHz/27cm/鼓風扇/註冊五年保), $45990</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA GeForce 210</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 N210-MD1G/D3(589MHz/1G DDR3/風扇版/14.5cm/三年保), $1590</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA GT710</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>華碩 GT710-SL-2GD5-BRK-EVO(954MHz/2G DDR5/17cm/註冊四年保)保固最優, $2590 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 N710D3-2GL(954MHz/2G DDR3/14.4cm/三年保), $2490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 GT710 2GD3H LP(954MHz/2G DDR3/靜音版/14.6cm/三年保), $2590</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC GT710-2GD3-L(954MHz/2G DDR3/靜音版/14.6cm/註四年)三介面 *尾盤, $2290</tr>
+<tr><td onclick=A(this) class=g><img src=img/d.gif>ZOTAC GT710-2GD3(954MHz/2G DDR3/單風扇/15.7cm/註四年)三介面, $2990↘$2490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D GT710 2GB DDR3(954MHz/靜音版/14cm/三年保固), $1988</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA GT730</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>華碩 GT730-SL-2GD5-BRK(902MHz/2G DDR5/16.5cm/靜音版/註四年), $3090 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 GT730-4H-SL-2GD5(927MHz/2G DDR5/14.8cm/靜音版/註四年) 4輸出 HDMI, $3490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 N730-2GD3V3(700MHz/2G DDR3 128Bit/14.5cm/三年保)雪精靈系列, $2990 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 N730K-2GD3/OCV5(1006MHz/2G DDR3/15cm/三年保) *尾盤, $2990 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC GT730 2GB Zone Edition(902MHz/2G DDR3/15cm/無風扇/註四年)三介面, $2990 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D GT730 2GB SDDR3 LP(902MHz/靜音版/14cm/三年保), $2688</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D GT730 4GB SDDR3 LP(902MHz/單風扇/15cm/三年保), $2988</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之 ZOTAC 索泰顯卡,180天內故障,無人損有現貨直接換新！</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA GT1030</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>華碩 GT1030-SL-2G-BRK(1468MHz/GDDR5/17cm/註四年), $3590 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 GT1030 Low Profile D4 2G(1417MHz/GDDR4/15cm/單風扇), $3490 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 GT1030 2GD4 LP OC(1430MHz/DDR4/15cm/三年保), $3590 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 GT1030 AERO ITX 2GD4 OCV1(1430MHz/DDR4/15cm/三年保) 類比輸出, $3590 任搭↓90</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC GT1030 2GB GDDR5 HDMI/DVI Low Profile(P10300A-10L), $3490 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC GT1030 2GB GDDR5 HDMI/VGA Low Profile(P10300E-10L) 類比輸出, $3490 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D GT1030 2G(1468MHz/GDDR5/17cm/三年保), $2988</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX3050-6GB</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX3050-O6G(1537MHz/20cm/雙風扇/註四年), $9990</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>技嘉 RTX3050 WINDFORCE OC V2 6G(1477MHz/18cm/雙風扇/註四年), $9990 <i>Hot！</i> 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX3050 VENTUS 2X E 6G OC(1492MHz/19cm/雙風扇/註四年), $9990 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX3050 GAMING X 6G(1507MHz/21cm/雙風扇/註五年), $10290 任搭↓90</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>ZOTAC RTX3050 6GB GDDR6 Solo(1470MHz/15cm/單風扇/註四年)滿料四輸出, $9790 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX3050 6GB GDDR6 LP(1470MHz/16cm/雙風扇/註四年) 短版設計, $9890 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX3050 6GB GDDR6 Twin Edge OC(1477MHz/16cm/雙風扇), $9990 任搭↓90</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX3050 6GB TWIN X2 V2(1470MHz/22cm/雙風扇/註四年), $8888</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX3050-8GB</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX3050-8G-V2(1807MHz/20cm/雙風扇/註冊四年保), $10390</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX3050 TWIN X2(1777MHZ/24cm/超頻雙風扇/註冊四年保)[1711VA41], $9888</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX3050 TWIN X2(1777MHZ/24cm/雙風扇/註冊四年保)[1190VA42], $9888</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX3060-12GB</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX3060-O12G-V2(1852MHz/20cm/雙風扇/註四年)OC版.時脈高, $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX3060 WINDFORCE OC 12G(rev2.0)(1792MHz/19.8cm/雙風扇/註四年), $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX3060 VENTUS 2X 12G OC(1807MHz/23.5cm/雙風扇/註四年), $15590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX3060 Twin Edge(1777MHz/23cm/雙風扇/註四年), $15890 任搭↓190</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5050-8GB(GDDR6)</tr></thead><tbody class=h>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>華碩 DUAL-RTX5050-O8G(2677MHz/21cm/雙風扇/註冊四年) 2-slot 設計, $13590 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5050 WINDFORCE OC 8G(2587MHz/20cm/雙風扇/註冊四年保), $13490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5050 OC Low Profile 8G(2632MHz/18cm/三風扇/註冊四年保), $13990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5050 GAMING OC 8G(2632MHz/28cm/三風扇/註冊五年保), $14290 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5050 8G INSPIRE ITX OC(2617MHz/15cm/單風扇/註冊四年保), $13290 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5050 8G SHADOW 2X OC(2617MHz/20cm/雙風扇/註冊四年保), $13590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5050 8G VENTUS 2X OC(2617MHz/20cm/雙風扇/註冊四年保), $13990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5050 8G GAMING OC(2647MHz/21cm/雙風扇/註冊五年保), $14290 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5050 SOLO(2572MHz/17cm/單風扇/註冊五年), $13590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5050 Twin Edge OC(2602MHz/22cm/雙風扇/註冊五年), $13990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5050 Twin Edge OC White Edition(2602MHz/22cm/雙風扇/註五年/白), $14290 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5050 8GB TWIN X2(2572MHz/22.5cm/雙風扇/註冊四年), $12888 任搭↓90</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5060-8GB(GDDR7)</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX5060-O8G-A(2587MHz/23cm/雙風扇/註冊四年)Advanced金屬背板, $16290 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX5060-O8G-WHITE(2565MHz/23cm/雙風扇/註冊四年/白)*金屬背板, $16590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RTX5060-O8G(2595MHz/27cm/三風扇/註冊五年)*金屬背板, $16590 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>華碩 ATS-RTX5060-O8G 巨齒鯊(2595MHz/27cm/三風扇/免註冊五年保)獨家*金屬背板, $16590 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 WINDFORCE OC 8G(2512MHz/20cm/雙風扇/註冊四年), $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 WINDFORCE MAX OC 8G(2512MHz/20cm/雙風扇/註冊四年), $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 WINDFORCE MAX OC V2 8G(2512MHz/20cm/雙風扇/註冊四年), $15990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 OC Low Profile 8G(2512MHz/19cm/三風扇/註冊四年), $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 EAGLE OC 8G(2550MHz/21cm/雙風扇/註冊五年), $16490 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 EAGLE MAX OC 8G(2550MHZ/28cm/三風扇/註五年)Hawk 風扇, $16490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 EAGLE OC ICE 8G 白(2550MHz/21cm/雙風扇/註五年/銀白), $16990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060 GAMING OC V2 8G(2602MHz/28cm/三風扇/註冊五年), $17490 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>技嘉 RTX5060 AERO OC 8G(2595MHz/28cm/三風扇/註冊五年/銀白), $17990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5060 ELITE 8G(2722MHz/33cm/三風扇/註冊五年), $18490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060 8G VENTUS 2X OC(2535MHz/20cm/雙風扇/註冊四年), $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060 8G VENTUS 2X OC V1(2535MHz/20cm/雙風扇/註冊四年), $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060 8G VENTUS 2X OC WHITE 純白(2535MHz/20cm/雙風扇/註冊四年), $16590 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>微星 RTX5060 8G CYCLONE OC 雪螳螂【獨家】(2535MHz/16cm/免註冊五年保), $15990 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060 8G VENTUS 3X OC(2550MHz/31cm/三風扇/註冊五年), $16990 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060 8G GAMING TRIO OC(2640MHz/30cm/三風扇/註冊五年), $17990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060 8G GAMING TRIO OC WHITE(2640MHz/30cm/三風扇/註冊五年), $18590 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>ZOTAC RTX5060 8GB 星辰 OC(2512MHz/24cm/雙風扇/免註冊五年保/白)*獨家款, $15990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060 SOLO(2497MHz/17cm/單風扇/註冊五年), $16490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060 Twin Edge OC(2527MHz/22cm/雙風扇/註冊五年)金屬背板, $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060 Twin Edge OC White Edition(2527MHz/22cm/雙風扇/註冊五年)金屬背板, $16490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060 Low Profile(2497MHz/18.3cm/三風扇/短卡設計/註冊五年), $16490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060 AMP(2550MHz/22cm/雙風扇/註冊五年), $16990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5060 8GB TWIN X2(2497MHz/25cm/註四年/雙風扇), $15488 任搭↓188</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5060 8GB TWIN X2 OC WHITE(2527MHz/25cm/超頻雙風扇/映雪), $16488 任搭↓188</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5060 X3 LOW PROFILE(2497MHz/18cm/三風扇/註冊四年) 短卡, $15488 任搭↓188</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5060Ti-8GB(GDDR7)</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX5060TI-O8G-WHITE(2632MHz/23cm/雙風扇/註冊四年保/白), $19990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RTX5060TI-O8G(2647MHz/31cm/三風扇/註五年)SFF-Ready 2.5 Slot 設計, $20990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 T1-RTX5060TI-O8G-GAMING(2662MHz/26.7cm/三風扇/註五年) T1冠軍戰隊版, $21990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti WINDFORCE 8G(2572MHz/21cm/雙風扇/註冊四年保), $18590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti WINDFORCE OC 8G(2587MHz/21cm/雙風扇/註四年保), $18990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti WINDFORCE MAX OC 8G(2587MHz/21cm/雙風扇/註冊四年保), $18990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti EAGLE OC 8G(2617MHz/22cm/雙風扇/註冊五年保), $19490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti EAGLE MAX OC 8G(2617MHz/28cm/三風扇/註冊五年保), $19490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti EAGLE OC ICE 8G 白(2617MHz/22cm/雙風扇/註冊五年保), $19990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti GAMING OC 8G(2647MHz/28cm/三風扇/註冊五年保), $20990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5060Ti AERO OC 8G 白(2647MHz/28cm/三風扇/註冊五年保), $21590 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>微星 RTX5060Ti 8G CYCLONE OC 雪螳螂【獨家】(2617MHz/16cm/免註冊五年保), $18990 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 8G VENTUS 2X PLUS(2587MHz/23cm/雙風扇/註四年), $18990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 8G SHADOW 2X OC PLUS(2617MHz/23cm/雙風扇/註四年), $18990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 8G VENTUS 2X OC PLUS(2617MHz/23cm/雙風扇/註四年), $19590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 8G VENTUS 2X OC WHITE PLUS(2617MHz/23cm/雙風扇/註四年/白), $19990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 8G VENTUS 3X OC(2617MHz/31cm/三風扇/註五年), $19990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 8G GAMING TRIO OC(2662MHz/30cm/三風扇/註五年), $20990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 8G GAMING TRIO OC WHITE 白(2662MHz/30cm/三風扇/註五年), $21590 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>ZOTAC RTX5060Ti 8GB 月白 OC(2602MHz/30cm/三風扇/免註冊五年保/白色)-獨家版, $19490 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060Ti 8GB Twin Edge OC(2602MHz/22cm/雙風扇/註冊五年保)金屬背板, $19490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060Ti 8GB AMP(2632MHz/22cm/雙風扇/註冊五年保)金屬背板, $20490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5060Ti 8GB TWIN X2(2572MHz/25cm/註四年/雙風扇), $18488</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5060Ti 8GB TWIN X2 OC WHITE(2602MHz/25cm/註四年/雙風扇/映雪), $19488</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5060Ti-16GB(GDDR7)</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX5060TI-O16G-WHITE(2632MHz/23cm/雙風扇/註冊四年保/白), $26590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RTX5060TI-16G(2602MHz/31cm/三風扇/註冊五年保固), $26590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RTX5060TI-O16G(2647MHz/31cm/三風扇/註冊五年保固), $27590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5060Ti AI BOX(2572MHz/外接式顯示卡/Thunderbolt 5隨插即用), $31990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>微星 RTX5060Ti 16G CYCLONE OC 雪螳螂【獨家】(2617MHz/16cm/免註冊五年保), $25590 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 16G SHADOW 2X OC PLUS(2617MHz/23cm/雙風扇/註四年), $25590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5060Ti 16G VENTUS 2X OC PLUS(2617MHz/23cm/雙風扇/註四年), $25990 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060Ti 16GB Twin Edge(2572MHz/22cm/雙風扇/註冊五年保)金屬背板, $24490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5060Ti 16GB Twin Edge OC(2602MHz/22cm/雙風扇/註冊五年保)金屬背板, $24990 任搭↓190</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5070-12GB(GDDR7)</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RTX5070-O12G(2572MHz/25cm/雙風扇/註四年), $29990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>華碩 PRIME-RTX5070-O12G(2587MHz/31cm/三風扇/註冊五年保), $31990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RTX5070-O12G-WHITE(2587MHz/31cm/三風扇/註冊五年保/純白), $32990 任搭↓100</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 T1-RTX5070-O12G-GAMING(2595MHz/31cm/三風扇/註五年) T1冠軍戰隊版, $32990</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>技嘉 RTX5070 WINDFORCE OC SFF 12G(2542MHz/29cm/三風扇/註冊四年保), $29990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5070 EAGLE OC SFF 12G(2587MHz/29cm/三風扇/註五年), $30990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5070 EAGLE OC ICE SFF 12G(2587MHz/29cm/三風扇/註五年/冰魄白), $31490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5070 GAMING OC 12G(2625MHz/33cm/三風扇/註五年), $32490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5070 AERO OC 12G(2625MHz/33cm/三風扇/註五年), $32990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5070 MASTER 12G(2715MHz/32cm/三風扇/註五年), $33990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5070 INFINITY 12G(2715MHz/31cm/渦流雙風扇/註五年), $33990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5070 12G SHADOW 2X OC(2557MHz/24cm/雙風扇/註四年), $29990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5070 12G VENTUS 2X OC(2557MHz/24cm/雙風扇/註四年), $30590 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>微星 RTX5070 12G VENTUS 2X OC WHITE(2557MHz/24cm/雙風扇/雪白), $30990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5070 12G INSPIRE 3X OC(2557MHz/29cm/三風扇/註五年), $30990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5070 12G VENTUS 3X OC(2557MHz/31cm/三風扇/註五年), $31590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5070 12G GAMING TRIO OC(2625MHz/34cm/三風扇/註五年), $32990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5070 12G GAMING TRIO OC WHITE(2625MHz/34cm/三風扇/雪白), $32990 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5070 Twin Edge(2512MHz/24cm/雙風扇/註五年), $28990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5070 Twin Edge OC(2542MHz/24cm/雙風扇/註五年), $29990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5070 SOLID(2512MHz/31cm/三風扇/註五年), $30990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>ZOTAC RTX5070 SOLID OC(2542MHz/31cm/三風扇/註五年), $31490 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5070 AMP White Edition(2587MHz/31cm/三風扇/註五年), $31990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5070 TWIN X2(2512MHz/25cm/雙風扇/註四年), $28888</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5070 TWIN X2 OC WHITE(2542MHz/25cm/超頻雙風/白註四年), $29888</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5070 iChill X3(2572MHz/34cm/ARGB三風扇/註冊五年), $30888</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5070Ti-16GB(GDDR7)</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RTX5070TI-16G(2482MHz/31cm/三風扇/註五年), $44990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5070Ti INFINITY 16G(2670MHz/33cm/渦流雙風扇/註五年), $47990 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5070Ti 16GB 天啟 OC(2572MHz/36cm/三風扇/免註冊五年保)*獨家版, $46490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5070Ti SOLID CORE OC White Edition(2482MHz/31cm/註五年), $46990 任搭↓190</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5080-16GB(GDDR7)</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RTX5080-16G-EVO(2640MHz/31cm/三風扇/註五年)2.5 Slot, $53990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PROART-RTX5080-O16G(2730MHz/31cm/三風扇/註五年), $65990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 ROG-ASTRAL-RTX5080-O16G-GAMING(2790MHz/36cm/四風扇/註五年), $67990 任搭↓490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 ROG-ASTRAL-RTX5080-O16G-WHITE(2790MHz/36cm/四風扇/註五年/白), $69990 任搭↓490</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5080 WINDFORCE OC SFF 16G(2670MHz/31cm/三風扇/註冊四年保), $53990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>技嘉 RTX5080 GAMING OC 16G(2730MHz/34cm/三風扇/註冊五年保), $54990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RTX5080 AERO OC SFF 16G(2730MHz/31cm/三風扇/註冊五年保), $55990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5080 MASTER 16G(2805MHz/36cm/三風扇/註冊五年保), $57990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5080 MASTER ICE 16G(2805MHz/36cm/三風扇/註五年), $57990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX5080 INFINITY 16G(2805MHz/33cm/渦流雙風扇/註五年), $61990 任搭↓390</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5080 16G VENTUS 3X OC(2655MHz/31cm/三風扇/註五年), $53990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5080 16G VENTUS 3X OC WHITE白龍(2655MHz/31cm/註冊五年保), $54990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5080 16G GAMING TRIO OC(2715MHz/34cm/三風扇/註冊五年保), $55990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5080 16G GAMING TRIO OC WHITE白龍(2715MHz/34cm/註五年), $56590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>微星 RTX5080 16G SUPRIM LIQUID SOC(2760MHz/28cm/三風扇+水冷), $56990 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5080 SOLID OC White Edition(2640MHz/33cm/三風扇/註五年/白色), $54990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ZOTAC RTX5080 SOLID CORE OC(2640MHz/31cm/三風扇/註五年), $53990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5080 X3(2617MHz/30cm/三風扇/Dual Slot/註四年), $52888 任搭↓188</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5080 X3 OC(2640MHz/30cm/註四年/超頻三風扇/註四年), $53888 任搭↓188</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5080 X3 OC WHITE(2640MHz/30cm/超頻三風扇/註四年/映雪), $53888 任搭↓188</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>INNO3D RTX5080 iChill X3 V2(2715MHz/34cm/ARGB三風扇/註冊五年), $54888 任搭↓188</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA RTX5090-32GB(GDDR7)</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 針對 RTX5090 因貨量限縮不足以全省分發，暫時採取以下措施請見諒：</tr>
+<tr><td disabled class=z>&#x2764; 1. [限組裝] 為避免黃牛掃卡牟利，故加上組裝限制請見諒，電源瓦數請吻合常規需求。</tr>
+<tr><td disabled class=z>&#x2764; 2. 台中(含)以北當天或隔日、台中以南二日內自家物流配達各分店，價格依原廠通知。</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 華碩 ROG-ASTRAL-RTX5090-O32G-GAMING(2610MHz/36cm/註五年)(少量到貨.請先詢問), $175990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 華碩 ROG-ASTRAL-RTX5090-O32G-WHITE(2610MHz/36cm/四風扇/註五年/白)(少量到貨.請先詢問), $179990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 技嘉 RTX5090 WINDFORCE OC 32G(2467MHz/35cm/三風扇/註四年)(少量到貨.請先詢問), $159990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 技嘉 RTX5090 GAMING OC 32G(2550MHz/35cm/三風扇/註五年)(少量到貨.請先詢問), $165990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 技嘉 AORUS RTX5090 MASTER 32G(2655MHz/36cm/三風扇/註冊五年保), $169990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 技嘉 AORUS RTX5090 MASTER ICE 32G(2655MHz/36cm/註冊五年保), $169990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 技嘉 AORUS RTX5090 STEALTH ICE 32G(2655MHz/36cm/註冊五年保)背藏線電源, $172990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 技嘉 AORUS RTX5090 INFINITY 32G(2730MHz/33cm/渦流雙風扇), $179990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RTX 5090 AI BOX(2407MHz/外接式顯示卡/Thunderbolt 5連接)*任搭商品, $179990</tr>
+<tr><td disabled class=z>&#x2764; 針對 RTX5090 因貨量限縮不足以全省分發，暫時採取以下措施請見諒：</tr>
+<tr><td disabled class=z>&#x2764; 1. [限組裝] 為避免黃牛掃卡牟利，故加上組裝限制請見諒，電源瓦數請吻合常規需求。</tr>
+<tr><td disabled class=z>&#x2764; 2. 台中(含)以北當天或隔日、台中以南二日內自家物流配達各分店，價格依原廠通知。</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 微星 RTX5090 32G GAMING TRIO OC(2497MHz/36cm/三風扇/註冊五年保), $165990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 微星 RTX5090 32G SUPRIM SOC(2580MHz/36cm/三風扇/註五年), $169990</tr>
+<tr><td disabled class=z>&#x2764; 【理索當然.穩如泰山】原價屋銷售之ZOTAC顯卡，180天內故障無人損有現貨直接換新</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] ZOTAC RTX5090 SOLID OC White Edition(2422MHz/33cm/三風扇/註五年/白色)(少量到貨.請先詢問), $164990</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> NVIDIA 專業工作站繪圖卡</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; 購買NVIDIA專業工作站繪圖卡.認明麗臺代理與享有完善的企業級售後保固</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX A400(4G GDDR6 64bit/CUDA:768/16.26cm/三年保固), $9100 任搭↓300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX A1000(8G GDDR6 128bit/CUDA:2304/16.26cm/三年保固), $20600 任搭↓600</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX 2000 Ada(16GB GDDR6/CUDA:2816/16.76cm/三年保固), $29300 任搭↓1000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX 4000 SFF Ada(20GB GDDR6 ECC/16.76cm/三年保固/小卡), $55000 任搭↓2000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX 6000 Ada(48GB GDDR6 ECC/26.67cm/三年保固), $289900 任搭↓2000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 2000 Blackwell 16GB GDDR7 工作站繪圖卡, $66300 任搭↓2300</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 4000 Blackwell SFF 24GB GDDR7 工作站繪圖卡, $124000 任搭↓4000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 4000 Blackwell 24GB GDDR7 工作站繪圖卡, $124000 任搭↓4000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 4500 Blackwell 32GB GDDR7 工作站繪圖卡, $189000 任搭↓4000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 5000 Blackwell 48GB GDDR7 工作站繪圖卡, $325000 任搭↓5000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 5000 Blackwell 72GB GDDR7 工作站繪圖卡, $455000 任搭↓5000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 6000 Blackwell Max-Q 96GB GDDR7 工作站級, $575000 任搭↓5000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>麗臺 NVIDIA RTX PRO 6000 Blackwell 96GB GDDR7 工作站繪圖卡, $585000 任搭↓5000</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[加購價] 麗臺 mini-DP轉DVI-D轉接線, $190</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD R7 240 系列</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 AXR7 240 2GBD5-HLEV2(780MHz/18cm/三年保) *尾盤, $1790</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD Radeon RX7650GRE-8G</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 白金版 PULSE RX7650GRE GAMING 8GB(2695MHz/24cm/雙風扇/註五年)金屬背板, $9590 任搭↓200</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 極地 PURE RX7650GRE GAMING 8GB(2695MHz/24cm/雙風扇/註五年/白)金屬背板, $9690 任搭↓200</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX7650GRE 8G-L/OC Hellhound 暗黑犬(2755MHz/24cm/雙風扇/註四年), $8490</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD Radeon RX9060XT-8G</tr></thead><tbody class=h>
+<tr><td disabled class=z>&#x2764; [贈遊戲] 9/30前買技嘉RX9000系列顯卡.登錄送"鬼武者 WAY OF THE SWORD"遊戲乙組</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RX9060XT GAMING OC 8G(3320MHz/28cm/三風扇/註冊五年保), $11490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 RX9060XT Challenger 8GB OC(3290MHz/25cm/雙風扇/註冊四年保), $11990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 脈動 PULSE RX9060XT GAMING OC 8GB(3290MHz/25cm/雙風扇/註五年)金屬背板, $10990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9060XT 8G-L/OC Hellhound 暗黑犬(3310MHz/33cm/三風扇/註冊四年保固)*MIT台灣製, $11490 任搭↓290</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD Radeon RX9060XT-16G</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 DUAL-RX9060XT-16G-WHITE(3250MHz/21cm/雙風扇/註冊四年保/白), $16990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>華碩 PRIME-RX9060XT-O16G(3330MHz/31cm/三風扇/註冊五年保), $16990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; [贈遊戲] 9/30前買技嘉RX9000系列顯卡.登錄送"鬼武者 WAY OF THE SWORD"遊戲乙組</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>技嘉 RX9060XT GAMING 16G(3230MHz/28cm/三風扇/註冊五年保), $15890 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RX9060XT GAMING OC 16G(3300MHz/28cm/三風扇/註冊五年保), $16890 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RX9060XT GAMING OC ICE 16G(3320MHz/28cm/三風扇/註冊五年保/白), $17390 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 RX9060XT Challenger 16GB OC(3290MHz/25cm/雙風扇/註冊四年保), $16790 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>藍寶石 脈動 PULSE RX9060XT GAMING OC 16GB(3290MHz/25cm/雙風扇/註五年)金屬背板, $15990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 極地 PURE RX9060XT GAMING OC 16GB(3290MHz/24cm/雙風扇/註五年/白)金屬背板, $16490 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 氮動 NITRO+ RX9060XT GAMING OC 16GB(3320MHz/30cm/三風扇/註五年)金屬背板, $16990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>撼訊 RX9060XT 16G-A Reaper 遊蕩者(3230MHz/22cm/雙風扇/三年保固)*MIT台灣製, $14590 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9060XT 16G-L/OC Hellhound 暗黑犬(3310MHz/33cm/三風扇/四年固)*MIT台灣製, $15990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9060XT 16G-L/OC/WHITE Hellhound 暗黑犬(白)(3310MHz/33cm/三風扇)*MIT台灣製, $16490 任搭↓190</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD Radeon RX9070GRE-12G</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 ATS-RX9070GRE-O12G 巨齒鯊(2880MHz/31cm/三風扇/免註冊五年保), $18990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RX9070GRE-O12G-EVO(2880MHz/31cm/三風扇/註冊五年保), $18990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 RX9070GRE Steel Legend Dark 12GB OC(2920MHz/30cm/三風扇/註冊五年保), $21290 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>藍寶石 脈動 PULSE RX9070GRE GAMING 12GB(2790MHz/28cm/雙風扇/註五年)金屬背板, $19990 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 極地 PURE RX9070GRE GAMING OC 12GB(2920MHz/32cm/三風扇/註五年/白)金屬背板, $20590 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9070GRE 12G-A Reaper 遊蕩者(2790MHz/31cm/三風扇/三年保固), $17990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9070GRE 12G-L/OC Hellhound 暗黑犬(2860MHz/33cm/三風扇/註冊四年保), $18990 任搭↓190</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD Radeon RX9070-16G</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RX9070-O16G-EVO(2610MHz/32cm/三風扇/五年保), $24990 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; [贈遊戲] 9/30前買技嘉RX9000系列顯卡.登錄送"鬼武者 WAY OF THE SWORD"遊戲乙組</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RX9070 GAMING OC 16G(2700MHz/29cm/三風扇/五年保), $24890 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 RX9070 Challenger 16GB(2520MHz/29cm/三風扇/五年保), $24590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>[限搭機] 華擎 RX9070 Challenger 16GB(2520MHz/29cm/三風扇/五年保), $23990</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD Radeon RX9070XT-16G</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RX9070XT-O16G(3030MHz/32cm/三風扇/五年保), $26990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 PRIME-RX9070XT-O16G-WHITE(3030MHz/32cm/三風扇/五年保/白), $27990 任搭↓190</tr>
+<tr><td disabled class=z>&#x2764; [贈遊戲] 9/30前買技嘉RX9000系列顯卡.登錄送"鬼武者 WAY OF THE SWORD"遊戲乙組</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RX9070XT GAMING 16G(2970MHz/29cm/三風扇/五年保), $26890 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>技嘉 RX9070XT GAMING OC 16G(3060MHz/29cm/三風扇/五年保), $27890 <i>Hot！</i> 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 RX9070XT GAMING OC ICE 16G(3060MHz/29cm/三風扇/五年保/白), $28890 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 AORUS RX9070XT ELITE 16G(3100MHz/34cm/三風扇/五年保), $29890 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 RX9070XT Challenger 16GB(2970MHz/29cm/三風扇/註五年保), $26590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 RX9070XT Taichi 16GB OC(3100MHz/33cm/三風扇/註五年), $27590 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ACER NITRO RX9070XT 16G OC(3100MHz/30cm/三風扇/三年保), $25990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>ACER Predator BiFrost RX9070XT 16G OC White(3100MHz/30cm/三風扇/三年保), $26990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 脈動 PULSE RX9070XT GAMING 16GB(2970MHz/32cm/三風扇/註五年)全鋁金屬背板, $25990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 極地 PURE RX9070XT GAMING OC 16GB(3010MHz/32cm/三風扇/註五年/白)金屬背板, $26990 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 氮動 NITRO+ RX9070XT GAMING OC 16GB(3060MHz/33cm/三風扇/註五年)*隱藏式電源線設計, $28990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>[限搭機] 藍寶石 氮動 NITRO+ RX9070XT GAMING OC 16GB(3060MHz/33cm/三風扇), $26990 <i>Hot！</i></tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 氮動 NITRO+ RX9070XT Crimson Desert (赤血沙漠版/註五年)-附限量塗裝背板, $28990 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 氮動 NITRO+ RX9070XT OC 16GB PhantomLink(背插式GC HWPR/註五年), $30490 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 氮動 NITRO+ RX9070XT OC 16GB PhantomLink Polar(背插式GC HWPR/註五年/白), $30990 任搭↓290</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9070XT 16G-A 遊蕩者(2970MHz/31cm/三風扇/三年保)*MIT台灣製, $25590 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9070XT 16G-L/OC 暗黑犬(3010MHz/34cm/三風扇/註四年)*MIT台灣製, $26990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9070XT 16G-L/OC/WHITE 暗黑犬(白)(3010MHz/34cm/三風扇)*MIT台灣製, $27990 任搭↓190</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>撼訊 RX9070XT 16G-L/OC/REVA 夜嵐紀念版(3010MHz/35cm/三風扇)附夜嵐磁吸背板, $27990 任搭↓190</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>撼訊 RX9070XT 16G-E/OC 紅魔(3060MHz/36cm/三風扇/註五年)*MIT台灣製-, $28990 <i>Hot！</i> 任搭↓190</tr>
+</tbody></table>
+<table width=100% cellspacing=0><thead><tr><th onclick=Pull(this) onmouseover=Mon(this)><img src='p.gif'> AMD 專業級/工作站級 顯卡</tr></thead><tbody class=h>
+<tr><td onclick=A(this)><img src=img/d.gif>華碩 TURBO AI PRO R9700(2920MHz/27cm/鼓風扇/註冊四年保), $53990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>技嘉 Radeon AI PRO R9700 AI TOP 32G(2920MHz/27cm/鼓風扇/註冊五年保), $53990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>華擎 AI PRO R9700 Creator 32GB(2920MHz/27cm/鼓風扇/註冊五年保), $51990</tr>
+<tr><td onclick=A(this)><img src=img/d.gif>藍寶石 AI PRO R9700 32GB(2920MHz/27cm/鼓風扇/註五年) 專為AI應用打造, $52990</tr>
+<tr><td onclick=A(this) class=r><img src=img/d.gif>撼訊 AI PRO R9700 32G-B(2920MHz/27cm/鼓風扇/三年保) 專業級繪圖卡, $49880 <i>Hot！</i></tr>
+</td></tbody></table>
+</span>
+<div><table background="img/navbg1.png" cellspacing=0 class=t onclick="location.replace('./')"><tr><td width=68 align=center valign=middle><img src=img/back3.png><td><span class=r>紅-熱賣</span> <span class=g>綠-價格異動</span> <span class=b>藍-熱賣+價異</span><br><span>原價屋 2026年8月15日17:29 更新</span></tr></table></div>
+<div style="padding:12px;background:url(img/backbgr.png) repeat-x;background-position:left bottom" align=center>
+<span class=s><img src=img/info.png onclick="top.location.href='http://www.coolpc.com.tw/phpBB2/portal_pages.php?page=6'"</span>
+<span class=s><img src=img/vga12.png onclick="top.location.href='http://www.coolpc.com.tw/4k.php'"</span>
+<span class=s><img src=img/fb.png onclick="top.location.href='http://www.facebook.com/pages/yuan-jia-wucoolpc/169635866411766#!/pages/yuan-jia-wucoolpc/169635866411766?v=wall'"></span>
+<span class=s><img src=img/pcc.png onclick="top.location.href='/evaluate.php'"></span>
+</div>
+</center>
+<table width=100% height=100% bgcolor=black id=sending style="position:fixed;top:0;left:0;height:100vh;display:none;opacity:0.92;-moz-opacity:0.92;-khtml-opacity:0.92;filter:alpha(opacity=92);">
+<tr><th align=center valign=middle><img src="img/gif-load.gif"><p style="font-size:28pt;color:white">傳送原價屋中...</p></td></tr>
+</table>
+</body>
+</html>
