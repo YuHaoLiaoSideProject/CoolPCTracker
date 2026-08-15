@@ -1,7 +1,19 @@
-"""HTML table → RawItem。過濾 disabled/贈品列；G=9 子分類過濾；標記解析。
+"""m-list.php 真實結構 → RawItem（issue #11 重寫，對齊真實頁面）。
 
-來源：Tech Decision §2.2（手機版 m-list.php 乾淨 table：
-<th>=子分類標題、<td>=商品列）、開發規格 §1.5（BDD #8/#9/#10/#16/#19）。
+**真實結構**（2026-08-15 spike #2 實測，fixtures：`scripts/tests/fixtures/mobile/G*.html`）：
+`<span class=Q>` 內「每個子分類一個 table」——thead/tr/th = 子分類標題（無
+`</th>` 收尾，selectolax 容錯），tbody/tr/td = 商品列；**td 內名稱與價格同格**
+（`名稱, $價格[↗|↘$異動價] <i>標記</i>`）；class=y（↪ 限量/加贈通知）、
+class=z（❤ 專業性產品說明）、disabled 皆為非商品列。
+
+舊版 parser 假設單 table（`tree.css_first("table")` 取到的第一個 table 為本頁
+logo 表頭），對真實頁面每分類僅產 3 筆錯誤資料——此為 spike 發現，本版依真實
+結構重寫；並保留舊單 table 結構（th=子分類、td 名稱/價格分格）作為 fallback：
+既有 `crawler/tests/fixtures/*.html`（設計期結構）與頁面改版時皆可降級解析。
+
+來源：issue #11、spike 報告 `docs/spike/ab-source-compare-2026-08-15.md`、
+開發規格 §1.5（BDD #8/#9/#10/#16/#19）。parse() 介面不變：
+`parse_page(html, category) -> ParseResult`（items: list[RawItem]）。
 """
 from __future__ import annotations
 
@@ -28,6 +40,11 @@ _FLAG_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
 
 _GIFT_KEYWORD = "贈品"
 _DISABLED_CLASS = "disabled"
+# 真實頁面通知列 class（非商品）：y=↪ 限量/加贈通知、z=❤ 專業性產品說明
+_NOTICE_CLASSES = frozenset({"y", "z"})
+_NOTICE_PREFIXES = ("❤", "↪")  # 防禦：class 遺失時以文字字首判別
+# 價格段：`名稱, $N` 或 `名稱, $N↗$M` / `名稱, $N↘$M`（N=列表價、M=異動後價）
+_PRICE_SEGMENT_RE = re.compile(r",\s*\$(\d[\d,]*)(?:[↗↘]\$(\d[\d,]*))?")
 
 
 @dataclass
@@ -52,13 +69,116 @@ class Parser:
     def parse_page(self, html: str, category: Category) -> ParseResult:
         """完整解析一頁：
 
-        1. 找 table → 以 <th> 切分子分類區塊
-        2. 逐商品列 parse → RawItem
-        3. 過濾 disabled 加購列 / 贈品列
-        4. G=9：僅保留子分類名稱含 category.subcategory_keyword 的商品
+        1. 真實結構優先：`<span class=Q>` 多 table（th=子分類、td 名稱＋價格同格）
+        2. 過濾 disabled / class=y,z 通知列 / 贈品列
+        3. G=9：僅保留子分類名稱含 category.subcategory_keyword 的商品
+        4. 無 span.Q → 舊單 table 結構 fallback（既有 fixtures 相容）
         5. 無任何商品列 → 回傳空 list，不拋例外（BDD 空表格）
         """
         tree = HTMLParser(html)
+        span_q = tree.css_first("span.Q")
+        if span_q is not None:
+            return self._parse_span_q(span_q, category)
+        return self._parse_legacy(tree, category)
+
+    # ── 真實 m-list.php 結構（span.Q 多 table、td 名稱＋價格同格） ───────────
+
+    def _parse_span_q(self, span_q: Node, category: Category) -> ParseResult:
+        """真實頁面（spike #2 / issue #11）。
+
+        span.Q 內每子分類一個 table：thead/tr/th = 子分類標題；tbody/tr/td =
+        商品列（td 內 `名稱, $價格[↗|↘$異動價] <i>標記</i>`）。
+        class=y/z 通知列與 disabled 列非商品，一律過濾。
+        """
+        items: list[RawItem] = []
+        subcategories: list[str] = []
+        current_subcategory = ""
+
+        for table in span_q.css("table"):
+            th = table.css_first("th")
+            if th is not None:
+                current_subcategory = th.text().strip()
+                subcategories.append(current_subcategory)
+            # 防禦：table 無 th（真實頁面未見過）→ 沿用上一子分類
+            for tr in table.css("tr"):
+                if tr.css_first("th") is not None:
+                    continue  # 標題列（thead）
+                cell = self._product_cell_text(tr)
+                if cell is None:
+                    continue
+                name, price, flags = self._parse_cell_text(cell)
+                if not name or _GIFT_KEYWORD in name:
+                    continue
+                if (
+                    category.subcategory_keyword is not None
+                    and category.subcategory_keyword not in current_subcategory
+                ):
+                    continue
+
+                items.append(
+                    RawItem(
+                        category=category.name,
+                        subcategory=current_subcategory,
+                        name=name,
+                        price=price,
+                        flags=flags,
+                    )
+                )
+
+        return ParseResult(category=category, items=items, subcategories=subcategories)
+
+    def _product_cell_text(self, tr: Node) -> str | None:
+        """回傳商品列 td 文字；非商品列（disabled / class=y,z / 無 td / 空 cell）回傳 None。"""
+        td = tr.css_first("td")
+        if td is None:
+            return None
+        classes = set((tr.attributes.get("class") or "").split())
+        classes |= set((td.attributes.get("class") or "").split())
+        if _DISABLED_CLASS in classes or classes & _NOTICE_CLASSES:
+            return None
+        if td.attributes.get("disabled") is not None:
+            return None
+        cell = td.text().strip()
+        if not cell or cell.startswith(_NOTICE_PREFIXES):
+            return None  # 防禦：❤/↪ 通知列（真實頁面帶 class=y/z，舊結構可能無）
+        return cell
+
+    def _parse_cell_text(self, cell: str) -> tuple[str, int | None, dict[str, Any]]:
+        """真實結構 td 文字解析：`名稱, $N[↗|↘$M] <i>標記</i>` → (名稱, 價格, flags)。
+
+        價格 = 列表價 `, $N`（與 spike 一致；↗/↘ 後為異動價，不影響本欄）。
+        flags 偵測自完整 cell（Hot！/任搭↓N/↘/尾盤），標記文字自名稱剝離
+        （與偵測同一輪掃描，確保兩者永遠一致，不污染 ID 正規化）。
+        """
+        match = _PRICE_SEGMENT_RE.search(cell)
+        if match is not None:
+            name = cell[: match.start()]
+            price = int(match.group(1).replace(",", ""))
+        else:
+            name = cell
+            price = None
+
+        flags: dict[str, Any] = {}
+        stripped = name
+        for pattern, key in _FLAG_PATTERNS:
+            flag_match = pattern.search(cell)
+            if flag_match is None:
+                continue
+            if key == FLAG_PROMO:
+                flags[key] = f"任搭{flag_match.group(1)}"
+            else:
+                flags[key] = True
+            stripped = pattern.sub("", stripped)
+        return re.sub(r"\s+", " ", stripped).strip(), price, flags
+
+    # ── 舊單 table 結構 fallback（設計期 fixtures / 頁面改版降級） ───────────
+
+    def _parse_legacy(self, tree: HTMLParser, category: Category) -> ParseResult:
+        """單 table、<th>=子分類、td 名稱/價格分格的舊結構。
+
+        既有 `crawler/tests/fixtures/*.html`（設計期樣式）與 test_main 自訂
+        頁面以此路徑解析；真實頁面改版（無 span.Q）時亦降級至此，避免全數漏品。
+        """
         table = tree.css_first("table")
         if table is None:
             return ParseResult(category=category, items=[], subcategories=[])

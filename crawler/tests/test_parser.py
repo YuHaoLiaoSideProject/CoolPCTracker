@@ -20,6 +20,8 @@ from crawler.parser import (
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
+# 真實 m-list.php 頁面快照（2026-08-15 spike #2 抓取存檔，issue #11 解析基準）
+REAL_FIXTURES = Path(__file__).resolve().parents[2] / "scripts" / "tests" / "fixtures" / "mobile"
 
 
 def load_fixture(name: str) -> str:
@@ -28,6 +30,17 @@ def load_fixture(name: str) -> str:
 
 def parse_fixture(name: str, g_index: int):
     return Parser().parse_page(load_fixture(name), get_category(g_index))
+
+
+def parse_real(g_index: int):
+    return Parser().parse_page(
+        (REAL_FIXTURES / f"G{g_index}.html").read_text(encoding="utf-8"),
+        get_category(g_index),
+    )
+
+
+# spike #2 統計：9 分類合計 1,449（G=9 已套「記憶卡」子分類過濾）
+REAL_COUNTS = {1: 157, 3: 86, 4: 48, 5: 373, 6: 216, 7: 171, 8: 89, 9: 54, 12: 255}
 
 
 # ── parse_page 基本：<th> 子分類 + <td> 商品列 ─────────────────────────────
@@ -221,6 +234,111 @@ class TestSpecialCharsAndDuplicates:
         assert [i.price for i in dup] == [1000, 1200]
 
 
+# ── 真實 m-list.php 結構（issue #11：span.Q 多 table、td 名稱＋價格同格） ─
+
+class TestRealMobileStructure:
+    """真實頁面：<span class=Q> 內每子分類一個 table（thead/th 標題、
+    tbody/td 商品列，td 內 `名稱, $價格[↗|↘$異動價] <i>標記</i>`）。"""
+
+    def test_span_q_multiple_tables_all_subcategories_parsed(self):
+        result = parse_real(4)
+        # 舊 parser 只取第一個 table（logo 表頭）→ 0 子分類；真實結構須全數取得
+        assert len(result.subcategories) == 10
+        assert result.subcategories[0] == "Intel Core Ultra 200S系列1851 腳位【內建 NPU 支援 AI】"
+        assert len(result.items) == 48  # spike 統計（G=4）
+
+    def test_td_name_and_price_same_cell_separated(self):
+        result = parse_real(4)
+        first = result.items[0]
+        assert first.name == "Intel Core Ultra 5 225F【10核】3.3G(↑4.9G) /20M /無內顯【代理盒裝】"
+        assert first.price == 4880
+        assert first.subcategory == "Intel Core Ultra 200S系列1851 腳位【內建 NPU 支援 AI】"
+        assert first.flags == {}
+
+    def test_special_chars_and_arrow_preserved(self):
+        result = parse_real(4)
+        assert any("↑4.9G" in i.name for i in result.items)
+
+    def test_hot_flag_from_i_tag_stripped_from_name(self):
+        result = parse_real(4)
+        hot = next(i for i in result.items if "Intel Core Ultra 5 245K" in i.name)
+        assert hot.flags == {FLAG_HOT: True}
+        assert hot.name == "Intel Core Ultra 5 245K【14核】4.2G(↑5.2G) /24M /內顯Xe-core /無風扇【代理盒裝】"
+
+    def test_price_drop_segment_sets_flag_and_keeps_listed_price(self):
+        """`$16150↘$15900`：price=列表價（第一個 $N，與 spike 一致）、price_drop=True。"""
+        result = parse_real(4)
+        item = next(i for i in result.items
+                    if i.name == "AMD R7 9800X3D代理盒裝【8核/16緒】4.7G(↑5.2G)120W /96M /具RDNA內顯")
+        assert item.price == 16150
+        assert item.flags == {FLAG_PRICE_DROP: True}
+        assert "↘" not in item.name
+
+
+class TestRealMobileNoticeAndDisabledRows:
+    """真實頁面 class=y（↪ 限量/加贈通知）、class=z（❤ 專業性產品說明）、
+    disabled td 皆非商品列，必須過濾（G=1 含 23 列 y、46 列 z）。"""
+
+    def test_notice_rows_filtered(self):
+        result = parse_real(1)
+        assert len(result.items) == 157  # spike 統計（G=1）
+        for item in result.items:
+            assert not item.name.startswith(("❤", "↪"))
+
+
+class TestRealMobileG9Filter:
+    """G=9 混合頁：僅保留子分類含「記憶卡」的 4 段（spike 驗證：保留 54 / 過濾 157）。"""
+
+    def test_memory_card_subcategories_only(self):
+        result = parse_real(9)
+        kept = {i.subcategory for i in result.items}
+        assert kept == {"Micro SD 記憶卡", "SD 記憶卡", "CFexpress記憶卡",
+                        "MicroSDXC Express 記憶卡(Switch 2專用)"}
+        assert all("記憶卡" in s for s in kept)
+        assert len(result.items) == 54  # spike 統計（G=9 過濾後）
+
+
+class TestRealMobileFlags:
+    """真實頁面標記：<i>Hot！</i>、名稱內 尾盤、價格段後 任搭↓N、價格段 ↘。"""
+
+    def test_promo_marker_after_price_segment(self):
+        result = parse_real(12)
+        item = next(i for i in result.items if "微星 N730-2GD3V3" in i.name)
+        assert item.flags == {FLAG_PROMO: "任搭90"}
+        assert item.name == "微星 N730-2GD3V3(700MHz/2G DDR3 128Bit/14.5cm/三年保)雪精靈系列"
+
+    def test_clearance_marker_in_name_stripped(self):
+        result = parse_real(12)
+        item = next(i for i in result.items if "ZOTAC GT710-2GD3-L" in i.name)
+        assert item.flags == {FLAG_CLEARANCE: True}
+        assert "尾盤" not in item.name
+
+    def test_price_drop_marker(self):
+        result = parse_real(12)
+        item = next(i for i in result.items if "ZOTAC GT710-2GD3(" in i.name)
+        assert item.flags == {FLAG_PRICE_DROP: True}
+        assert item.price == 2990
+
+    def test_hot_flag(self):
+        result = parse_real(12)
+        hot = [i for i in result.items if i.flags.get(FLAG_HOT)]
+        assert hot
+        assert all("Hot！" not in i.name for i in hot)
+
+
+class TestRealMobileCategoryCounts:
+    """驗收基準：9 分類合計 ≈ 1,449（與 spike 報告統計逐分類對齊，fixture 釘選）。"""
+
+    @pytest.mark.parametrize("g_index", [1, 3, 4, 5, 6, 7, 8, 9, 12])
+    def test_count_matches_spike(self, g_index: int):
+        result = parse_real(g_index)
+        assert len(result.items) == REAL_COUNTS[g_index]
+
+    def test_total_1449(self):
+        total = sum(len(parse_real(g).items) for g in REAL_COUNTS)
+        assert total == 1449
+
+
 # ── 依分類實例驗證（fixture 重用基礎，供 main E2E） ───────────────────────
 
 class TestCategoryFixtures:
@@ -252,3 +370,14 @@ class TestCategoryFixtures:
         for item in result.items:
             assert item.category == result.category.name
             assert item.name
+
+    @pytest.mark.parametrize("g_index", [1, 3, 4, 5, 6, 7, 8, 9, 12])
+    def test_each_real_category_fixture_parses_without_exception(self, g_index: int):
+        """真實頁面 9 分類全數可解析（含 G=9 過濾、Deep spec 名稱欄位）。"""
+        result = parse_real(g_index)
+        assert result.category.g_index == g_index
+        assert len(result.items) >= 1
+        for item in result.items:
+            assert item.category == result.category.name
+            assert item.name
+            assert item.subcategory
