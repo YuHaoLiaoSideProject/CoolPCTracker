@@ -8,8 +8,14 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "jsx": "preserve",
+    "useDefineForClassFields": true,
     "types": ["vite/client"],
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] }
   },
   "include": ["src"]
 }

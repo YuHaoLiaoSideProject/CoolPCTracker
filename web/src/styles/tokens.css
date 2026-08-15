@@ -1,0 +1,198 @@
+/* web/src/styles/tokens.css — 共用設計 token（UIUX 003 §3，與 004 平行共用，不可更動）
+   來源：開發規格 003 §7.1；深色主題對應值依 docs/uiux/003-frontend-listing-design.md §3。 */
+
+:root {
+  /* 漲跌顏色：漲紅 / 跌綠 / 持平灰（BDD 指定語意） */
+  --price-up: #e02424;
+  --price-down: #18933f;
+  --price-flat: #6b7280;
+
+  --brand: #1f6feb;
+  --brand-soft: #e8f0fe;
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #f1f3f5;
+  --border: #e5e7eb;
+  --text: #1f2937;
+  --text-dim: #6b7280;
+  --warn-bg: #fff7e6;
+  --warn-border: #f5c518;
+  --warn-text: #8a6d00;
+
+  --accent: #1a73e8;
+  --success: #188038;
+  --danger: #c5221f;
+  --warning: #e37400;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 2px 8px rgba(31, 111, 235, 0.15);
+
+  --h: 36px;
+  --h-mobile: 44px;
+  --fs: 0.875rem;
+  --transition: 0.2s ease;
+  --fade: 150ms;
+
+  --focus-ring: 3px solid rgba(26, 115, 232, 0.14);
+
+  --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  --price-up: #f87171;
+  --price-down: #4ade80;
+  --price-flat: #9ca3af;
+
+  --brand: #4c8dff;
+  --brand-soft: #1d2f4d;
+  --bg: #0f141a;
+  --surface: #161c24;
+  --surface-2: #1e2733;
+  --border: #2a3340;
+  --text: #e5e7eb;
+  --text-dim: #8b95a3;
+  --warn-bg: #2b230f;
+  --warn-border: #f5c518;
+  --warn-text: #f2d57a;
+
+  --accent: #8ab4f8;
+  --success: #81c995;
+  --danger: #f28b82;
+  --warning: #fdd663;
+
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-hover: 0 2px 8px rgba(76, 141, 255, 0.25);
+  --focus-ring: 3px solid rgba(138, 180, 248, 0.22);
+}
+
+/* ── 基礎重置與全站外框 ─────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-stack);
+  font-size: var(--fs);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+  transition: background-color var(--fade), color var(--fade);
+}
+
+h1, h2, h3, h4, p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+a {
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── 全站頂部 header（App.vue） ─────────────────────── */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.app-logo .logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--brand);
+  color: #fff;
+}
+
+.app-sub {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  margin-left: 2px;
+}
+
+.app-header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--h);
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.theme-btn:hover {
+  color: var(--text);
+}
