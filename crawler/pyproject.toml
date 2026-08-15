@@ -7,5 +7,15 @@ dependencies = ["httpx>=0.27", "selectolax>=0.3"]
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-mock"]
 
+# 專案根即 crawler package（pyproject.toml 位於 crawler/ 內、根含 __init__.py）
+# → 顯式宣告 packages + package-dir 對映到根目錄，避免新版 setuptools
+#   flat-layout 自動發現歧義（CI `pip install -e ./crawler` 報
+#   Multiple top-level modules discovered）
+[tool.setuptools]
+packages = ["crawler"]
+
+[tool.setuptools.package-dir]
+crawler = "."
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
