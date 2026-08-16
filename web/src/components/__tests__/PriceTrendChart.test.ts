@@ -1,16 +1,52 @@
-// web/src/components/__tests__/PriceTrendChart.test.ts — ECharts option 組裝（mock echarts lib）
-// jsdom 無 canvas → mock @/lib/echarts，驗證 init/dispose、time 軸、markLine、dataZoom slider、單點降級。
+// web/src/components/__tests__/PriceTrendChart.test.ts — lightweight-charts 呼叫參數（mock lwc lib）
+// jsdom 無 canvas → mock @/lib/lightweight-charts；驗證 addSeries(LineSeries)/setData/createPriceLine/
+// createSeriesMarkers/setVisibleLogicalRange/subscribeCrosshairMove tooltip/雙擊重置/E16 延後 init/onUnmounted 清理。
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { mount } from "@vue/test-utils"
-import { ref } from "vue"
+import { nextTick, ref } from "vue"
 import type { PricePoint } from "@/types/item"
 
 const mocks = vi.hoisted(() => {
-  const chart = { setOption: vi.fn(), resize: vi.fn(), dispose: vi.fn() }
-  return { chart, init: vi.fn(() => chart) }
+  const timeScale = { fitContent: vi.fn<any>(), setVisibleLogicalRange: vi.fn<any>() }
+  const series = { setData: vi.fn<any>(), createPriceLine: vi.fn<any>(() => ({})), removePriceLine: vi.fn<any>() }
+  const chart = {
+    addSeries: vi.fn<any>(() => series),
+    applyOptions: vi.fn<any>(),
+    subscribeCrosshairMove: vi.fn<any>(),
+    subscribeDblClick: vi.fn<any>(),
+    unsubscribeCrosshairMove: vi.fn<any>(),
+    unsubscribeDblClick: vi.fn<any>(),
+    timeScale: vi.fn<any>(() => timeScale),
+    remove: vi.fn<any>(),
+  }
+  const markersApi = { setMarkers: vi.fn<any>(), markers: vi.fn<any>(), detach: vi.fn<any>() }
+  return {
+    timeScale,
+    series,
+    chart,
+    markersApi,
+    createChart: vi.fn<any>(() => chart),
+    createSeriesMarkers: vi.fn<any>(() => markersApi),
+    // 供未 mock 的 @/lib/priceTrend 使用（真實列舉值）
+    LineStyle: { Solid: 0, Dotted: 1, Dashed: 2, LargeDashed: 3, SparseDotted: 4 },
+    LineType: { Simple: 0, WithSteps: 1, Curved: 2 },
+    ColorType: { Solid: "solid", VerticalGradient: "gradient" },
+    CrosshairMode: { Normal: 0, Magnet: 1, Hidden: 2, MagnetOHLC: 3 },
+    LineSeries: { type: "Line", isBuiltIn: true, defaultOptions: {} },
+    AreaSeries: { type: "Area", isBuiltIn: true, defaultOptions: {} },
+  }
 })
 
-vi.mock("@/lib/echarts", () => ({ default: { init: mocks.init } }))
+vi.mock("@/lib/lightweight-charts", () => ({
+  createChart: mocks.createChart,
+  createSeriesMarkers: mocks.createSeriesMarkers,
+  LineStyle: mocks.LineStyle,
+  LineType: mocks.LineType,
+  ColorType: mocks.ColorType,
+  CrosshairMode: mocks.CrosshairMode,
+  LineSeries: mocks.LineSeries,
+  AreaSeries: mocks.AreaSeries,
+}))
 
 // jsdom 無 ResizeObserver
 class ROStub {
@@ -23,9 +59,11 @@ vi.stubGlobal("ResizeObserver", ROStub)
 import PriceTrendChart from "@/components/PriceTrendChart.vue"
 
 const mk = (pts: [string, number][]): PricePoint[] => pts.map(([d, p]) => ({ d, p }))
-const data = (opt: { series: { data: unknown[] }[] }): [string, number][] =>
-  opt.series[0].data as [string, number][]
-const lastOption = (): any => mocks.chart.setOption.mock.calls.at(-1)?.[0]
+const seriesDataArg = () => mocks.series.setData.mock.calls.at(-1)?.[0] as { time: string; value: number }[]
+const priceLineArg = () => mocks.series.createPriceLine.mock.calls.at(-1)?.[0] as { price: number }
+const markersArg = () => mocks.createSeriesMarkers.mock.calls.at(-1)?.[1] as unknown[]
+const crosshairHandler = () => mocks.chart.subscribeCrosshairMove.mock.calls[0]?.[0] as (p: unknown) => void
+const dblClickHandler = () => mocks.chart.subscribeDblClick.mock.calls[0]?.[0] as () => void
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -37,98 +75,137 @@ beforeEach(() => {
 })
 
 describe("PriceTrendChart", () => {
-  it("init 一次並以 time 軸渲染（E14 非等間距如實呈現）", () => {
+  it("init：createChart → addSeries(LineSeries) → setData({time,value}) → createSeriesMarkers → 訂閱", () => {
     const w = mount(PriceTrendChart, {
       props: { history: mk([["2026-08-13", 9490], ["2026-08-15", 9290]]) },
     })
-    expect(mocks.init).toHaveBeenCalledTimes(1)
-    const opt = lastOption()
-    expect(opt.xAxis.type).toBe("time")
-    expect(data(opt)).toEqual([["2026-08-13", 9490], ["2026-08-15", 9290]])
-    // 點數 <15 → slider 隱藏、inside 保留
-    const zooms = opt.dataZoom as any[]
-    expect(zooms[0].type).toBe("inside")
-    expect(zooms[1].show).toBe(false)
+    expect(mocks.createChart).toHaveBeenCalledTimes(1)
+    expect(mocks.chart.addSeries).toHaveBeenCalledWith(
+      mocks.LineSeries,
+      expect.objectContaining({ color: "#1f6feb", lineWidth: 2, priceLineVisible: false, lastValueVisible: false }),
+    )
+    expect(seriesDataArg()).toEqual([
+      { time: "2026-08-13", value: 9490 },
+      { time: "2026-08-15", value: 9290 },
+    ])
+    expect(mocks.createSeriesMarkers).toHaveBeenCalledWith(mocks.series, expect.any(Array))
+    expect(mocks.chart.subscribeCrosshairMove).toHaveBeenCalledTimes(1)
+    expect(mocks.chart.subscribeDblClick).toHaveBeenCalledTimes(1)
     w.unmount()
-    expect(mocks.chart.dispose).toHaveBeenCalledTimes(1)
+    expect(mocks.chart.remove).toHaveBeenCalledTimes(1)
   })
 
-  it("點數 ≥15 → dataZoom slider show:true", () => {
-    const pts: [string, number][] = []
-    for (let i = 0; i < 20; i++) {
-      const d = `2026-07-${String(10 + i).padStart(2, "0")}`
-      pts.push([d, 5000 + i * 10])
-    }
-    const w = mount(PriceTrendChart, { props: { history: mk(pts) } })
-    const zooms = lastOption().dataZoom as any[]
-    expect(zooms[1].show).toBe(true)
-    w.unmount()
+  it("≤24 點 → markers 每點一個；>24 點 → markers 空", () => {
+    const w2 = mount(PriceTrendChart, {
+      props: { history: mk([["2026-08-13", 9490], ["2026-08-15", 9290]]) },
+    })
+    expect(markersArg()).toHaveLength(2)
+    w2.unmount()
+
+    const pts: [string, number][] = Array.from({ length: 25 }, (_, i) => [
+      `2026-07-${String(1 + i).padStart(2, "0")}`,
+      5000 + i,
+    ])
+    const w25 = mount(PriceTrendChart, { props: { history: mk(pts) } })
+    expect(markersArg()).toHaveLength(0)
+    w25.unmount()
   })
 
-  it("targetPrice → markLine dashed #f59e0b＋label「目標價 NT$9,500」；無 target → 無 markLine", () => {
+  it("targetPrice → createPriceLine（dashed #f59e0b、title 目標價）；無 target → 不建立", () => {
     const w = mount(PriceTrendChart, {
       props: { history: mk([["2026-08-13", 10500], ["2026-08-15", 9990]]), targetPrice: 9500 },
     })
-    const ml = lastOption().series[0].markLine
-    expect(ml).toBeDefined()
-    expect(ml.lineStyle).toMatchObject({ type: "dashed", color: "#f59e0b", width: 1.5 })
-    expect(ml.silent).toBe(true)
-    expect(ml.symbol).toBe("none")
-    expect(ml.data).toEqual([{ yAxis: 9500 }])
-    expect(ml.label.formatter({ value: 9500 })).toBe("目標價 NT$9,500")
+    expect(mocks.series.createPriceLine).toHaveBeenCalledTimes(1)
+    expect(priceLineArg()).toEqual({
+      price: 9500,
+      color: "#f59e0b",
+      lineStyle: 2, // LineStyle.Dashed
+      lineWidth: 2,
+      title: "目標價",
+      axisLabelVisible: true,
+    })
     w.unmount()
 
+    vi.clearAllMocks()
     const w2 = mount(PriceTrendChart, {
       props: { history: mk([["2026-08-13", 10500], ["2026-08-15", 9990]]) },
     })
-    expect(lastOption().series[0].markLine).toBeUndefined()
+    expect(mocks.series.createPriceLine).not.toHaveBeenCalled()
     w2.unmount()
   })
 
-  it("yMin/yMax 傳入 yAxis", () => {
-    const w = mount(PriceTrendChart, {
-      props: { history: mk([["2026-08-13", 10500], ["2026-08-15", 9990]]), yMin: 9790.2, yMax: 11730 },
-    })
-    expect(lastOption().yAxis.min).toBe(9790.2)
-    expect(lastOption().yAxis.max).toBe(11730)
-    w.unmount()
-  })
-
-  it("單筆降級（E5）：symbolSize 放大、label 顯示價格、無 dataZoom、X 軸以該日為中心", () => {
+  it("單筆降級（E5）：marker 附價格文字、setVisibleLogicalRange 居中", () => {
     const w = mount(PriceTrendChart, { props: { history: mk([["2026-08-15", 5990]]) } })
-    const opt = lastOption()
-    expect(opt.series[0].symbolSize).toBe(10)
-    expect(opt.series[0].label.show).toBe(true)
-    expect(opt.series[0].label.formatter({ value: ["2026-08-15", 5990] })).toBe("NT$5,990")
-    expect(opt.dataZoom).toEqual([])
-    expect(opt.xAxis.min).toBeLessThan(opt.xAxis.max)
-    const center = (opt.xAxis.min + opt.xAxis.max) / 2
-    expect(center).toBe(new Date("2026-08-15").getTime())
+    const markers = markersArg() as { text?: string }[]
+    expect(markers).toHaveLength(1)
+    expect(markers[0].text).toBe("NT$5,990")
+    expect(mocks.timeScale.setVisibleLogicalRange).toHaveBeenCalledWith({ from: -1.5, to: 1.5 })
     w.unmount()
   })
 
-  it("props 更新 → notMerge setOption 重新渲染（目標價修改 9500→9800）", async () => {
+  it("crosshair move → 自寫 tooltip（日期＋價格＋目標價）；離開 → 隱藏", async () => {
+    const w = mount(PriceTrendChart, {
+      props: { history: mk([["2026-08-13", 10500], ["2026-08-15", 9990]]), targetPrice: 9500 },
+    })
+    crosshairHandler()({
+      point: { x: 100, y: 200 },
+      time: "2026-08-15",
+      seriesData: new Map([[mocks.series, { time: "2026-08-15", value: 9990 }]]),
+    })
+    await nextTick()
+    expect(w.find(".chart-tooltip").exists()).toBe(true)
+    expect(w.find(".tt-date").text()).toBe("2026-08-15")
+    expect(w.find(".tt-price").text()).toBe("價格：NT$9,990")
+    expect(w.find(".tt-target").text()).toBe("目標價 NT$9,500")
+
+    crosshairHandler()({ point: undefined, time: undefined, seriesData: new Map() })
+    await nextTick()
+    expect(w.find(".chart-tooltip").exists()).toBe(false)
+    w.unmount()
+  })
+
+  it("雙擊 → timeScale().fitContent()（重置縮放）", () => {
+    const w = mount(PriceTrendChart, {
+      props: { history: mk([["2026-08-13", 10500], ["2026-08-15", 9990]]) },
+    })
+    dblClickHandler()()
+    expect(mocks.timeScale.fitContent).toHaveBeenCalledTimes(1)
+    w.unmount()
+  })
+
+  it("props 更新（目標價 9500→9800）→ 重建 price line 並重設資料", async () => {
     const target = ref<number | null>(9500)
     const w = mount(PriceTrendChart, {
       props: { history: mk([["2026-08-13", 10500], ["2026-08-15", 9990]]), targetPrice: target.value },
     })
-    expect(mocks.chart.setOption).toHaveBeenCalledTimes(1)
+    expect(mocks.series.setData).toHaveBeenCalledTimes(1)
+    expect(priceLineArg().price).toBe(9500)
     target.value = 9800
     await w.setProps({ targetPrice: 9800 })
-    expect(mocks.chart.setOption).toHaveBeenCalledTimes(2)
-    expect(lastOption().series[0].markLine.data).toEqual([{ yAxis: 9800 }])
+    expect(mocks.series.setData).toHaveBeenCalledTimes(2)
+    expect(mocks.series.removePriceLine).toHaveBeenCalledTimes(1)
+    expect(priceLineArg().price).toBe(9800)
     w.unmount()
   })
 
-  it("容器 0 寬（E16）：延後 init（init 不執行）", () => {
+  it("容器 0 寬（E16）：延後 init（createChart 不執行）", () => {
     const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth")
     Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get: () => 0 })
     try {
       const w = mount(PriceTrendChart, { props: { history: mk([["2026-08-15", 5990]]) } })
-      expect(mocks.init).not.toHaveBeenCalled()
+      expect(mocks.createChart).not.toHaveBeenCalled()
       w.unmount()
     } finally {
       if (desc) Object.defineProperty(HTMLElement.prototype, "clientWidth", desc)
     }
+  })
+
+  it("onUnmounted：取消訂閱＋detach markers＋remove chart＋disconnect observer", () => {
+    const w = mount(PriceTrendChart, { props: { history: mk([["2026-08-15", 5990]]) } })
+    w.unmount()
+    expect(mocks.chart.unsubscribeCrosshairMove).toHaveBeenCalledTimes(1)
+    expect(mocks.chart.unsubscribeDblClick).toHaveBeenCalledTimes(1)
+    expect(mocks.markersApi.detach).toHaveBeenCalledTimes(1)
+    expect(mocks.chart.remove).toHaveBeenCalledTimes(1)
   })
 })

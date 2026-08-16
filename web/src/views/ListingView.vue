@@ -71,7 +71,7 @@ function onClearAll() {
 const showError = computed(() => !!error.value && items.value.length === 0)
 const showOldData = computed(() => !!error.value && items.value.length > 0)
 
-// 背景預載詳情頁 chunk（含 echarts）：首屏不阻塞；首次點進詳情頁免等待下載。
+// 背景預載詳情頁 chunk（含 lightweight-charts）：首屏不阻塞；首次點進詳情頁免等待下載。
 // requestIdleCallback 為主，Safari 無此 API 時 fallback 到 setTimeout。
 onMounted(() => {
   const prefetch = () => import("@/views/ProductDetailView.vue")
