@@ -2,7 +2,7 @@
 // web/src/views/ListingView.vue — 列表頁組合與 deep link（開發規格 003 §2.12）
 // 組合全部元件；URL 分類參數為分類狀態的唯一真相來源（雙向同步）；
 // 掛載時依 ?category=<key> 初始化（deep link）；載入/錯誤/空狀態只在列表區域。
-import { computed, watch } from "vue"
+import { computed, onMounted, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useItems } from "@/composables/useItems"
 import { useFilters } from "@/composables/useFilters"
@@ -70,6 +70,22 @@ function onClearAll() {
 
 const showError = computed(() => !!error.value && items.value.length === 0)
 const showOldData = computed(() => !!error.value && items.value.length > 0)
+
+// 背景預載詳情頁 chunk（含 echarts）：首屏不阻塞；首次點進詳情頁免等待下載。
+// requestIdleCallback 為主，Safari 無此 API 時 fallback 到 setTimeout。
+onMounted(() => {
+  const prefetch = () => import("@/views/ProductDetailView.vue")
+  const ric = (window as any).requestIdleCallback
+  if (typeof ric === "function") {
+    ric(() => {
+      prefetch().catch(() => {})
+    }, { timeout: 2000 })
+  } else {
+    setTimeout(() => {
+      prefetch().catch(() => {})
+    }, 500)
+  }
+})
 </script>
 
 <template>
