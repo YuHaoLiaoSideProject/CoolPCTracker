@@ -1,5 +1,5 @@
 // web/e2e/003-filtering.spec.ts — 003「列表＋搜尋篩選」篩選功能 E2E
-// 以真實資料（data/items.v2.json）動態計算 oracle，避免寫死隨資料漂移的筆數。
+// 以真實資料（依 data/meta.json version 動態解析的 items.v{version}.json）計算 oracle，避免寫死隨資料漂移的筆數。
 // 涵蓋：單一規格篩選、多條件 AND、搜尋＋篩選並用、清除全部、無結果空狀態、
 //       邊界值納入（≥ 語意）、無規格欄位商品靜默排除。
 import { test, expect, type Page } from "@playwright/test"
@@ -56,7 +56,7 @@ test.describe("003 規格篩選 E2E（真資料 oracle）", () => {
   test("套用單一規格篩選 瓦數≥750W：真資料無 wattage_w → 空狀態（資料缺口）", async ({ page }) => {
     await gotoListing(page)
     const oracle = applyConditions(ITEMS, [{ field: "wattage_w", threshold: 750 }])
-    // 現況：items.v2.json 沒有任何 wattage_w 欄位（9 大分類不含電源），故 oracle 為空集合
+    // 現況：目前資料版本沒有任何 wattage_w 欄位（9 大分類不含電源），故 oracle 為空集合
     expect(oracle.length).toBe(0)
 
     await applyFilter(page, "wattage_w", 750)
