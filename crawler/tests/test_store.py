@@ -78,9 +78,9 @@ class TestLoad:
         (tmp_path / "items.json").write_text(
             json.dumps({"meta": {"embedded": 1}, "items": []}, ensure_ascii=False), encoding="utf-8")
         (tmp_path / "meta.json").write_text(
-            json.dumps({"crawled_at": "2026-08-15T06:00:00Z", "version": 2}), encoding="utf-8")
+            json.dumps({"crawled_at": "2026-08-15T06:00:00Z", "previous_total": 2}), encoding="utf-8")
         _, meta = Store(tmp_path).load()
-        assert meta == {"crawled_at": "2026-08-15T06:00:00Z", "version": 2}
+        assert meta == {"crawled_at": "2026-08-15T06:00:00Z", "previous_total": 2}
 
     def test_load_corrupt_items_json_raises(self, tmp_path):
         (tmp_path / "items.json").write_text("{not valid json", encoding="utf-8")
@@ -375,30 +375,30 @@ class TestWriteMeta:
         assert meta["changed"] == 12
         assert meta["failed_categories"] == ["主機板"]
         assert meta["status"] == "partial"
-        assert meta["version"] == 0          # 不存在 → 0
+        assert "version" not in meta  # 日期制快照：不再寫整數版本
         assert meta["previous_total"] is None  # 不存在 → None
 
-    def test_write_meta_carries_version_and_previous_total(self, tmp_path):
-        """沿用既有 meta 的 version 與 previous_total（002/007 判定基準不得遺失）。"""
+    def test_write_meta_carries_previous_total(self, tmp_path):
+        """沿用既有 meta 的 previous_total（007 驟降基準不得遺失）；version 不再寫入。"""
         (tmp_path / "meta.json").write_text(
             json.dumps({"version": 3, "previous_total": 1449}), encoding="utf-8")
         store = Store(tmp_path)
         store.write_meta(crawled_at="2026-08-16T06:00:00Z", counts={}, total=0,
                          changed=0, failed_categories=[], status="ok")
         meta = json.loads((tmp_path / "meta.json").read_text(encoding="utf-8"))
-        assert meta["version"] == 3
+        assert "version" not in meta
         assert meta["previous_total"] == 1449
 
     def test_write_meta_keeps_007_extension_fields(self, tmp_path):
         """007 擴充欄位（sources/anomaly 等）不因覆寫而遺失。"""
-        existing = {"version": 2, "previous_total": 1200,
+        existing = {"previous_total": 1200,
                     "sources": {"5": {"g": 5}}, "anomaly": {"kind": "none"}}
         (tmp_path / "meta.json").write_text(json.dumps(existing), encoding="utf-8")
         store = Store(tmp_path)
         store.write_meta(crawled_at="2026-08-16T06:00:00Z", counts={}, total=1449,
                          changed=5, failed_categories=[], status="ok")
         meta = json.loads((tmp_path / "meta.json").read_text(encoding="utf-8"))
-        assert meta["version"] == 2
+        assert "version" not in meta
         assert meta["previous_total"] == 1200
         assert meta["sources"] == {"5": {"g": 5}}
         assert meta["anomaly"] == {"kind": "none"}

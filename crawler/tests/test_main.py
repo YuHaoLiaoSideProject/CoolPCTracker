@@ -15,7 +15,7 @@ Store 一律以 pytest tmp_path 作為 data_dir。
 - 邊界 降幅恰為 20%（本次 = 前次 80%）：不判異常、正常寫入（007 §6.1）
 - #20  CLI --date 手動補爬（first_seen=指定日）；無 --date 預設今日
 - meta 完整欄位（crawled_at ISO UTC、counts、total、previous_total、changed、
-       failed_categories、status、version 沿用/0）
+       failed_categories、status；日期制快照改造後不再含 version）
 - exit code 2（其他執行失敗：items.json 損壞）
 """
 from __future__ import annotations
@@ -353,4 +353,4 @@ class TestMetaComplete:
         assert meta["changed"] == TOTAL_ITEMS  # 首次執行全部為新商品
         assert meta["failed_categories"] == []
         assert meta["status"] == "ok"
-        assert meta["version"] == 0  # 不存在 → 0
+        assert "version" not in meta  # 日期制快照：不再寫整數版本

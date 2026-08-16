@@ -123,7 +123,6 @@ def run_crawler(data_dir: Path, today: date | None = None,
         "failed_categories": failed_categories,
         "status": status,
     })
-    meta.setdefault("version", 0)  # 002 cache-busting 版本號：沿用；不存在 → 0
     store.save(items, meta)
 
     # 7. 執行摘要 log（各分類商品數、異動數、失敗分類）

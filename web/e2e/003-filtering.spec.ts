@@ -1,5 +1,5 @@
 // web/e2e/003-filtering.spec.ts — 003「列表＋搜尋篩選」篩選功能 E2E
-// 以真實資料（依 data/meta.json version 動態解析的 items.v{version}.json）計算 oracle，避免寫死隨資料漂移的筆數。
+// 以真實資料（依 api/index.json 的 latest_file 動態解析的日期制快照）計算 oracle，避免寫死隨資料漂移的筆數。
 // 涵蓋：單一規格篩選、多條件 AND、搜尋＋篩選並用、清除全部、無結果空狀態、
 //       邊界值納入（≥ 語意）、無規格欄位商品靜默排除。
 import { test, expect, type Page } from "@playwright/test"

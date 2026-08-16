@@ -4,7 +4,7 @@
 // - 單一 inline plugin（無額外 dependency）：
 //   dev：configureServer middleware 把 /api/* 對應到 ../api（檔案不存在回 404）；
 //   build：closeBundle 把 ../api/** 遞迴複製進 dist/api/（自動、非手動 drift）。
-//   前端 runtime fetch(BASE_URL + "api/index.json") → latest_version → api/items/v{n}.json。
+//   前端 runtime fetch(BASE_URL + "api/index.json") → latest_file → api/items/YYYYMMDD[_n].json。
 // 003：新增 vue plugin、alias @→src、vitest 設定（§2.1 專案初始化）
 import { cpSync, existsSync, readFileSync, statSync } from "node:fs";
 import { join, sep } from "node:path";

@@ -35,7 +35,7 @@ docs/development/       ← 開發規格（模組介面、資料結構、測試�
 # 手動跑爬蟲（002 完成前之本地驗證）
 .venv/bin/python -m crawler.main --data-dir data [--date YYYY-MM-DD]
 
-# 資料異動判定 + 重建 api/（index.json / latest.json / items/v*.json）
+# 資料異動判定 + 重建 api/（index.json / latest.json / items/YYYYMMDD[_n].json）
 .venv/bin/python scripts/version_data.py
 
 # 前端（web/）
@@ -69,20 +69,21 @@ Issue 內已含：目標、對應文件路徑、驗收要點 → 指向 issue �
 ```
 crawler/main.py ──寫──▶ data/items.json + data/meta.json   （原始真相，git 版控）
                                 │
-scripts/version_data.py ──讀 data/ 比對上次版本──▶
-    ├─ 有異動：寫 api/items/v{n}.json（= {crawled_at, items}）
+scripts/version_data.py ──讀 data/ 比對上次最新快照──▶
+    ├─ 有異動：寫 api/items/{YYYYMMDD[_n]}.json（= {crawled_at, items}）
     │          寫 api/latest.json（穩定端點，同內容）
-    │          重建 api/index.json（versions[] 完整歷史 + latest_version + merged meta）
+    │          重建 api/index.json（files[] 完整日期檔清單 + latest_file + merged meta）
     └─ 無異動：不動任何檔
 
 前端 useItems.ts ──runtime──▶
-    1. GET api/index.json  → latest_version
-    2. GET api/items/v{latest_version}.json → parse → 渲染
+    1. GET api/index.json  → latest_file
+    2. GET {latest_file}（api/items/YYYYMMDD[_n].json）→ parse → 渲染
 ```
 
 - `data/` 是唯一真相（crawler 只寫這裡）；`api/` 是對外 API 面（version_data.py 產出、可重建）。
-- `api/index.json` 是前端唯一入口：versions[] 列完整歷史、latest_version/latest_items 指向最新版。
-- 前端 runtime 發現版本（不再 build 注入 `__DATA_VERSION__`）；dev 由 vite middleware 服務 `../api`，
+- `api/index.json` 是前端唯一入口：`files[]` 列完整日期檔歷史、`latest_file` 指向最新檔。
+- 快照檔名取自 `crawled_at` 轉 Asia/Taipei（UTC+8）的日期 YYYYMMDD；同日多份依序加 `_1`/`_2`… 後綴。
+- 前端 runtime 發現資料檔（不再 build 注入 `__DATA_VERSION__`）；dev 由 vite middleware 服務 `../api`，
   build 時自動把 `../api/**` 複製進 `dist/api/`（非手動 drift）。
 
 ## 結構
@@ -90,8 +91,8 @@ scripts/version_data.py ──讀 data/ 比對上次版本──▶
 ```
 crawler/    Python 爬蟲套件（categories/fetcher/parser/spec_parser/store/main + tests/）
 data/       爬蟲輸出（items.json / meta.json，git 版控，首跑由 store 建立）—— 原始真相
-api/        衍生 API 成品（version_data.py 產出：index.json / latest.json / items/v*.json）
-scripts/    version_data.py（diff → 版本化快照 + 重建 api/index.json）與一次性遷移工具
+api/        衍生 API 成品（version_data.py 產出：index.json / latest.json / items/YYYYMMDD[_n].json）
+scripts/    version_data.py（diff → 日期制快照 + 重建 api/index.json）與一次性遷移工具
 docs/       全部文件（tech-decisions / interaction-flows / bdds / development）
 web/        Vue3 + Vite 前端（runtime fetch api/index.json；build 產出 dist/）
 ```

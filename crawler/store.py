@@ -171,7 +171,9 @@ class Store:
 
     def save(self, items: list[Item], meta: dict[str, Any]) -> None:
         """原子寫入 items.json（{"meta": ..., "items": [...]}）與 meta.json。
-        兩檔皆 tempfile + os.replace；失敗拋例外且不影響既有檔案。"""
+        兩檔皆 tempfile + os.replace；失敗拋例外且不影響既有檔案。
+        日期制快照改造後，meta 不再含整數 version 欄位。"""
+        meta = {k: v for k, v in meta.items() if k != "version"}
         doc = {"meta": meta, "items": [asdict(item) for item in items]}
         self._write_json_atomic(self._items_path, doc)
         self._write_json_atomic(self._meta_path, meta)
@@ -179,8 +181,9 @@ class Store:
     def write_meta(self, *, crawled_at: str, counts: dict[str, int], total: int,
                    changed: int, failed_categories: list[str], status: str) -> None:
         """輸出 meta.json 基礎欄位。status 僅 ok/partial/failed（007 三態）。
-        自既有 meta 沿用 version（002 cache-busting）與 previous_total（007 驟降基準），
-        並保留 007 擴充欄位（sources/anomaly/checked_at…），不得因覆寫而遺失。"""
+        自既有 meta 沿用 previous_total（007 驟降基準），並保留 007 擴充欄位
+        （sources/anomaly/checked_at…），不得因覆寫而遺失。
+        日期制快照改造後，meta 不再含整數 version 欄位。"""
         if status not in META_STATUSES:
             raise ValueError(f"無效 meta status：{status!r}，僅允許 {sorted(META_STATUSES)}")
 
@@ -201,7 +204,7 @@ class Store:
             "failed_categories": failed_categories,
             "status": status,
         })
-        new_meta.setdefault("version", 0)  # 沿用；不存在 → 0
+        new_meta.pop("version", None)  # 日期制快照：不再使用整數版本
         self._write_json_atomic(self._meta_path, new_meta)
 
     # ── 內部工具 ────────────────────────────────────────────────────────────

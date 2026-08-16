@@ -1,7 +1,7 @@
 // web/src/composables/useItems.ts — 資料載入（開發規格 003 §2.4 / 004 §2.3）
 // 職責：runtime 兩段式 fetch（AirTicketsPrice 模式，無 build 注入版本）：
-//   1. fetch(BASE_URL + "api/index.json") → 取 latest_version（index 為唯一入口/目錄）
-//   2. fetch(BASE_URL + "api/items/v{latest_version}.json") → 版本化快照（檔名自帶快取失效）
+//   1. fetch(BASE_URL + "api/index.json") → 取 latest_file（index 為唯一入口/目錄）
+//   2. fetch(BASE_URL + latest_file) → 日期制快照（檔名自帶快取失效）
 // 解析與 shape 驗證（parseItemsFile 相容 001 items.json 與 002 版本化快照兩種頂層形狀）、
 // 錯誤分類、重試、過期判定。錯誤分類決定 ErrorState 顯示文案；任何失敗都不能影響側欄／
 // 搜尋框渲染（錯誤只在列表區域呈現）。
@@ -17,18 +17,18 @@ export type LoadError = "fetch" | "parse" | null
 export class ParseError extends TypeError {} // 供 error 分類判別
 
 // 002 §1.7 合約（改造後）＋ AirTicketsPrice 模式：前端 runtime 發現，無 build 注入版本。
-// index.json 是唯一入口（latest_version / latest_items），版本化快照 api/items/v{n}.json
-// 檔名版本化 → 瀏覽器/Pages 快取對該檔必然失效，無需 query 快取穿透。
+// index.json 是唯一入口（latest_file），日期制快照 api/items/YYYYMMDD[_n].json
+// 檔名含日期 → 瀏覽器/Pages 快取對新檔必然失效，無需 query 快取穿透。
 const INDEX_URL = `${import.meta.env.BASE_URL}api/index.json`
 
-/** index.json shape 驗證：latest_version 為正整數（前端 runtime 發現的版本來源）。 */
-export function parseIndex(raw: unknown): { latest_version: number } {
+/** index.json shape 驗證：latest_file 為非空字串（指向日期制快照）。 */
+export function parseIndex(raw: unknown): { latest_file: string } {
   if (!isRecord(raw)) throw new ParseError("index.json shape 不符：頂層應為 object")
-  const v = raw.latest_version
-  if (typeof v !== "number" || !Number.isInteger(v) || v < 1) {
-    throw new ParseError("index.json shape 不符：latest_version 缺失或非正整數")
+  const f = raw.latest_file
+  if (typeof f !== "string" || f.length === 0) {
+    throw new ParseError("index.json shape 不符：latest_file 缺失或非字串")
   }
-  return { latest_version: v }
+  return { latest_file: f }
 }
 
 function createItemsState() {
@@ -44,8 +44,8 @@ function createItemsState() {
       const indexRes = await fetch(INDEX_URL)
       if (!indexRes.ok) throw new Error(`HTTP ${indexRes.status}`)
       const indexRaw: unknown = await indexRes.json() // 壞 JSON → SyntaxError
-      const { latest_version } = parseIndex(indexRaw) // shape 驗證失敗 → ParseError
-      const itemsUrl = `${import.meta.env.BASE_URL}api/items/v${latest_version}.json`
+      const { latest_file } = parseIndex(indexRaw) // shape 驗證失敗 → ParseError
+      const itemsUrl = `${import.meta.env.BASE_URL}${latest_file}`
       const itemsRes = await fetch(itemsUrl)
       if (!itemsRes.ok) throw new Error(`HTTP ${itemsRes.status}`)
       const raw: unknown = await itemsRes.json() // 壞 JSON → SyntaxError
@@ -113,7 +113,7 @@ function normalizeSpec(spec: Record<string, unknown>): Item["spec"] {
 
 /** shape 驗證：接受兩種頂層形狀（前端契約相容）——
  *  ① 001 items.json：{ meta: { crawled_at, source }, items }
- *  ② 002 items.v{n}.json 快照：{ crawled_at, items }（頂層無 meta 巢狀）
+ *  ② 002 日期制快照：{ crawled_at, items }（頂層無 meta 巢狀）
  *  items 為陣列且每筆具 id/name/category；不符即拋 ParseError。
  *  正規化：原始 history 為 compact [d,p] 陣列（001 格式決策），此處 map 為 { d, p }（PricePoint）；
  *  缺 history/spec → 補預設值，避免下游 undefined 崩潰。 */

@@ -2,7 +2,7 @@
 
 以 `git check-ignore -q`（subprocess）驗證：
 - data/items.json、data/meta.json、data/telegram.json 不再被忽略（入庫）
-- api/index.json、api/latest.json、api/items/v*.json 不被忽略（衍生 API 成品入庫）
+- api/index.json、api/latest.json、api/items/*.json 不被忽略（衍生 API 成品入庫）
 - data/items.v*.json 重新被忽略（版本化快照已移入 api/items/）
 - data/secret.txt（其他 data/ 內容）仍被忽略
 - web/node_modules/ 被忽略（前端依賴不入庫）
@@ -35,7 +35,7 @@ def test_data_truth_files_not_ignored() -> None:
     """002 要版控的資料真相檔不再被 .gitignore 忽略（§1.1 data/ 入庫）。"""
     for path in [
         "data/items.json",          # 001 來源真相
-        "data/meta.json",           # version/crawled_at/計數
+        "data/meta.json",           # crawled_at/計數
         "data/telegram.json",       # 006 通知狀態（與 items.json 一併 commit）
     ]:
         assert not _git_check_ignore(path), f"{path} 應不再被 .gitignore 忽略"
@@ -46,8 +46,8 @@ def test_api_artifacts_not_ignored() -> None:
     for path in [
         "api/index.json",           # 目錄/總覽（前端唯一入口）
         "api/latest.json",          # 穩定端點
-        "api/items/v1.json",        # cache-busting 版本化快照（v1 起）
-        "api/items/v10.json",       # 多位數版本（v9→v10 不誤傷）
+        "api/items/20260815.json",  # 日期制快照（無後綴）
+        "api/items/20260815_1.json",  # 同日後綴（_1 起）
     ]:
         assert not _git_check_ignore(path), f"{path} 應不被 .gitignore 忽略"
 

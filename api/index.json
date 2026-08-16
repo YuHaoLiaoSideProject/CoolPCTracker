@@ -1,10 +1,9 @@
 {
-  "generated_at": "2026-08-16T23:30:56.050839+00:00",
+  "generated_at": "2026-08-16T23:48:58.100547+00:00",
   "source": "https://www.coolpc.com.tw/m/m-list.php",
   "description": "原價屋商品價格追蹤資料 API",
-  "latest_version": 3,
+  "latest_file": "api/items/20260816.json",
   "latest": "api/latest.json",
-  "latest_items": "api/items/v3.json",
   "crawled_at": "2026-08-16T06:20:49.650053+00:00",
   "status": "ok",
   "total": 1450,
@@ -19,24 +18,24 @@
     "記憶卡": 54,
     "顯示卡": 255
   },
-  "versions": [
+  "files": [
     {
-      "version": 1,
+      "file": "20260815.json",
       "crawled_at": "2026-08-15T15:40:15.770082+00:00",
       "total": 16,
-      "url": "api/items/v1.json"
+      "url": "api/items/20260815.json"
     },
     {
-      "version": 2,
+      "file": "20260815_1.json",
       "crawled_at": "2026-08-15T15:40:15.770082+00:00",
       "total": 1447,
-      "url": "api/items/v2.json"
+      "url": "api/items/20260815_1.json"
     },
     {
-      "version": 3,
+      "file": "20260816.json",
       "crawled_at": "2026-08-16T06:20:49.650053+00:00",
       "total": 1448,
-      "url": "api/items/v3.json",
+      "url": "api/items/20260816.json",
       "changed": 1
     }
   ]

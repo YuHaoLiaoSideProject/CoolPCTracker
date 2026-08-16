@@ -2,8 +2,8 @@
 // （開發規格 003 §2.4：成功/404/壞 JSON/shape/compact 正規化/isStale/retry）
 // ⚠️ useItems 為 module-level 單例（004 §2.3：003/004 共用同一份資料，避免重複請求）
 //   → 每個測試前以 __resetItemsShared() 重置，讓各測試以獨立 stub fetch 驗證。
-// 兩段式 fetch（AirTicketsPrice 模式）：先 fetch api/index.json（取 latest_version），
-// 再 fetch api/items/v{latest_version}.json（版本化快照）。
+// 兩段式 fetch（AirTicketsPrice 模式）：先 fetch api/index.json（取 latest_file），
+// 再 fetch 該檔（日期制快照）。
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useItems, parseItemsFile, parseIndex, ParseError, __resetItemsShared } from "@/composables/useItems"
 import { matchesCondition } from "@/utils/specFilter"
@@ -35,17 +35,16 @@ function badJsonResponse(): Response {
 }
 
 /** index.json 回應（前端 runtime 發現的版本來源） */
-function indexResponse(version = 3, crawledAt = "2026-08-16T06:00:00Z"): Response {
+function indexResponse(file = "api/items/20260816.json", crawledAt = "2026-08-16T06:00:00Z"): Response {
   return okResponse({
     generated_at: "2026-08-16T23:00:00Z",
-    latest_version: version,
+    latest_file: file,
     latest: "api/latest.json",
-    latest_items: `api/items/v${version}.json`,
     crawled_at: crawledAt,
     status: "ok",
     total: 0,
     counts: {},
-    versions: [],
+    files: [],
   })
 }
 
@@ -55,9 +54,9 @@ function stubFetch(handler: (url: string) => Response) {
 }
 
 /** 兩段式成功：index.json → items 快照 */
-function twoStage(itemsDoc: unknown, version = 3): (url: string) => Response {
+function twoStage(itemsDoc: unknown, file = "api/items/20260816.json"): (url: string) => Response {
   return (url: string) => {
-    if (url.includes(INDEX_MARK)) return indexResponse(version)
+    if (url.includes(INDEX_MARK)) return indexResponse(file)
     if (url.includes(ITEMS_MARK)) return okResponse(itemsDoc)
     return failResponse(404)
   }
@@ -92,7 +91,7 @@ describe("useItems", () => {
     // 兩段式順序：先 index 再版本化快照
     expect(urls[0]).toContain(INDEX_MARK)
     expect(urls[1]).toContain(ITEMS_MARK)
-    expect(urls[1]).toContain("/v3.json")
+    expect(urls[1]).toContain("/20260816.json")
   })
 
   it("index 404 → error='fetch'、items 為空", async () => {
@@ -105,7 +104,7 @@ describe("useItems", () => {
   })
 
   it("items 404（index 成功）→ error='fetch'", async () => {
-    stubFetch(url => (url.includes(INDEX_MARK) ? indexResponse(3) : failResponse(404)))
+    stubFetch(url => (url.includes(INDEX_MARK) ? indexResponse() : failResponse(404)))
     const { error } = useItems()
     await flush()
     expect(error.value).toBe("fetch")
@@ -119,13 +118,13 @@ describe("useItems", () => {
   })
 
   it("items 壞 JSON（SyntaxError）→ error='parse'", async () => {
-    stubFetch(url => (url.includes(INDEX_MARK) ? indexResponse(3) : badJsonResponse()))
+    stubFetch(url => (url.includes(INDEX_MARK) ? indexResponse() : badJsonResponse()))
     const { error } = useItems()
     await flush()
     expect(error.value).toBe("parse")
   })
 
-  it("index shape 缺 latest_version → error='parse'", async () => {
+  it("index shape 缺 latest_file → error='parse'", async () => {
     stubFetch(url => (url.includes(INDEX_MARK) ? okResponse({ generated_at: "x" }) : okResponse(makeItemsFile())))
     const { error } = useItems()
     await flush()
@@ -215,7 +214,7 @@ describe("useItems", () => {
   it("retry：items 失敗後重試成功 → error 清空、items 填入", async () => {
     let itemsCalls = 0
     stubFetch(url => {
-      if (url.includes(INDEX_MARK)) return indexResponse(3)
+      if (url.includes(INDEX_MARK)) return indexResponse()
       if (url.includes(ITEMS_MARK)) {
         itemsCalls += 1
         if (itemsCalls === 1) return failResponse(404)
@@ -239,15 +238,15 @@ describe("parseIndex（純函數）", () => {
     expect(() => parseIndex([])).toThrow(ParseError)
   })
 
-  it("latest_version 缺失 / 非正整數 → ParseError", () => {
+  it("latest_file 缺失 / 非字串 → ParseError", () => {
     expect(() => parseIndex({})).toThrow(ParseError)
-    expect(() => parseIndex({ latest_version: "3" })).toThrow(ParseError)
-    expect(() => parseIndex({ latest_version: 0 })).toThrow(ParseError)
-    expect(() => parseIndex({ latest_version: 1.5 })).toThrow(ParseError)
+    expect(() => parseIndex({ latest_file: 3 })).toThrow(ParseError)
+    expect(() => parseIndex({ latest_file: "" })).toThrow(ParseError)
+    expect(() => parseIndex({ latest_file: null })).toThrow(ParseError)
   })
 
-  it("正整數 latest_version → 回傳該版本", () => {
-    expect(parseIndex({ latest_version: 3 })).toEqual({ latest_version: 3 })
+  it("非空字串 latest_file → 回傳該檔", () => {
+    expect(parseIndex({ latest_file: "api/items/20260816.json" })).toEqual({ latest_file: "api/items/20260816.json" })
   })
 })
 

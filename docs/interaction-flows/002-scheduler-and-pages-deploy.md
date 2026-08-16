@@ -37,7 +37,7 @@ flowchart TD
     Pip --> Crawl[4. 執行爬蟲（功能 001）]
     Crawl --> Diff{5. 資料有異動?}
     Diff --> TG[[6. Telegram 通知整合點（功能 006 預留，commit 前）]]
-    TG -->|有異動| Commit[7a. commit data/：items.v{n}.json + meta.json + telegram.json]
+    TG -->|有異動| Commit[7a. commit data/ api/：YYYYMMDD[_n].json + index.json + meta.json + telegram.json]
     TG -->|無異動| Skip[7b. 跳過 commit，保留上次資料]
     Commit --> Build[8. 前端 Vite build]
     Skip --> Build
@@ -110,10 +110,10 @@ flowchart TD
 
 | | 描述 |
 |---|------|
-| **觸發** | version_data 比對本次爬取結果與上次 `items.v{n}.json` |
+| **觸發** | version_data 比對本次爬取結果與上次最新快照（掃 `api/items/*.json` 取 (日期, 後綴) 最大） |
 | **操作前** | 爬蟲已完成（步驟 5） |
-| **系統回應** | 輸出異動判定（changed）與新版本號（next = prev + 1）；**此步不 commit** |
-| **操作後** | 工作目錄含本次資料與版本化快照，待 telegram 階段與 commit |
+| **系統回應** | 輸出異動判定（changed）與新檔名（filename = {YYYYMMDD[_n]}.json）；**此步不 commit** |
+| **操作後** | 工作目錄含本次資料與日期制快照，待 telegram 階段與 commit |
 | **下一步** | 步驟 7：Telegram 通知整合點（commit 前） |
 
 ### 步驟 7：Telegram 通知整合點（功能 006 預留）
@@ -132,7 +132,7 @@ flowchart TD
 |---|------|
 | **觸發** | telegram 階段完成後依異動判定分支 |
 | **操作前** | 爬蟲與 telegram 已完成（步驟 5-7） |
-| **系統回應** | **有異動（7a）**：commit data/（items.v{n}.json 版本號遞增 + meta.json + telegram.json）；**無異動（7b）**：跳過 commit，保留上次資料（不產生空 commit） |
+| **系統回應** | **有異動（7a）**：commit data/ api/（YYYYMMDD[_n].json + index.json + meta.json + telegram.json）；**無異動（7b）**：跳過 commit，保留上次資料（不產生空 commit） |
 | **操作後** | 有異動 → 資料檔已推回主分支；無異動 → 工作目錄無變化 |
 | **下一步** | 步驟 8：前端 Vite build |
 
@@ -178,7 +178,7 @@ flowchart TD
 | Vite build 失敗 | run 標記失敗，不執行部署 | 檢查前端相依套件與程式碼 → 修正後重跑 |
 | GitHub Pages 部署失敗 | run 標記失敗，線上維持上次成功部署 | 檢查 Pages 部署設定與權限 → 修正後重跑部署 job |
 | cron 排程延遲或跳過 | 當日沒有 run 或 run 延遲啟動 | 維護者手動 workflow_dispatch 補爬，資料新鮮度照常更新 |
-| 排程與手動同時觸發（並發） | 若無 concurrency 控制，可能發生 commit 衝突或版本號重複 | concurrency group 確保同一時間僅一個 run 執行寫入 |
+| 排程與手動同時觸發（並發） | 若無 concurrency 控制，可能發生 commit 衝突或檔名重複 | concurrency group 確保同一時間僅一個 run 執行寫入 |
 
 ---
 
@@ -189,7 +189,7 @@ flowchart TD
 | **更新頻率** | 每日一次（06:00 UTC = 台北 14:00）；手動觸發可隨時補爬，不受每日一次限制 |
 | **cron 精準度** | GitHub Actions 排程不保證分秒不差，可能延遲數分鐘或偶發跳過（官方不提供 SLA） |
 | **並發寫入** | 排程與手動同時觸發時，需以 concurrency 控制避免 commit 衝突；同一時間僅允許一個 run 進入寫入階段 |
-| **資料檔命名** | 考量 GitHub Pages JSON 快取，資料檔採 cache-busting 檔名 items.v{n}.json；n 隨每次異動遞增並記錄於 meta.json |
+| **資料檔命名** | 考量 GitHub Pages JSON 快取，資料檔採日期制 cache-busting 檔名 api/items/YYYYMMDD[_n].json；檔名取自 crawled_at 轉台北日期（同日多份依序加後綴） |
 | **資料新鮮度** | 資料檔含 crawled_at；爬蟲失敗當日不更新，網站顯示上次成功爬取時間 |
 | **失敗保護** | 任一關鍵步驟失敗即停止後續步驟：爬蟲失敗不覆寫舊資料、build 失敗不部署、部署失敗保留上次版本 |
 | **版本控制** | 資料檔納入 git 版控（delta 歷史），僅異動時 append，避免 repo 快速膨脹 |
@@ -204,13 +204,13 @@ flowchart TD
 - [ ] 維護者可透過 workflow_dispatch 手動觸發（Actions 頁面有「Run workflow」按鈕）
 - [ ] 工作流依序執行：checkout → setup-python 3.12 → pip install → 爬蟲 → build → 部署
 - [ ] 資料有異動時才 commit data/，無異動時跳過 commit（不產生空 commit）
-- [ ] 資料檔使用 cache-busting 檔名 items.v{n}.json，n 隨異動遞增
-- [ ] meta.json 記錄目前版本號與最後爬取時間
+- [ ] 資料檔使用日期制 cache-busting 檔名 api/items/YYYYMMDD[_n].json（同日多份依序加後綴）
+- [ ] api/index.json 記錄 files[] 完整日期檔清單與 latest_file；meta.json 記錄最後爬取時間
 - [ ] 資料含 crawled_at，前端可顯示資料新鮮度
 - [ ] 爬蟲完成後觸發 Telegram 通知整合點（功能 006 預留，未實作不中斷 run）
 - [ ] 爬蟲失敗 → run 標記失敗、舊資料不覆寫、不部署
 - [ ] build 失敗 → run 標記失敗、不部署
 - [ ] 部署失敗 → run 標記失敗、線上維持上次成功版本
-- [ ] 並發 run 有 concurrency 控制，不產生 commit 衝突或版本號重複
-- [ ] 首次執行（repo 尚無資料檔）建立 items.v1.json 與 meta.json
+- [ ] 並發 run 有 concurrency 控制，不產生 commit 衝突或檔名重複
+- [ ] 首次執行（repo 尚無快照）建立 api/items/{date}.json 與 api/index.json
 - [ ] 部署完成後 GitHub Pages 網站可存取，且資料為最新版本（crawled_at 為本次爬取時間）

@@ -15,7 +15,7 @@ Feature: 每日排程與 GitHub Pages 部署
     When GitHub Actions 依 cron 排程自動觸發 crawl.yml
     And 爬蟲執行成功且本次資料有異動
     Then 工作流依序完成 checkout、setup-python 3.12、pip install 與爬蟲
-    And commit data/ 的異動並遞增 cache-busting 版本號
+    And commit data/ api/ 的異動並寫入日期制快照
     And 前端 build 成功並部署至 GitHub Pages
     And 工作流以成功狀態結束
 
@@ -24,21 +24,21 @@ Feature: 每日排程與 GitHub Pages 部署
     Given 維護者開啟 GitHub Actions 頁面並選擇 crawl.yml
     When 維護者點擊「Run workflow」以 workflow_dispatch 手動觸發
     Then 工作流執行與每日排程相同的完整管線
-    And 資料有異動時 commit data/
+    And 資料有異動時 commit data/ api/
     And 前端 build 成功並部署至 GitHub Pages
     And 工作流以成功狀態結束
 
   @business-rule @cache-busting @regression
-  Scenario Outline: 資料異動時以遞增版本號更新 cache-busting 資料檔
-    Given 上次部署的資料檔為 items.v<prev>.json
+  Scenario Outline: 資料異動時寫入日期制 cache-busting 資料檔
+    Given 上次部署後 api/items/ 已有的同日檔案為 <同日既存>
     When 本次爬蟲產出與上次有異動的資料
-    Then 工作流寫入 items.v<next>.json 並更新 meta.json 的版本號
+    Then 工作流寫入 api/items/<filename>.json 並更新 api/index.json
     And 資料檔內含本次爬取時間 crawled_at
     Examples:
-      | prev | next |
-      | 1    | 2    |
-      | 5    | 6    |
-      | 9    | 10   |
+      | 同日既存                         | filename  |
+      | 無                                | 20260816  |
+      | 20260816.json                     | 20260816_1 |
+      | 20260816.json, 20260816_1.json   | 20260816_2 |
 
   @business-rule @regression
   Scenario: 資料無異動時跳過 commit 仍完成部署
@@ -96,11 +96,11 @@ Feature: 每日排程與 GitHub Pages 部署
     Given 排程與手動觸發使兩次 run 同時進入寫入階段
     When 兩次 run 嘗試 commit data/
     Then 工作流以 concurrency 控制確保同一時間僅一個 run 執行寫入
-    And 資料檔不發生 commit 衝突或版本號重複
+    And 資料檔不發生 commit 衝突或檔名重複
 
   @edge-case @initial-setup
   Scenario: 首次執行建立初始資料檔
-    Given repo 內尚無 items.v{n}.json 與 meta.json
+    Given repo 內尚無 api/items/*.json 快照
     When 工作流首次執行爬蟲成功並產出資料
-    Then 工作流建立 items.v1.json 與 meta.json
+    Then 工作流建立 api/items/{date}.json 與 api/index.json
     And 資料檔含 crawled_at 與完整商品清單
