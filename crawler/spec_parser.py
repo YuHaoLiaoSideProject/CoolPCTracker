@@ -169,6 +169,7 @@ _RAM_BRANDS: tuple[str, ...] = (
     "芝奇", "G.SKILL", "十銓", "TEAM", "海盜船", "CORSAIR", "Patriot",
     "博帝", "創見", "Transcend", "廣穎", "宇瞻", "Apacer", "KLEVV",
     "科賦", "PNY", "Samsung", "三星", "UMAX", "凌航", "T-FORCE",
+    "Biwin", "佰維", "Origin code", "Origin",
 )
 _RE_RAM_SPEC = re.compile(r"\b(DDR[0-9])\b", re.IGNORECASE)  # DDR5 / DDR4
 _RE_RAM_CLOCK = re.compile(r"\bDDR[0-9]\s*[-/]?\s*(\d+)\b", re.IGNORECASE)  # DDR5-5600 → 5600

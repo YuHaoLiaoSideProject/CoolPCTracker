@@ -17284,9 +17284,13 @@
       "subcategory": "桌上型記憶體 DDR5 雙通道",
       "name": "Biwin 佰維 Black Opal HX100 48GB(雙通24GBx2) DDR5-6000 CL28 黑",
       "spec": {
-        "brand": null,
-        "model": null,
-        "extra": {}
+        "brand": "Biwin",
+        "model": "佰維 Black Opal HX100 48GB(雙通24GBx2) DDR5-6000 CL28 黑",
+        "extra": {
+          "ram_gb": 48,
+          "spec": "DDR5",
+          "clock_mhz": 6000
+        }
       },
       "flags": {},
       "status": "in_stock",
@@ -17305,9 +17309,13 @@
       "subcategory": "桌上型記憶體 DDR5 雙通道",
       "name": "Biwin 佰維 Black Opal DW100 RGB 32GB(雙通16GBx2) DDR5-6000 CL28 黑",
       "spec": {
-        "brand": null,
-        "model": null,
-        "extra": {}
+        "brand": "Biwin",
+        "model": "佰維 Black Opal DW100 RGB 32GB(雙通16GBx2) DDR5-6000 CL28 黑",
+        "extra": {
+          "ram_gb": 32,
+          "spec": "DDR5",
+          "clock_mhz": 6000
+        }
       },
       "flags": {},
       "status": "in_stock",
@@ -17326,9 +17334,13 @@
       "subcategory": "桌上型記憶體 DDR5 雙通道",
       "name": "Biwin 佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 黑",
       "spec": {
-        "brand": null,
-        "model": null,
-        "extra": {}
+        "brand": "Biwin",
+        "model": "佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 黑",
+        "extra": {
+          "ram_gb": 48,
+          "spec": "DDR5",
+          "clock_mhz": 6000
+        }
       },
       "flags": {},
       "status": "in_stock",
@@ -17347,9 +17359,13 @@
       "subcategory": "桌上型記憶體 DDR5 雙通道",
       "name": "Biwin 佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 白",
       "spec": {
-        "brand": null,
-        "model": null,
-        "extra": {}
+        "brand": "Biwin",
+        "model": "佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 白",
+        "extra": {
+          "ram_gb": 48,
+          "spec": "DDR5",
+          "clock_mhz": 6000
+        }
       },
       "flags": {},
       "status": "in_stock",
@@ -17368,9 +17384,13 @@
       "subcategory": "桌上型記憶體 DDR5 雙通道",
       "name": "Origin code Vortex RGB 32GB(雙通16GBx2) DDR5-6200(CL26)銀(獨立風扇)",
       "spec": {
-        "brand": null,
-        "model": null,
-        "extra": {}
+        "brand": "Origin code",
+        "model": "Vortex RGB 32GB(雙通16GBx2) DDR5-6200(CL26)銀(獨立風扇)",
+        "extra": {
+          "ram_gb": 32,
+          "spec": "DDR5",
+          "clock_mhz": 6200
+        }
       },
       "flags": {},
       "status": "in_stock",
@@ -17389,9 +17409,13 @@
       "subcategory": "桌上型記憶體 DDR5 雙通道",
       "name": "Origin code Vortex RGB 48GB(雙通24GBx2) DDR5-6000(CL26)銀(獨立風扇)",
       "spec": {
-        "brand": null,
-        "model": null,
-        "extra": {}
+        "brand": "Origin code",
+        "model": "Vortex RGB 48GB(雙通24GBx2) DDR5-6000(CL26)銀(獨立風扇)",
+        "extra": {
+          "ram_gb": 48,
+          "spec": "DDR5",
+          "clock_mhz": 6000
+        }
       },
       "flags": {
         "hot": true

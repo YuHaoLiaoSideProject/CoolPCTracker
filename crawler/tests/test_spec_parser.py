@@ -132,6 +132,49 @@ class TestRamDeepParse:
         assert spec.extra["ram_gb"] == 16
         assert "capacity_gb" not in spec.extra
 
+    @pytest.mark.parametrize(
+        ("name", "brand", "ram_gb", "spec", "clock_mhz", "model_fragment"),
+        [
+            # 004 資料缺口：Biwin 佰維 / Origin code 品牌無法辨識 → spec.extra 為空。
+            # 補品牌別名後，雙語前綴「Biwin 佰維」依既有慣例剝離英文品牌、中文別名留於 model。
+            (
+                "Biwin 佰維 Black Opal HX100 48GB(雙通24GBx2) DDR5-6000 CL28 黑",
+                "Biwin", 48, "DDR5", 6000, "Black Opal HX100",
+            ),
+            (
+                "Biwin 佰維 Black Opal DW100 RGB 32GB(雙通16GBx2) DDR5-6000 CL28 黑",
+                "Biwin", 32, "DDR5", 6000, "Black Opal DW100 RGB",
+            ),
+            (
+                "Biwin 佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 黑",
+                "Biwin", 48, "DDR5", 6000, "Black Opal DW100 RGB",
+            ),
+            (
+                "Biwin 佰維 Black Opal DW100 RGB 48GB(雙通24GBx2) DDR5-6000 CL28 白",
+                "Biwin", 48, "DDR5", 6000, "Black Opal DW100 RGB",
+            ),
+            (
+                "Origin code Vortex RGB 32GB(雙通16GBx2) DDR5-6200(CL26)銀(獨立風扇)",
+                "Origin code", 32, "DDR5", 6200, "Vortex RGB",
+            ),
+            (
+                "Origin code Vortex RGB 48GB(雙通24GBx2) DDR5-6000(CL26)銀(獨立風扇)",
+                "Origin code", 48, "DDR5", 6000, "Vortex RGB",
+            ),
+        ],
+    )
+    def test_biwin_origin_code_brand_parse(
+        self, name: str, brand: str, ram_gb: int, spec: str, clock_mhz: int, model_fragment: str
+    ) -> None:
+        parsed = parse_spec("記憶體", name)
+        assert parsed.brand == brand
+        assert parsed.model is not None
+        assert model_fragment in parsed.model
+        assert parsed.extra["ram_gb"] == ram_gb
+        assert parsed.extra["spec"] == spec
+        assert parsed.extra["clock_mhz"] == clock_mhz
+        assert "capacity_gb" not in parsed.extra
+
 
 # ── SSD 深度 ─────────────────────────────────────────────────────────────
 
