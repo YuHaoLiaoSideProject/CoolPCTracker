@@ -1,6 +1,7 @@
 // web/e2e/helpers/oracle.ts — 測試 oracle（以真實資料檔動態計算，避免寫死會漂移的筆數）
-// 讀 data/meta.json 的 version → 組出 data/items.v{version}.json 路徑（與 vite.config.ts 注入
-// __DATA_VERSION__ 的來源一致），動態解析當前版本，避免資料版本 bump 後 oracle 仍讀舊快照。
+// 讀 ../api/index.json 的 latest_version → 組出 api/items/v{latest_version}.json 路徑
+// （與前端 useItems runtime 兩段式 fetch 一致），動態解析當前版本，避免資料版本 bump 後
+// oracle 仍讀舊快照。
 // 鏡像前端 useItems.parseItemsFile 的 normalizeSpec 與 search.ts / specFilter.ts 的比對邏輯，
 // 產出「前端應顯示的結果集合」，供 E2E 斷言對照。
 import { readFileSync } from "node:fs"
@@ -38,22 +39,22 @@ export function flatSpec(spec: RawSpec | null | undefined): Record<string, strin
   return out
 }
 
-/** 讀 data/meta.json 的 version，動態解析前端實際載入的版本化資料檔 */
+/** 讀 ../api/index.json 的 latest_version，動態解析前端實際載入的版本化資料檔 */
 function resolveDataVersion(): number {
-  const metaUrl = new URL("../../../data/meta.json", import.meta.url)
-  const meta = JSON.parse(readFileSync(fileURLToPath(metaUrl), "utf-8")) as { version?: unknown }
-  if (typeof meta.version !== "number") {
-    throw new Error("oracle: data/meta.json 缺少數值 version，無法解析資料檔名")
+  const indexUrl = new URL("../../../api/index.json", import.meta.url)
+  const index = JSON.parse(readFileSync(fileURLToPath(indexUrl), "utf-8")) as { latest_version?: unknown }
+  if (typeof index.latest_version !== "number") {
+    throw new Error("oracle: api/index.json 缺少數值 latest_version，無法解析資料檔名")
   }
-  return meta.version
+  return index.latest_version
 }
 
-/** 載入真資料 items（與 dev server 依 __DATA_VERSION__ 服務的 items.v{version}.json 一致） */
+/** 載入真資料 items（與前端 useItems 依 latest_version fetch 的 api/items/v{version}.json 一致） */
 export function loadItems(): RawItem[] {
   const version = resolveDataVersion()
-  const url = new URL(`../../../data/items.v${version}.json`, import.meta.url)
+  const url = new URL(`../../../api/items/v${version}.json`, import.meta.url)
   const raw = JSON.parse(readFileSync(fileURLToPath(url), "utf-8"))
-  if (!Array.isArray(raw.items)) throw new Error(`oracle: data/items.v${version}.json 缺少 items 陣列`)
+  if (!Array.isArray(raw.items)) throw new Error(`oracle: api/items/v${version}.json 缺少 items 陣列`)
   return raw.items as RawItem[]
 }
 

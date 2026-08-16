@@ -1,5 +1,5 @@
 // web/playwright.config.ts — E2E（Playwright）設定（003 篩選功能）
-// - webServer 以 vite dev 啟動（dev 模式直接服務 public/data/items.v2.json，即真資料）
+// - webServer 以 vite dev 啟動（dev 模式由 vite middleware 服務 ../api，即真資料）
 // - base 為 /CoolPCTracker/（見 vite.config.ts base），故 URL 需帶 /CoolPCTracker/ 前綴
 // - 單 worker 循序執行，避免並行干擾 dev server 與計數斷言
 import { defineConfig } from "@playwright/test"

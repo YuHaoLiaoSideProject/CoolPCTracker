@@ -1,8 +1,10 @@
 // web/src/composables/useItems.ts — 資料載入（開發規格 003 §2.4 / 004 §2.3）
-// 職責：fetch 版本化商品檔 data/items.v{n}.json（002 §1.7 合約，檔名自帶快取失效）、
-// 解析與 shape 驗證（相容 001 items.json 與 002 版本化快照兩種頂層形狀）、錯誤分類、
-// 重試、過期判定。錯誤分類決定 ErrorState 顯示文案；任何失敗都不能影響側欄／搜尋框
-// 渲染（錯誤只在列表區域呈現）。
+// 職責：runtime 兩段式 fetch（AirTicketsPrice 模式，無 build 注入版本）：
+//   1. fetch(BASE_URL + "api/index.json") → 取 latest_version（index 為唯一入口/目錄）
+//   2. fetch(BASE_URL + "api/items/v{latest_version}.json") → 版本化快照（檔名自帶快取失效）
+// 解析與 shape 驗證（parseItemsFile 相容 001 items.json 與 002 版本化快照兩種頂層形狀）、
+// 錯誤分類、重試、過期判定。錯誤分類決定 ErrorState 顯示文案；任何失敗都不能影響側欄／
+// 搜尋框渲染（錯誤只在列表區域呈現）。
 // 003/004 共用 module-level 單例：列表頁與詳情頁共用同一份資料，避免重複請求（004 §2.3）。
 
 import { ref, computed, type Ref } from "vue"
@@ -14,11 +16,20 @@ export type LoadError = "fetch" | "parse" | null
 
 export class ParseError extends TypeError {} // 供 error 分類判別
 
-// 002 §1.7 合約：前端讀取版本化檔名（build 期注入 __DATA_VERSION__，vite.config.ts define），
+// 002 §1.7 合約（改造後）＋ AirTicketsPrice 模式：前端 runtime 發現，無 build 注入版本。
+// index.json 是唯一入口（latest_version / latest_items），版本化快照 api/items/v{n}.json
 // 檔名版本化 → 瀏覽器/Pages 快取對該檔必然失效，無需 query 快取穿透。
-// 資料形狀：version_data.py 將 001 的 items.json（{meta, items}）快照為 items.v{n}.json
-// （{crawled_at, items}，頂層無 meta 巢狀），parseItemsFile 兩種形狀皆相容。
-const DATA_URL = `${import.meta.env.BASE_URL}data/items.v${__DATA_VERSION__}.json`
+const INDEX_URL = `${import.meta.env.BASE_URL}api/index.json`
+
+/** index.json shape 驗證：latest_version 為正整數（前端 runtime 發現的版本來源）。 */
+export function parseIndex(raw: unknown): { latest_version: number } {
+  if (!isRecord(raw)) throw new ParseError("index.json shape 不符：頂層應為 object")
+  const v = raw.latest_version
+  if (typeof v !== "number" || !Number.isInteger(v) || v < 1) {
+    throw new ParseError("index.json shape 不符：latest_version 缺失或非正整數")
+  }
+  return { latest_version: v }
+}
 
 function createItemsState() {
   const items = ref<Item[]>([]) as Ref<Item[]>
@@ -30,9 +41,14 @@ function createItemsState() {
     loading.value = true
     error.value = null
     try {
-      const res = await fetch(DATA_URL)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const raw: unknown = await res.json() // 壞 JSON → SyntaxError
+      const indexRes = await fetch(INDEX_URL)
+      if (!indexRes.ok) throw new Error(`HTTP ${indexRes.status}`)
+      const indexRaw: unknown = await indexRes.json() // 壞 JSON → SyntaxError
+      const { latest_version } = parseIndex(indexRaw) // shape 驗證失敗 → ParseError
+      const itemsUrl = `${import.meta.env.BASE_URL}api/items/v${latest_version}.json`
+      const itemsRes = await fetch(itemsUrl)
+      if (!itemsRes.ok) throw new Error(`HTTP ${itemsRes.status}`)
+      const raw: unknown = await itemsRes.json() // 壞 JSON → SyntaxError
       const parsed = parseItemsFile(raw) // shape 驗證失敗 → ParseError
       items.value = parsed.items
       meta.value = parsed.meta

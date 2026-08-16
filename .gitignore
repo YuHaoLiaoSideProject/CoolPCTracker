@@ -15,12 +15,11 @@ env/
 .coverage
 htmlcov/
 
-# Runtime data（002 起版控：items.json/meta.json/版本化快照/telegram.json 入庫）
+# Runtime data（002 起版控：items.json/meta.json/telegram.json 入庫；版本化快照已移入 api/items/）
 data/*
 !data/.gitkeep
 !data/items.json
 !data/meta.json
-!data/items.v*.json
 !data/telegram.json
 
 # Env / secrets
@@ -29,6 +28,7 @@ data/*
 
 # Frontend (web/)
 web/node_modules/
+web/test-results/
 
 # Reports（使用者決定不納入版本控制）
 PROJECT-REPORT.md

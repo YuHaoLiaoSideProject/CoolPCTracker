@@ -2,13 +2,17 @@
 // （開發規格 003 §2.4：成功/404/壞 JSON/shape/compact 正規化/isStale/retry）
 // ⚠️ useItems 為 module-level 單例（004 §2.3：003/004 共用同一份資料，避免重複請求）
 //   → 每個測試前以 __resetItemsShared() 重置，讓各測試以獨立 stub fetch 驗證。
+// 兩段式 fetch（AirTicketsPrice 模式）：先 fetch api/index.json（取 latest_version），
+// 再 fetch api/items/v{latest_version}.json（版本化快照）。
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { useItems, parseItemsFile, ParseError, __resetItemsShared } from "@/composables/useItems"
+import { useItems, parseItemsFile, parseIndex, ParseError, __resetItemsShared } from "@/composables/useItems"
 import { matchesCondition } from "@/utils/specFilter"
 import { makeItemsFile } from "@/testing/fixtures"
 import type { ItemsFile } from "@/types/item"
 
 const DAY = 86_400_000
+const INDEX_MARK = "api/index.json"
+const ITEMS_MARK = "api/items/"
 
 beforeEach(() => {
   __resetItemsShared() // 每測試獨立單例
@@ -20,9 +24,43 @@ function okResponse(body: unknown): Response {
 function failResponse(status: number): Response {
   return { ok: false, status, json: async () => ({}) } as unknown as Response
 }
+function badJsonResponse(): Response {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => {
+      throw new SyntaxError("Unexpected token")
+    },
+  } as unknown as Response
+}
 
-function stubFetch(impl: () => Promise<Response>) {
-  vi.stubGlobal("fetch", vi.fn(impl))
+/** index.json 回應（前端 runtime 發現的版本來源） */
+function indexResponse(version = 3, crawledAt = "2026-08-16T06:00:00Z"): Response {
+  return okResponse({
+    generated_at: "2026-08-16T23:00:00Z",
+    latest_version: version,
+    latest: "api/latest.json",
+    latest_items: `api/items/v${version}.json`,
+    crawled_at: crawledAt,
+    status: "ok",
+    total: 0,
+    counts: {},
+    versions: [],
+  })
+}
+
+/** 依 URL 派送回應的 fetch stub（fetch 被 useItems await，回傳 Promise<Response>） */
+function stubFetch(handler: (url: string) => Response) {
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => handler(url)))
+}
+
+/** 兩段式成功：index.json → items 快照 */
+function twoStage(itemsDoc: unknown, version = 3): (url: string) => Response {
+  return (url: string) => {
+    if (url.includes(INDEX_MARK)) return indexResponse(version)
+    if (url.includes(ITEMS_MARK)) return okResponse(itemsDoc)
+    return failResponse(404)
+  }
 }
 
 /** 等待 useItems 內部的 async load() 完成 */
@@ -38,19 +76,27 @@ afterEach(() => {
 })
 
 describe("useItems", () => {
-  it("成功載入：items + meta 就緒、error 為 null", async () => {
+  it("成功載入：先 index 再 items、items + meta 就緒、error 為 null", async () => {
     const doc = makeItemsFile()
-    stubFetch(async () => okResponse(doc))
+    const urls: string[] = []
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      urls.push(url)
+      return twoStage(doc)(url)
+    }))
     const { items, meta, loading, error } = useItems()
     await flush()
     expect(loading.value).toBe(false)
     expect(error.value).toBeNull()
     expect(items.value.length).toBe(doc.items.length)
     expect(meta.value?.crawled_at).toBe(doc.meta.crawled_at)
+    // 兩段式順序：先 index 再版本化快照
+    expect(urls[0]).toContain(INDEX_MARK)
+    expect(urls[1]).toContain(ITEMS_MARK)
+    expect(urls[1]).toContain("/v3.json")
   })
 
-  it("HTTP 404 → error='fetch'、items 為空", async () => {
-    stubFetch(async () => failResponse(404))
+  it("index 404 → error='fetch'、items 為空", async () => {
+    stubFetch(() => failResponse(404))
     const { items, error, loading } = useItems()
     await flush()
     expect(error.value).toBe("fetch")
@@ -58,21 +104,36 @@ describe("useItems", () => {
     expect(loading.value).toBe(false)
   })
 
-  it("壞 JSON（SyntaxError）→ error='parse'", async () => {
-    stubFetch(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => {
-        throw new SyntaxError("Unexpected token")
-      },
-    }) as unknown as Response)
+  it("items 404（index 成功）→ error='fetch'", async () => {
+    stubFetch(url => (url.includes(INDEX_MARK) ? indexResponse(3) : failResponse(404)))
+    const { error } = useItems()
+    await flush()
+    expect(error.value).toBe("fetch")
+  })
+
+  it("index 壞 JSON（SyntaxError）→ error='parse'", async () => {
+    stubFetch(url => (url.includes(INDEX_MARK) ? badJsonResponse() : okResponse(makeItemsFile())))
     const { error } = useItems()
     await flush()
     expect(error.value).toBe("parse")
   })
 
-  it("shape 缺欄位 → error='parse'", async () => {
-    stubFetch(async () => okResponse({ meta: { crawled_at: "x" }, items: [{ id: 1 }] }))
+  it("items 壞 JSON（SyntaxError）→ error='parse'", async () => {
+    stubFetch(url => (url.includes(INDEX_MARK) ? indexResponse(3) : badJsonResponse()))
+    const { error } = useItems()
+    await flush()
+    expect(error.value).toBe("parse")
+  })
+
+  it("index shape 缺 latest_version → error='parse'", async () => {
+    stubFetch(url => (url.includes(INDEX_MARK) ? okResponse({ generated_at: "x" }) : okResponse(makeItemsFile())))
+    const { error } = useItems()
+    await flush()
+    expect(error.value).toBe("parse")
+  })
+
+  it("items shape 缺欄位 → error='parse'", async () => {
+    stubFetch(twoStage({ meta: { crawled_at: "x" }, items: [{ id: 1 }] }))
     const { error } = useItems()
     await flush()
     expect(error.value).toBe("parse")
@@ -96,7 +157,7 @@ describe("useItems", () => {
         },
       ],
     })
-    stubFetch(async () => okResponse(doc))
+    stubFetch(twoStage(doc))
     const { items } = useItems()
     await flush()
     expect(items.value[0].history).toEqual([
@@ -118,7 +179,7 @@ describe("useItems", () => {
         },
       ],
     })
-    stubFetch(async () => okResponse(doc))
+    stubFetch(twoStage(doc))
     const { items } = useItems()
     await flush()
     expect(items.value[0].history).toEqual([])
@@ -128,21 +189,21 @@ describe("useItems", () => {
 
   it("crawled_at 8 天前 → isStale=true；7 天內 → false", async () => {
     const doc8 = makeItemsFile({ meta: { crawled_at: new Date(Date.now() - 8 * DAY).toISOString(), source: "t" } })
-    stubFetch(async () => okResponse(doc8))
+    stubFetch(twoStage(doc8))
     const stale = useItems()
     await flush()
     expect(stale.isStale.value).toBe(true)
 
     __resetItemsShared() // 換新單例驗證「7 天內不視為過期」
     const doc7 = makeItemsFile({ meta: { crawled_at: new Date(Date.now() - 7 * DAY).toISOString(), source: "t" } })
-    stubFetch(async () => okResponse(doc7))
+    stubFetch(twoStage(doc7))
     const fresh = useItems()
     await flush()
     expect(fresh.isStale.value).toBe(false)
   })
 
   it("單例共享：第二次 useItems() 回傳同一實例（不重複 fetch，004 §2.3）", async () => {
-    stubFetch(async () => okResponse(makeItemsFile()))
+    stubFetch(twoStage(makeItemsFile()))
     const a = useItems()
     await flush()
     const b = useItems() // 同單例：不重新 fetch、不重新 loading
@@ -151,12 +212,16 @@ describe("useItems", () => {
     expect(b.loading.value).toBe(false)
   })
 
-  it("retry：失敗後重試成功 → error 清空、items 填入", async () => {
-    let calls = 0
-    stubFetch(async () => {
-      calls += 1
-      if (calls === 1) return failResponse(404)
-      return okResponse(makeItemsFile())
+  it("retry：items 失敗後重試成功 → error 清空、items 填入", async () => {
+    let itemsCalls = 0
+    stubFetch(url => {
+      if (url.includes(INDEX_MARK)) return indexResponse(3)
+      if (url.includes(ITEMS_MARK)) {
+        itemsCalls += 1
+        if (itemsCalls === 1) return failResponse(404)
+        return okResponse(makeItemsFile())
+      }
+      return failResponse(404)
     })
     const { error, retry, items } = useItems()
     await flush()
@@ -165,6 +230,24 @@ describe("useItems", () => {
     await flush()
     expect(error.value).toBeNull()
     expect(items.value.length).toBeGreaterThan(0)
+  })
+})
+
+describe("parseIndex（純函數）", () => {
+  it("非 object → ParseError", () => {
+    expect(() => parseIndex(null)).toThrow(ParseError)
+    expect(() => parseIndex([])).toThrow(ParseError)
+  })
+
+  it("latest_version 缺失 / 非正整數 → ParseError", () => {
+    expect(() => parseIndex({})).toThrow(ParseError)
+    expect(() => parseIndex({ latest_version: "3" })).toThrow(ParseError)
+    expect(() => parseIndex({ latest_version: 0 })).toThrow(ParseError)
+    expect(() => parseIndex({ latest_version: 1.5 })).toThrow(ParseError)
+  })
+
+  it("正整數 latest_version → 回傳該版本", () => {
+    expect(parseIndex({ latest_version: 3 })).toEqual({ latest_version: 3 })
   })
 })
 

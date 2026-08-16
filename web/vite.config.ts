@@ -1,49 +1,56 @@
 // web/vite.config.ts
-// 功能 002 §1.7 前端 build 整合合約（003-005 消費）
-// - 讀 ../data/meta.json 取得 version → define.__DATA_VERSION__（build 期注入）
+// 功能 002 §1.7 前端 build 整合合約（003-005 消費）＋ AirTicketsPrice 模式（data/ 真相 + api/ 衍生）
 // - base 由 workflow env BASE_PATH 注入（Pages project site 基底路徑），預設 /CoolPCTracker/
-// - 內建 inline plugin（無額外 dependency）：build 收尾把
-//   ../data/items.v{version}.json 與 ../data/meta.json 複製至 dist/data/；
-//   來源不存在時略過並印 warning（本地無資料檔仍可 build）
+// - 單一 inline plugin（無額外 dependency）：
+//   dev：configureServer middleware 把 /api/* 對應到 ../api（檔案不存在回 404）；
+//   build：closeBundle 把 ../api/** 遞迴複製進 dist/api/（自動、非手動 drift）。
+//   前端 runtime fetch(BASE_URL + "api/index.json") → latest_version → api/items/v{n}.json。
 // 003：新增 vue plugin、alias @→src、vitest 設定（§2.1 專案初始化）
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, statSync } from "node:fs";
+import { join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 
-const WEB_ROOT = fileURLToPath(new URL(".", import.meta.url)); // web/
-const DATA_DIR = fileURLToPath(new URL("../data", import.meta.url));
-const DIST_DATA_DIR = fileURLToPath(new URL("./dist/data", import.meta.url));
+const API_DIR = fileURLToPath(new URL("../api", import.meta.url)); // repo 根 /api
+const DIST_API_DIR = fileURLToPath(new URL("./dist/api", import.meta.url)); // web/dist/api
 
-// 讀 ../data/meta.json 取得 cache-busting 版本號（本地無資料檔 → 降級為 0，仍可 build）
-let dataVersion = 0;
-try {
-  const meta = JSON.parse(readFileSync(fileURLToPath(new URL("../data/meta.json", import.meta.url)), "utf-8"));
-  dataVersion = typeof meta.version === "number" ? meta.version : 0;
-  console.log(`[vite:data] 讀取 ../data/meta.json：version=${dataVersion}`);
-} catch {
-  console.warn("[vite:data] 找不到 ../data/meta.json（本地無資料檔）→ __DATA_VERSION__ 以 0 注入");
-}
-
-/** 複製單一資料檔至 dist/data/；來源不存在 → warning 並略過。 */
-function copyToDist(fileName: string): void {
-  const src = fileURLToPath(new URL(`../data/${fileName}`, import.meta.url));
-  if (!existsSync(src)) {
-    console.warn(`[vite:data] 來源不存在，略過複製：../data/${fileName}`);
-    return;
-  }
-  mkdirSync(DIST_DATA_DIR, { recursive: true });
-  copyFileSync(src, fileURLToPath(new URL(`./dist/data/${fileName}`, import.meta.url)));
-  console.log(`[vite:data] 已複製 ${fileName} → dist/data/`);
-}
-
-/** inline plugin：closeBundle 時把資料檔複製進 dist/data/（合約 §1.7；
- *  前端以 items.v{n}.json（版本化檔名自帶快取失效）讀取，不再需要 items.json） */
-const copyDataPlugin: Plugin = {
-  name: "coolpc-tracker:copy-data-files",
+/** 單一 plugin：dev 期 serve ../api 為 /api/*；build 期 copy ../api/** → dist/api/ */
+const serveCopyApiPlugin: Plugin = {
+  name: "coolpc-tracker:serve-copy-api",
+  configureServer(server) {
+    const base = server.config.base ?? "/";
+    server.middlewares.use((req, res, next) => {
+      const pathname = (req.url ?? "").split("?")[0];
+      let rel = pathname;
+      if (base !== "/" && rel.startsWith(base)) rel = rel.slice(base.length);
+      rel = rel.replace(/^\/+/, "");
+      if (!rel.startsWith("api/")) return next();
+      const target = join(API_DIR, rel.slice("api/".length));
+      // 防路徑穿越：僅允許落在 API_DIR 內（target === API_DIR 為目錄，走 404）
+      if (target !== API_DIR && !target.startsWith(API_DIR + sep)) {
+        res.statusCode = 403;
+        res.end("Forbidden");
+        return;
+      }
+      if (!existsSync(target) || !statSync(target).isFile()) {
+        res.statusCode = 404;
+        res.end("Not Found");
+        return;
+      }
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache");
+      res.end(readFileSync(target));
+    });
+  },
   closeBundle() {
-    copyToDist(`items.v${dataVersion}.json`);
-    copyToDist("meta.json");
+    if (!existsSync(API_DIR)) {
+      console.warn("[vite:api] 找不到 ../api（本地無資料）→ 略過複製");
+      return;
+    }
+    cpSync(API_DIR, DIST_API_DIR, { recursive: true });
+    console.log("[vite:api] 已複製 ../api/** → dist/api/");
   },
 };
 
@@ -53,11 +60,7 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
-  define: {
-    // build 期注入 → 前端 fetch(`data/items.v${__DATA_VERSION__}.json`)，快取必然失效（§9.4）
-    __DATA_VERSION__: JSON.stringify(dataVersion),
-  },
-  plugins: [vue(), copyDataPlugin],
+  plugins: [vue(), serveCopyApiPlugin],
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.ts"],

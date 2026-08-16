@@ -105,13 +105,13 @@ def test_crawl_job_steps(workflow: dict) -> None:
     assert telegram_steps, "缺少 telegram_hook step"
     assert telegram_steps[0].get("continue-on-error") is True
 
-    # commit step：if changed + bot 身分 + git add data/ + pull --rebase + push
+    # commit step：if changed + bot 身分 + git add data/ api/ + pull --rebase + push
     commit_steps = [s for s in steps if s.get("if")]
     assert commit_steps, "缺少條件執行的 commit step"
     commit = commit_steps[0]
     assert "steps.version.outputs.changed == 'true'" in commit["if"]
     run = commit["run"]
-    assert "git add data/" in run
+    assert "git add data/ api/" in run
     assert "coolpc-tracker[bot]" in run  # bot 身分 name/email（§9.3）
     assert "git pull --rebase" in run
     assert "git push" in run

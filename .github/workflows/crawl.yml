@@ -55,7 +55,7 @@ jobs:
         run: python scripts/version_data.py
         # 輸出 changed=true|false、version=N（steps.version.outputs.*；無異動 → 跳過 commit）
         # BDD @business-rule @cache-busting：版本遞增（1→2 / 5→6 / 9→10）
-        # BDD @edge-case @initial-setup：首次執行建立 items.v1.json + meta.json
+        # BDD @edge-case @initial-setup：首次執行建立 api/items/v1.json + api/index.json + meta.json
         # BDD @business-rule @regression：無異動 → changed=false
 
       - name: Telegram notification hook (feature 006 placeholder)
@@ -72,7 +72,7 @@ jobs:
         run: |
           git config user.name "coolpc-tracker[bot]"
           git config user.email "coolpc-tracker[bot]@users.noreply.github.com"
-          git add data/          # items.v{n}.json + meta.json + telegram.json（有變更時）
+          git add data/ api/    # data/ 真相 + api/ 衍生 API（index.json/latest.json/items/）
           git commit -m "chore(data): 更新商品資料 v${{ steps.version.outputs.version }}"
           git pull --rebase        # 併入並發期間 main 上其他人類 commit；實質衝突 → step 失敗
           git push
@@ -113,7 +113,7 @@ jobs:
           cd web
           npm ci
           npm run build
-        # vite.config.ts：讀 ../data/meta.json 注入 __DATA_VERSION__、複製 data/*.json 至 dist/data/
+        # vite.config.ts：build 收尾把 ../api/** 遞迴複製進 dist/api/；前端 runtime fetch index.json
         # build 失敗 → job 失敗 → 後續 upload/deploy step 不執行 → 不部署
         # BDD @error-handling：前端 build 失敗時不部署
 

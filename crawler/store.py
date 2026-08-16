@@ -1,4 +1,6 @@
-"""diff → 歷史 append → 原子寫檔。資料真相：data/items.json + data/meta.json。
+"""diff → 歷史 append → 原子寫檔。資料真相：data/items.json + data/meta.json
+（crawler 唯一寫入者）；對外 API 成品（api/index.json + api/items/）由
+scripts/version_data.py 依本目錄資料重建，本模組不寫 api/。
 
 本模組是資料的唯一寫入者（IF §5）：載入既有資料、與今日商品比對、
 僅在價格/狀態異動時增量 append 歷史 [d, p]、以 tempfile + os.replace 原子寫出。
