@@ -1,9 +1,9 @@
 {
   "meta": {
-    "crawled_at": "2026-08-15T15:40:15.770082+00:00",
+    "crawled_at": "2026-08-16T06:20:49.650053+00:00",
     "source": "https://www.coolpc.com.tw/m/m-list.php",
     "counts": {
-      "套裝/準系統": 157,
+      "套裝/準系統": 158,
       "劈發價組合區": 86,
       "CPU": 48,
       "主機板": 373,
@@ -13,12 +13,12 @@
       "記憶卡": 54,
       "顯示卡": 255
     },
-    "total": 1449,
-    "previous_total": 1449,
-    "changed": 1447,
+    "total": 1450,
+    "previous_total": 1450,
+    "changed": 1,
     "failed_categories": [],
     "status": "ok",
-    "version": 1
+    "version": 2
   },
   "items": [
     {
@@ -34909,6 +34909,27 @@
         [
           "2026-08-15",
           49880
+        ]
+      ]
+    },
+    {
+      "id": "2de0b549e5a983f8",
+      "category": "套裝/準系統",
+      "subcategory": "NVIDIA DGX Spark",
+      "name": "NVIDIA DGX Spark GB10 / 128G / Gen4 4TB SSD【現貨】",
+      "spec": {
+        "brand": null,
+        "model": null,
+        "extra": {}
+      },
+      "flags": {},
+      "status": "in_stock",
+      "first_seen": "2026-08-16",
+      "last_seen": "2026-08-16",
+      "history": [
+        [
+          "2026-08-16",
+          199500
         ]
       ]
     }
