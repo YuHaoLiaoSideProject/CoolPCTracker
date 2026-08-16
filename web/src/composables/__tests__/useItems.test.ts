@@ -223,7 +223,7 @@ describe("parseItemsFile（純函數）", () => {
           spec: {
             brand: "UMAX",
             model: "單條32GB DDR5-4800/CL40",
-            extra: { capacity_gb: 32, spec: "DDR5", clock_mhz: 4800 }, // extra 含 spec 鍵
+            extra: { ram_gb: 32, spec: "DDR5", clock_mhz: 4800 }, // extra 含 spec 鍵
           },
           history: [["2026-08-15", 10900]],
         },
@@ -239,7 +239,7 @@ describe("parseItemsFile（純函數）", () => {
     })
     expect(parsed.items[0].spec.extra).toBeUndefined() // 巢狀 extra 鍵移除
     expect(parsed.items[1].spec).toEqual({}) // null 值剔除（最少欄位商品）
-    expect(parsed.items[2].spec).toEqual({ brand: "UMAX", model: "單條32GB DDR5-4800/CL40", capacity_gb: 32, spec: "DDR5", clock_mhz: 4800 })
+    expect(parsed.items[2].spec).toEqual({ brand: "UMAX", model: "單條32GB DDR5-4800/CL40", ram_gb: 32, spec: "DDR5", clock_mhz: 4800 })
     expect(matchesCondition(parsed.items[0], { id: "vram_gb-12", field: "vram_gb", op: ">=", value: 12, label: "VRAM≥12G", unit: "G" })).toBe(true)
   })
 

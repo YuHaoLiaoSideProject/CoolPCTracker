@@ -15923,7 +15923,7 @@
         "brand": "UMAX",
         "model": "單條32GB DDR5-4800/CL40",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 4800
         }
@@ -15948,7 +15948,7 @@
         "brand": "UMAX",
         "model": "單條8GB DDR5-5600/CL46",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -15973,7 +15973,7 @@
         "brand": "UMAX",
         "model": "單條16GB DDR5-5600/CL46",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16000,7 +16000,7 @@
         "brand": "UMAX",
         "model": "單條32GB DDR5-5600/CL46",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16027,7 +16027,7 @@
         "brand": "威剛",
         "model": "單條8GB DDR5-5600/CL46 (AD5U56008G-S)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16052,7 +16052,7 @@
         "brand": "威剛",
         "model": "單條16GB DDR5-4000/CL32 (AD5U400016G-S)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 4000
         }
@@ -16079,7 +16079,7 @@
         "brand": "威剛",
         "model": "單條16GB DDR5-4800/CL40 (AD5U480016G-S)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 4800
         }
@@ -16104,7 +16104,7 @@
         "brand": "威剛",
         "model": "單條16GB DDR5-5600/CL46 (AD5U560016G-S)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16129,7 +16129,7 @@
         "brand": "威剛",
         "model": "單條16GB DDR5-5600/CL46 LancerBlade矮 黑(AX5U5600C4616G-SLABBK)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16154,7 +16154,7 @@
         "brand": "威剛",
         "model": "單條16GB DDR5-6000/CL48 LancerBlade矮 黑(AX5U6000C4816G-SLABBK)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -16179,7 +16179,7 @@
         "brand": "威剛",
         "model": "單條32GB DDR5-5600/CL46 (AD5U560032G-S)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16206,7 +16206,7 @@
         "brand": "金士頓",
         "model": "單條16GB DDR5-5600/CL46",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16231,7 +16231,7 @@
         "brand": "金士頓",
         "model": "單條32GB DDR5-5600/CL46",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16256,7 +16256,7 @@
         "brand": "金士頓",
         "model": "單條8GB DDR5-5600(CL36) FURY Beast (獸獵者)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16281,7 +16281,7 @@
         "brand": "金士頓",
         "model": "單條16GB DDR5-5600(CL36) FURY Beast (獸獵者)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16306,7 +16306,7 @@
         "brand": "金士頓",
         "model": "單條16GB DDR5-6000(CL30) FURY Beast Black (獸獵者)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -16331,7 +16331,7 @@
         "brand": "KLEVV",
         "model": "(科賦) 單條16GB DDR5-5600/CL46",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16356,7 +16356,7 @@
         "brand": "美光",
         "model": "Micron Crucial 單條16GB DDR5 5600/CL46 (原生顆粒)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16381,7 +16381,7 @@
         "brand": "美光",
         "model": "Micron Crucial 單條32GB DDR5 5600/CL46 (原生顆粒)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16406,7 +16406,7 @@
         "brand": "UMAX",
         "model": "16GB(雙通8GB*2) DDR5 5600/CL46 含散熱片",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16431,7 +16431,7 @@
         "brand": "UMAX",
         "model": "32GB(雙通16GB*2) DDR5 5600/CL46 含散熱片",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16456,7 +16456,7 @@
         "brand": "UMAX",
         "model": "64GB(雙通32GB*2) DDR5 5600/CL46 含散熱片",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -16481,7 +16481,7 @@
         "brand": "UMAX",
         "model": "64GB(雙通32GB*2) DDR5 6000/CL30 含散熱片",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -16506,7 +16506,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 黑(AX5U5600C4616G-DTLABBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16531,7 +16531,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 黑(AX5U5600C4616G-DTLABBK)~組裝價~",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16556,7 +16556,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 白(AX5U5600C4616G-DTLABWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16581,7 +16581,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-5600/CL46 LancerBlade矮 白(AX5U5600C4616G-DTLABWH)~組裝價~",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16606,7 +16606,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL48 LancerBlade矮 黑(AX5U6000C4816G-DTLABBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16631,7 +16631,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL48 LancerBlade矮 白(AX5U6000C4816G-DTLABWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16656,7 +16656,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL36 LancerBlade矮 黑(AX5U6000C3616G-DTLABBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16679,7 +16679,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL36 LancerBlade矮 白(AX5U6000C3616G-DTLABWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16702,7 +16702,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 LancerBlade矮 黑(AX5U6000C3016G-DTLABBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16727,7 +16727,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 LancerBlade矮 白(AX5U6000C3016G-DTLABWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16752,7 +16752,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL28 LancerBlade矮 白(AX5U6000C2816G-DTLABWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -16777,7 +16777,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL36 LancerBlade矮RGB黑(AX5U6000C3616G-DTLABRBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16800,7 +16800,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL36 LancerBlade矮RGB白(AX5U6000C3616G-DTLABRWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16823,7 +16823,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 LancerBlade矮RGB黑(AX5U6000C3016G-DTLABRBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16846,7 +16846,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 LancerBlade矮RGB白(AX5U6000C3016G-DTLABRWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16869,7 +16869,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-5600/CL36 Lancer黑(AX5U5600C3616G-DCLABK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16892,7 +16892,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 Lancer黑(AX5U6000C3016G-DCLABK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16915,7 +16915,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 Lancer黑(AX5U6000C3016G-DCLABK)~組裝價~",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16938,7 +16938,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 Lancer白(AX5U6000C3016G-DCLAWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16961,7 +16961,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 Lancer白(AX5U6000C3016G-DCLAWH)~組裝價~",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -16984,7 +16984,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 Lancer RGB黑(AX5U6000C3016G-DCLARBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -17007,7 +17007,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL30 Lancer RGB白(AX5U6000C3016G-DCLARWH)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -17030,7 +17030,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6000/CL28 Lancer RGB黑(AX5U6000C2816G-DCLARBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -17053,7 +17053,7 @@
         "brand": "威剛",
         "model": "32G(雙通16G*2)D5-6400/CL32 LancerBlade矮 黑(AX5U6400C3216G-DTLABBK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -17076,7 +17076,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-5600/CL46 LancerBlade矮 黑(AX5U5600C4632G-DTLABBK)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -17099,7 +17099,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 LancerBlade矮 黑(AX5U6000C3032G-DTLABBK)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {
@@ -17124,7 +17124,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 LancerBlade矮 白(AX5U6000C3032G-DTLABWH)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {
@@ -17149,7 +17149,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 LancerBlade矮RGB黑(AX5U6000C3032G-DTLABRBK)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -17172,7 +17172,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 LancerBlade矮RGB白(AX5U6000C3032G-DTLABRWH)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -17195,7 +17195,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 Lancer黑(AX5U6000C3032G-DCLABK)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -17218,7 +17218,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 Lancer白(AX5U6000C3032G-DCLAWH)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -17241,7 +17241,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 Lancer RGB黑(AX5U6000C3032G-DCLARBK)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -17264,7 +17264,7 @@
         "brand": "威剛",
         "model": "64G(雙通32G*2)D5-6000/CL30 Lancer RGB白(AX5U6000C3032G-DCLARWH)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -17415,7 +17415,7 @@
         "brand": "KLEVV",
         "model": "(科賦)64GB(雙通道32GB*2)DDR5 6000 CRAS V RGB/CL30 曜石黑",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17442,7 +17442,7 @@
         "brand": "KLEVV",
         "model": "(科賦)64GB(雙通道32GB*2)DDR5 6000 CRAS V RGB/CL30 晶燦白",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17467,7 +17467,7 @@
         "brand": "KLEVV",
         "model": "(科賦)32GB(雙通道16GB*2) DDR5 6400/CL32 CRAS V RGB 曜石黑",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -17492,7 +17492,7 @@
         "brand": "KLEVV",
         "model": "(科賦)64GB(雙通道32GB*2) DDR5 6400/CL32 CRAS V RGB 曜石黑",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -17519,7 +17519,7 @@
         "brand": "KLEVV",
         "model": "(科賦)64GB(雙通道32GB*2) DDR5 6400/CL32 CRAS V RGB 晶燦白",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -17544,7 +17544,7 @@
         "brand": "KLEVV",
         "model": "(科賦)32GB(雙通16GB*2) DDR5 6400/CL32 URBANE V RGB (低矮散熱)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -17569,7 +17569,7 @@
         "brand": "KLEVV",
         "model": "(科賦)32GB(雙通16GB*2) DDR5 6400/CL30 URBANE V RGB (低矮散熱)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -17594,7 +17594,7 @@
         "brand": "KLEVV",
         "model": "(科賦)48GB(雙通24GB*2) DDR5 6400/CL32 URBANE V RGB (低矮散熱)",
         "extra": {
-          "capacity_gb": 48,
+          "ram_gb": 48,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -17619,7 +17619,7 @@
         "brand": "金士頓",
         "model": "32GB(雙通16GB*2) DDR5-5600/CL36 FURY Beast黑",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -17644,7 +17644,7 @@
         "brand": "金士頓",
         "model": "32GB(雙通16GB*2) DDR5-5600/CL36 FURY Beast白",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -17669,7 +17669,7 @@
         "brand": "金士頓",
         "model": "32GB(雙通16GB*2) DDR5-5600/CL36 FURY Beast RGB黑",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -17694,7 +17694,7 @@
         "brand": "金士頓",
         "model": "32GB(雙通16GB*2) DDR5-6000/CL30 FURY Beast 黑 (獸獵者)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17719,7 +17719,7 @@
         "brand": "金士頓",
         "model": "32GB(雙通16GB*2) DDR5-6000/CL30 FURY Beast 白 (獸獵者)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17744,7 +17744,7 @@
         "brand": "金士頓",
         "model": "32GB(雙通16GB*2) DDR5-6000/CL30 FURY Beast RGB黑",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17769,7 +17769,7 @@
         "brand": "金士頓",
         "model": "64GB(雙通32GB*2) DDR5-5600/CL36 FURY Beast 黑 (獸獵者)",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -17794,7 +17794,7 @@
         "brand": "金士頓",
         "model": "64GB(雙通32GB*2) DDR5-5600/CL36 FURY Beast 白 (獸獵者)",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -17819,7 +17819,7 @@
         "brand": "金士頓",
         "model": "64GB(雙通32GB*2) DDR5-6000/CL30 FURY Beast 黑 (獸獵者)",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17844,7 +17844,7 @@
         "brand": "金士頓",
         "model": "64GB(雙通32GB*2) DDR5-6000/CL30 FURY Beast 白 (獸獵者)",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17869,7 +17869,7 @@
         "brand": "美光",
         "model": "Micron Crucial 64GB(雙通32GB*2) DDR5 5600/CL46(原生顆粒)",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -17894,7 +17894,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6000/CL36 黑色散熱片",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17919,7 +17919,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6000/CL36 白色散熱片",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17944,7 +17944,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6000/CL40 黑色散熱片",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17969,7 +17969,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6000/CL40 白色散熱片",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -17994,7 +17994,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6400/CL38 黑色散熱片",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18019,7 +18019,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 32GB(雙通16GB*2) DDR5 6400/CL38 白色散熱片",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18044,7 +18044,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6400/CL40 黑色散熱片",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18069,7 +18069,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 64GB(雙通32GB*2) DDR5 6400/CL40 白色散熱片",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18094,7 +18094,7 @@
         "brand": "美光",
         "model": "Micron Crucial PRO 超頻 96GB(雙通48GB*2) DDR5 5600/CL46 黑色散熱片",
         "extra": {
-          "capacity_gb": 96,
+          "ram_gb": 96,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -18119,7 +18119,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6000/CL36 灰(CMK32GX5M2E6000Z36)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -18144,7 +18144,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6000/CL36 灰RGB(CMH32GX5M2E6000Z36)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -18169,7 +18169,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6000/CL30 灰(CMK32GX5M2B6000Z30)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -18194,7 +18194,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6000/CL30 灰RGB(CMH32GX5M2B6000Z30K)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -18219,7 +18219,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6400/CL36 灰(CMK32GX5M2B6400Z36)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18244,7 +18244,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6400/CL36 灰RGB(CMH32GX5M2B6400Z36)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18269,7 +18269,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6400/CL32 灰(CMK32GX5M2B6400Z32)AI",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18294,7 +18294,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 32G(16G*2)DDR5-6400/CL32 灰RGB(CMH32GX5M2B6400Z32)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18319,7 +18319,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 64G(32G*2)DDR5-6400/CL42 黑(CMK64GX5M2B6400C42)",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18344,7 +18344,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 96G(48G*2)DDR5-6000/CL36 灰(CMK96GX5M2E6000Z36)",
         "extra": {
-          "capacity_gb": 96,
+          "ram_gb": 96,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -18369,7 +18369,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 128G(64G*2)DDR5-6000/CL40 黑(CMK128GX5M2D6000C40)",
         "extra": {
-          "capacity_gb": 128,
+          "ram_gb": 128,
           "spec": "DDR5",
           "clock_mhz": 6000
         }
@@ -18394,7 +18394,7 @@
         "brand": "海盜船",
         "model": "VENGEANCE 128G(64G*2)DDR5-6400/CL42 黑(CMK128GX5M2B6400C42)",
         "extra": {
-          "capacity_gb": 128,
+          "ram_gb": 128,
           "spec": "DDR5",
           "clock_mhz": 6400
         }
@@ -18419,7 +18419,7 @@
         "brand": "海盜船",
         "model": "DOMINATOR TITANIUM 32G(16G*2) D5-6000/CL30 灰RGB(CMP32GX5M2B6000Z30)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18442,7 +18442,7 @@
         "brand": "海盜船",
         "model": "DOMINATOR TITANIUM 32G(16G*2) D5-7200/CL34 黑RGB(CMP32GX5M2X7200C34)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -18467,7 +18467,7 @@
         "brand": "海盜船",
         "model": "DOMINATOR TITANIUM 32G(16G*2) D5-7200/CL34 白RGB(CMP32GX5M2X7200C34W)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -18492,7 +18492,7 @@
         "brand": "芝奇",
         "model": "Flare X5 烈焰槍32GB(雙通16G*2)D5-6000 CL28黑(F5-6000J2836G16GX2-FX5)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18515,7 +18515,7 @@
         "brand": "芝奇",
         "model": "Flare X5 烈焰槍32GB(雙通16G*2)D5-6000 CL28白(F5-6000J2836G16GX2-FX5W)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18538,7 +18538,7 @@
         "brand": "芝奇",
         "model": "Flare X5烈焰槍 64GB(雙通32G*2)D5-6000/CL30黑(F5-6000J3040G32GX2-FX5)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {
@@ -18563,7 +18563,7 @@
         "brand": "芝奇",
         "model": "Flare X5烈焰槍 64GB(雙通32G*2)D5-6000/CL30白(F5-6000J3040G32GX2-FX5W)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {
@@ -18588,7 +18588,7 @@
         "brand": "芝奇",
         "model": "Flare X5 烈焰槍64GB(雙通32G*2)D5-6000 CL28黑(F5-6000J2836G32GX2-FX5)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -18611,7 +18611,7 @@
         "brand": "芝奇",
         "model": "Flare X5 烈焰槍128GB(雙通64G*2)D5-6000 CL34黑(F5-6000J3444F64GX2-FX5)",
         "extra": {
-          "capacity_gb": 128
+          "ram_gb": 128
         }
       },
       "flags": {},
@@ -18634,7 +18634,7 @@
         "brand": "芝奇",
         "model": "Ripjaws S5焰刃32GB(雙通16G*2)D5-6000/CL36黑( F5-6000J3636F16GX2-RS5K)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18657,7 +18657,7 @@
         "brand": "芝奇",
         "model": "Ripjaws S5焰刃32GB(雙通16G*2)D5-6000/CL30黑(F5-6000J3040F16GX2-RS5K)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -18682,7 +18682,7 @@
         "brand": "芝奇",
         "model": "Ripjaws S5焰刃64GB(雙通32G*2)D5-6000/C36黑(F5-6000J3636F32GX2-RS5K)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -18705,7 +18705,7 @@
         "brand": "芝奇",
         "model": "Ripjaws S5焰刃64GB(雙通32G*2)D5-6000/CL30白(F5-6000J3040G32GX2-RS5W)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -18728,7 +18728,7 @@
         "brand": "芝奇",
         "model": "RipjawsM5 RGB焰刃32GB(16G*2)D5-6000/CL36黑(F5-6000J3636F16GX2-RM5RK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18751,7 +18751,7 @@
         "brand": "芝奇",
         "model": "RipjawsM5 RGB焰刃32GB(16G*2)D5-6000/CL36白(F5-6000J3636F16GX2-RM5RW)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18774,7 +18774,7 @@
         "brand": "芝奇",
         "model": "烈焰槍RGB 64GB(雙通32G*2)D5-6000/CL36黑(F5-6000J3636F32GX2-RM5NRK)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -18797,7 +18797,7 @@
         "brand": "芝奇",
         "model": "烈焰槍RGB 64GB(雙通32G*2)D5-6000/CL36白(F5-6000J3636F32GX2-RM5NRW)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -18820,7 +18820,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 32GB(雙通16G*2) D5-6000/CL30黑( F5-6000J3040F16GX2-TZ5RK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -18845,7 +18845,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 32GB(雙通16G*2) D5-6400/CL32黑( F5-6400J3239G16GX2-TZ5RK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18868,7 +18868,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 32GB(雙通16G*2) D5-6400/CL32白( F5-6400J3239G16GX2-TZ5RW)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -18891,7 +18891,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 32GB(雙通16G*2) D5-7200/CL34黑(F5-7200J3445G16GX2-TZ5RK)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -18916,7 +18916,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 32GB(雙通16G*2) D5-7200/CL34白(F5-7200J3445G16GX2-TZ5RW)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -18941,7 +18941,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 64GB(雙通32G*2) D5-6000/CL30白(F5-6000J3040G32GX2-TZ5RW)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -18964,7 +18964,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 64GB(雙通32G*2) D5-6400/CL32黑(F5-6400J3239G32GX2-TZ5RK)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {
@@ -18989,7 +18989,7 @@
         "brand": "芝奇",
         "model": "幻鋒戟RGB 64GB(雙通32G*2) D5-6400/CL32白(F5-6400J3239G32GX2-TZ5RW)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {
@@ -19014,7 +19014,7 @@
         "brand": "芝奇",
         "model": "焰鋒戟RGB 32GB(雙通16GB*2) D5-6000/CL30黑(F5-6000J3038F16GX2-TZ5NR)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -19037,7 +19037,7 @@
         "brand": "芝奇",
         "model": "焰鋒戟RGB 64GB(雙通32GB*2)D5-6000/CL30黑(F5-6000J3040G32GX2-TZ5NR)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -19060,7 +19060,7 @@
         "brand": "芝奇",
         "model": "焰鋒戟RGB 64GB(雙通32GB*2)D5-6000/CL30白(F5-6000J3040G32GX2-TZ5NRW)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {
@@ -19085,7 +19085,7 @@
         "brand": "芝奇",
         "model": "焰鋒戟RGB 32GB(雙通16GB*2)D5-6400/CL30黑(F5-6400J3039G16GX2-TZ5NR)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -19108,7 +19108,7 @@
         "brand": "芝奇",
         "model": "焰鋒戟RGB 32GB(雙通16GB*2)D5-6400/CL30白(F5-6400J3039G16GX2-TZ5NRW)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -19131,7 +19131,7 @@
         "brand": "芝奇",
         "model": "焰鋒戟RGB 32GB(雙通16GB*2)D5-7200/CL34黑(F5-7200J3445G16GX2-TZ5NR)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -19154,7 +19154,7 @@
         "brand": "芝奇",
         "model": "焰鋒戟RGB 128GB(雙通64GB*2)D5-6000/CL34黑(F5-6000J3444F64GX2-TZ5NR)",
         "extra": {
-          "capacity_gb": 128
+          "ram_gb": 128
         }
       },
       "flags": {},
@@ -19177,7 +19177,7 @@
         "brand": "芝奇",
         "model": "皇家戟RGB 64GB(雙通32GB*2)D5-6000/CL28銀(F5-6000J2836G32GX2-TR5NS)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -19200,7 +19200,7 @@
         "brand": "芝奇",
         "model": "皇家戟RGB 32GB(雙通16GB*2)D5-7200/CL34銀(F5-7200J3445G16GX2-TR5S)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -19223,7 +19223,7 @@
         "brand": "芝奇",
         "model": "皇家戟RGB 64GB(雙通32GB*2)D5-6400/CL32銀(F5-6400J3239G32GX2-TR5S)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -19246,7 +19246,7 @@
         "brand": "UMAX",
         "model": "NB 16GB DDR5 4800/CL40",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 4800
         }
@@ -19271,7 +19271,7 @@
         "brand": "UMAX",
         "model": "NB 32GB DDR5 4800/CL40",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 4800
         }
@@ -19296,7 +19296,7 @@
         "brand": "UMAX",
         "model": "NB 8GB DDR5 5600/CL46",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19321,7 +19321,7 @@
         "brand": "UMAX",
         "model": "NB 16GB DDR5 5600/CL46",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19348,7 +19348,7 @@
         "brand": "UMAX",
         "model": "NB 32GB DDR5 5600/CL46",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19373,7 +19373,7 @@
         "brand": "威剛",
         "model": "NB 32GB DDR5-4800/CL40 (AD5S480032G-S)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 4800
         }
@@ -19400,7 +19400,7 @@
         "brand": "威剛",
         "model": "NB 8GB DDR5-5600/CL46 (AD5S56008G-S)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19425,7 +19425,7 @@
         "brand": "威剛",
         "model": "NB 16GB DDR5-5600/CL46 (AD5S560016G-S)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19450,7 +19450,7 @@
         "brand": "威剛",
         "model": "NB 32GB DDR5-5600/CL46 (AD5S560032G-S)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19475,7 +19475,7 @@
         "brand": "金士頓",
         "model": "NB 16GB DDR5 5600(KVR56S46BS8-16)/CL46",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19500,7 +19500,7 @@
         "brand": "金士頓",
         "model": "NB 32GB DDR5 5600(KVR56S46BD8-32)/CL46",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19525,7 +19525,7 @@
         "brand": "美光",
         "model": "Micron Crucial NB 16GB DDR5 5600/CL46",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19550,7 +19550,7 @@
         "brand": "美光",
         "model": "Micron Crucial NB 32GB DDR5 5600/CL46",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19577,7 +19577,7 @@
         "brand": "美光",
         "model": "Micron Crucial NB 64GB DDR5 5600/CL46)",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19602,7 +19602,7 @@
         "brand": "美光",
         "model": "Micron Crucial NB 雙通16G*2 DDR5 5600/CL46",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19627,7 +19627,7 @@
         "brand": "美光",
         "model": "Micron Crucial NB 雙通64G*2 DDR5 5600/CL46",
         "extra": {
-          "capacity_gb": 128,
+          "ram_gb": 128,
           "spec": "DDR5",
           "clock_mhz": 5600
         }
@@ -19652,7 +19652,7 @@
         "brand": "UMAX",
         "model": "8GB DDR4-2400(1024*8)CL17",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 2400
         }
@@ -19677,7 +19677,7 @@
         "brand": "UMAX",
         "model": "8GB DDR4-2666(1024*8)CL19",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 2666
         }
@@ -19702,7 +19702,7 @@
         "brand": "UMAX",
         "model": "8GB DDR4-3200(1024*8)超頻CL16",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19727,7 +19727,7 @@
         "brand": "UMAX",
         "model": "16GB DDR4-2400(1024*8)CL17",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 2400
         }
@@ -19752,7 +19752,7 @@
         "brand": "UMAX",
         "model": "16GB DDR4-2666(1024*8)CL19",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 2666
         }
@@ -19777,7 +19777,7 @@
         "brand": "UMAX",
         "model": "16GB DDR4-2666(2048*8)(CL19",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 2666
         }
@@ -19802,7 +19802,7 @@
         "brand": "UMAX",
         "model": "16GB DDR4-3200(1024*8)超頻CL16",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19827,7 +19827,7 @@
         "brand": "UMAX",
         "model": "16GB DDR4-3200(2048*8)超頻CL16",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19852,7 +19852,7 @@
         "brand": "UMAX",
         "model": "16GB DDR4-3200(1024*8)CL22",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19879,7 +19879,7 @@
         "brand": "UMAX",
         "model": "32GB DDR4-3200(2048*8)CL22",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19904,7 +19904,7 @@
         "brand": "UMAX",
         "model": "32GB DDR4-3200(2048*8)超頻CL16",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19929,7 +19929,7 @@
         "brand": "威剛",
         "model": "8GB DDR4-3200(AD4U320038G22-SGN)(1024*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19954,7 +19954,7 @@
         "brand": "威剛",
         "model": "16GB DDR4-3200(AD4U3200316G22-SGN)(1024*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -19979,7 +19979,7 @@
         "brand": "威剛",
         "model": "16GB DDR4-3200/CL16 XPG D10超頻 黑(AX4U3200316G16A-SB10)(1024*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20006,7 +20006,7 @@
         "brand": "威剛",
         "model": "32GB DDR4-3200(AD4U3200732G22-SGN)(2048*8)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20033,7 +20033,7 @@
         "brand": "金士頓",
         "model": "8GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/8)(1024*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20058,7 +20058,7 @@
         "brand": "金士頓",
         "model": "8GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/8)(1024*8)~搭機價~",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20083,7 +20083,7 @@
         "brand": "金士頓",
         "model": "16GB DDR4-3200(KVR32N22S8/16)(2048*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20108,7 +20108,7 @@
         "brand": "金士頓",
         "model": "16GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/16)(2048*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20133,7 +20133,7 @@
         "brand": "金士頓",
         "model": "32GB DDR4-3200(KVR32N22D8/32)(2048*8)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20158,7 +20158,7 @@
         "brand": "金士頓",
         "model": "32GB DDR4-3200(KVR32N22D8/32)(2048*8)~搭機價~",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20183,7 +20183,7 @@
         "brand": "金士頓",
         "model": "32GB DDR4-3200 FURY Beast(獸獵者)(KF432C16BB/32)(2048*8)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20210,7 +20210,7 @@
         "brand": "UMAX",
         "model": "32GB(雙通16GB*2) DDR4-2666含散熱片(1024*8)CL19",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4"
         }
       },
@@ -20234,7 +20234,7 @@
         "brand": "UMAX",
         "model": "32GB(雙通16GB*2) DDR4-2666含散熱片(2048*8)CL19",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4"
         }
       },
@@ -20258,7 +20258,7 @@
         "brand": "UMAX",
         "model": "32GB(雙通16GB*2) DDR4-3200超頻CL16含散熱片(1024*8)CL16",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4"
         }
       },
@@ -20284,7 +20284,7 @@
         "brand": "UMAX",
         "model": "32GB(雙通16GB*2) DDR4-3200超頻CL16含散熱片(2048*8)CL16",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4"
         }
       },
@@ -20308,7 +20308,7 @@
         "brand": "UMAX",
         "model": "64GB(雙通32GB*2) DDR4-3200含散熱片(2048*8) CL22",
         "extra": {
-          "capacity_gb": 64,
+          "ram_gb": 64,
           "spec": "DDR4"
         }
       },
@@ -20334,7 +20334,7 @@
         "brand": "威剛",
         "model": "32GB(雙通16G*2) D4-3200/CL16 D10超頻 黑(AX4U3200316G16A-DB10)(1024*8)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -20357,7 +20357,7 @@
         "brand": "金士頓",
         "model": "16GB(雙通8GB*2) DDR4-3200 FURY Beast(獸獵)(KF432C16BBK2/16)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20382,7 +20382,7 @@
         "brand": "金士頓",
         "model": "32GB(雙通16GB*2) DDR4-3200 (獸獵者)(KF432C16BBK2/32)(2048*8)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20407,7 +20407,7 @@
         "brand": "芝奇",
         "model": "G.SKILL Ripjaws V 32GB(雙通16GB*2) D4-3600 CL18 黑 F4-3600C18D-32GVK",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20432,7 +20432,7 @@
         "brand": "芝奇",
         "model": "G.SKILL Ripjaws V 32GB(雙通16GB*2) D4-4000 CL18 黑 F4-4000C18D-32GVK",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20457,7 +20457,7 @@
         "brand": "芝奇",
         "model": "G.SKILL 幻光戟 16GB(雙通8GB*2) D4-3200 CL16 黑銀 F4-3200C16D-16GTZR",
         "extra": {
-          "capacity_gb": 16
+          "ram_gb": 16
         }
       },
       "flags": {
@@ -20482,7 +20482,7 @@
         "brand": "芝奇",
         "model": "G.SKILL 幻光戟 32GB(雙通16GB*2) D4-3200 CL16 黑銀 F4-3200C16D-32GTZR",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20507,7 +20507,7 @@
         "brand": "芝奇",
         "model": "G.SKILL 幻光戟 32GB(雙通16GB*2) D4-3600 CL16 黑銀 F4-3600C16D-32GTZRC",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20532,7 +20532,7 @@
         "brand": "芝奇",
         "model": "G.SKILL 皇家戟 32GB(雙通16GB*2) D4-3200 CL16 銀 F4-3200C16D-32GTRS",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20557,7 +20557,7 @@
         "brand": "芝奇",
         "model": "G.SKILL 焰光戟 32GB(雙通16GB*2) D4-3200 F4-3200C16D-32GTZN[For AMD]",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20582,7 +20582,7 @@
         "brand": "芝奇",
         "model": "G.SKILL 焰光戟 32GB(雙通16GB*2) D4-3600 F4-3600C16D-32GTZNC[For AMD]",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20608,7 +20608,7 @@
         "brand": "芝奇",
         "model": "G.SKILL 燄光戟 32GB(雙通16GB*2) D4-4000 F4-4000C18D-32GTZN[FOR R5000]",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {
@@ -20633,7 +20633,7 @@
         "brand": "UMAX",
         "model": "NB 8GB DDR4-2400(1024*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 2400
         }
@@ -20658,7 +20658,7 @@
         "brand": "UMAX",
         "model": "NB 8GB DDR4-2666(1024*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 2666
         }
@@ -20683,7 +20683,7 @@
         "brand": "UMAX",
         "model": "NB 8GB DDR4-3200(1024*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20710,7 +20710,7 @@
         "brand": "UMAX",
         "model": "NB 16GB DDR4-2400(1024*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 2400
         }
@@ -20737,7 +20737,7 @@
         "brand": "UMAX",
         "model": "NB 16GB DDR4-2666(1024*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 2666
         }
@@ -20764,7 +20764,7 @@
         "brand": "UMAX",
         "model": "NB 16GB DDR4-3200(1024*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20791,7 +20791,7 @@
         "brand": "UMAX",
         "model": "NB 32GB DDR4-3200(2048*8)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20818,7 +20818,7 @@
         "brand": "威剛",
         "model": "NB 8GB DDR4-3200(AD4S320038G22-SGN)(1024*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20843,7 +20843,7 @@
         "brand": "威剛",
         "model": "NB 16GB DDR4-3200(AD4S3200316G22-SGN)(1024*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20868,7 +20868,7 @@
         "brand": "金士頓",
         "model": "NB 8GB DDR4-3200(KVR32S22S8/8)(1024*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20893,7 +20893,7 @@
         "brand": "金士頓",
         "model": "NB 16GB DDR4-3200(KVR32S22S8/16)(2048*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20918,7 +20918,7 @@
         "brand": "金士頓",
         "model": "NB 32GB DDR4-3200(KVR32S22D8/32)(2048*8)",
         "extra": {
-          "capacity_gb": 32,
+          "ram_gb": 32,
           "spec": "DDR4",
           "clock_mhz": 3200
         }
@@ -20943,7 +20943,7 @@
         "brand": "UMAX",
         "model": "8GB DDR3-1600(512*8)",
         "extra": {
-          "capacity_gb": 8,
+          "ram_gb": 8,
           "spec": "DDR3",
           "clock_mhz": 1600
         }
@@ -20968,7 +20968,7 @@
         "brand": "UMAX",
         "model": "16GB(雙通道8G*2)DDR3-1600含散熱片(512*8)",
         "extra": {
-          "capacity_gb": 16,
+          "ram_gb": 16,
           "spec": "DDR3"
         }
       },
@@ -20992,7 +20992,7 @@
         "brand": "UMAX",
         "model": "NB 8GB DDR3L-1600 低電壓(512*8)",
         "extra": {
-          "capacity_gb": 8
+          "ram_gb": 8
         }
       },
       "flags": {
@@ -21017,7 +21017,7 @@
         "brand": "金士頓",
         "model": "NB 8GB DDR3L-1600 低電壓(KVR16LS11/8)(512*8)",
         "extra": {
-          "capacity_gb": 8
+          "ram_gb": 8
         }
       },
       "flags": {},
@@ -21040,7 +21040,7 @@
         "brand": "金士頓",
         "model": "32GB 5600MT/s D5 ECC CL46 DIMM 2Rx8 Hynix A(KSM56E46BD8KM/32HA)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -21063,7 +21063,7 @@
         "brand": "金士頓",
         "model": "16GB 5600MT/s D5 ECC Reg CL46 DIMM 1R*8 Hynix A Rambus(KSM56R46BS8/16HA)",
         "extra": {
-          "capacity_gb": 16
+          "ram_gb": 16
         }
       },
       "flags": {},
@@ -21086,7 +21086,7 @@
         "brand": "金士頓",
         "model": "32GB 5600MT/s D5 ECC Reg CL46 DIMM 2R*8 Hynix A Rambus(KSM56R46BD8/32HA)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -21109,7 +21109,7 @@
         "brand": "金士頓",
         "model": "96GB 6400MT/s D5 ECC Reg CL52 DIMM 2R*4 Micron C(KSM64R52BD4/96MC)",
         "extra": {
-          "capacity_gb": 96
+          "ram_gb": 96
         }
       },
       "flags": {},
@@ -21132,7 +21132,7 @@
         "brand": "威剛",
         "model": "32GB 5600MT/s D5 ECC Reg CL46 DIMM 2R*8 Hynix A die (AD5R560032G20-SHYA)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -21155,7 +21155,7 @@
         "brand": "威剛",
         "model": "64GB 5600MT/s D5 ECC Reg CL46 DIMM 2R*4 Hynix A die (AD5R560064G40-SHYA)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},
@@ -21178,7 +21178,7 @@
         "brand": "金士頓",
         "model": "32GB 3200MHz D4 ECC Reg CL22 DIMM 2R*8 Hynix C Rambus (KSM32RD8/32HD)",
         "extra": {
-          "capacity_gb": 32
+          "ram_gb": 32
         }
       },
       "flags": {},
@@ -21201,7 +21201,7 @@
         "brand": "金士頓",
         "model": "64GB 3200MHz D4 ECC Reg CL22 DIMM 2R*4 Hynix C Rambus (KSM32RD4/64HCR)",
         "extra": {
-          "capacity_gb": 64
+          "ram_gb": 64
         }
       },
       "flags": {},

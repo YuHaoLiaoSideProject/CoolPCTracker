@@ -14,7 +14,7 @@ export const SPEC_FIELD_LABELS: Record<string, { label: string; unit: string }> 
   vram_gb: { label: "VRAM", unit: "G" },
   cores: { label: "CPU核數", unit: "核" },
   wattage_w: { label: "瓦數", unit: "W" },
-  capacity_gb: { label: "容量", unit: "GB" },
+  capacity_gb: { label: "儲存容量", unit: "GB" }, // 僅適用 SSD/HDD（勿與記憶體 ram_gb 混用）
   ram_gb: { label: "記憶體", unit: "GB" },
   tdp_w: { label: "TDP", unit: "W" },
 }

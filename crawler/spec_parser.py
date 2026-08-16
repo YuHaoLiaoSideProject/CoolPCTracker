@@ -6,8 +6,8 @@
 - brand/model 為 Spec 通用欄位；深度分類的結構化欄位一律置於 extra dict（依分類不同）。
 - 深度解析以「品牌 token 比對」為錨點：品牌無法辨識 → 回傳最少欄位 Spec
   （brand=None, model=None）。不得因單一欄位缺失而丟棄商品（規格 §1.6）。
-- 深度分類容量統一為整數 GB（capacity_gb，1TB = 1024）；輕量分類保留原始字串
-  token（記憶卡 capacity = "128GB"）。
+- 深度分類容量統一為整數 GB（1TB = 1024）：記憶體寫入 ram_gb、SSD/HDD 寫入
+  capacity_gb（儲存容量）；輕量分類保留原始字串 token（記憶卡 capacity = "128GB"）。
 - 未知分類回傳空 Spec；任何解析例外由 parse_spec 捕捉 → 最少欄位 Spec，不中斷管道。
 """
 from __future__ import annotations
@@ -194,13 +194,18 @@ def _ram_capacity_gb(name: str) -> int | None:
 
 
 def _parse_ram(name: str) -> Spec:
+    """記憶體深度解析：品牌/型號 + extra{ram_gb, spec, clock_mhz}。
+
+    容量寫入 ram_gb（記憶體容量），與 SSD/HDD 的 capacity_gb（儲存容量）分離，
+    避免前端「記憶體 ≥ N」篩選誤用儲存容量欄位造成空結果。
+    """
     rest, brand = _strip_brand(name, _RAM_BRANDS)
     if brand is None:
         return Spec()
     extra: dict[str, Any] = {}
     cap = _ram_capacity_gb(rest)
     if cap is not None:
-        extra["capacity_gb"] = cap
+        extra["ram_gb"] = cap
     m = _RE_RAM_SPEC.search(rest)
     if m:
         extra["spec"] = m.group(1).upper()
@@ -446,7 +451,7 @@ def _parse_bundle(name: str) -> Spec:
 _DEEP_PARSERS: dict[str, Callable[[str], Spec]] = {
     "CPU": _parse_cpu,        # cores/threads/base_ghz/turbo_ghz/tdp_w/socket
     "顯示卡": _parse_gpu,     # chip/vram_gb/interface/length_mm
-    "記憶體": _parse_ram,     # capacity_gb/spec/clock_mhz
+    "記憶體": _parse_ram,     # ram_gb/spec/clock_mhz
     "SSD": _parse_ssd,        # capacity_gb/interface/format
     "HDD": _parse_hdd,        # capacity_gb/rpm/interface
     "主機板": _parse_mobo,    # chipset/socket/form_factor

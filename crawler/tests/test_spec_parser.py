@@ -110,21 +110,27 @@ class TestRamDeepParse:
     def test_crucial_ddr5(self) -> None:
         spec = parse_spec("記憶體", "美光 Crucial DDR5-5600 16GB(8G*2) 桌上型記憶體")
         assert spec.brand == "美光"
-        assert spec.extra["capacity_gb"] == 16
+        assert spec.extra["ram_gb"] == 16
         assert spec.extra["spec"] == "DDR5"
         assert spec.extra["clock_mhz"] == 5600
 
     def test_kingston_ddr4(self) -> None:
         spec = parse_spec("記憶體", "Kingston DDR4-3200 16GB 桌上型記憶體")
         assert spec.brand == "Kingston"
-        assert spec.extra["capacity_gb"] == 16
+        assert spec.extra["ram_gb"] == 16
         assert spec.extra["spec"] == "DDR4"
         assert spec.extra["clock_mhz"] == 3200
 
     def test_gb_multiplier_form(self) -> None:
         # 8GB*2 雙通道套裝 → 總容量 16（與 16GB(8G*2) 形式一致）
         spec = parse_spec("記憶體", "Kingston 8GB*2 DDR4-3200 桌上型記憶體")
-        assert spec.extra["capacity_gb"] == 16
+        assert spec.extra["ram_gb"] == 16
+
+    def test_ram_writes_ram_gb_not_capacity_gb(self) -> None:
+        # 根因修正：記憶體容量欄位為 ram_gb，與 SSD/HDD 的 capacity_gb（儲存）分離
+        spec = parse_spec("記憶體", "美光 Crucial DDR5-5600 16GB(8G*2) 桌上型記憶體")
+        assert spec.extra["ram_gb"] == 16
+        assert "capacity_gb" not in spec.extra
 
 
 # ── SSD 深度 ─────────────────────────────────────────────────────────────
@@ -260,7 +266,7 @@ class TestExtraScope:
             ("顯示卡", "MSI RTX 4060 VENTUS 2X 8G OC",
              {"chip", "vram_gb", "interface", "length_mm"}),
             ("記憶體", "美光 Crucial DDR5-5600 16GB(8G*2) 桌上型記憶體",
-             {"capacity_gb", "spec", "clock_mhz"}),
+             {"ram_gb", "spec", "clock_mhz"}),
             ("SSD", "WD 藍標 SN580 1TB M.2 PCIe 4.0 SSD",
              {"capacity_gb", "interface", "format", "rpm"}),
             ("HDD", "Seagate 新梭魚 2TB 256M/7200轉/3年保",

@@ -42,7 +42,7 @@ export function specChipTexts(spec: ItemSpec, category: string): string[] {
     push("", spec.chip)
     push("", spec.tdp_w != null ? `${spec.tdp_w}W` : undefined)
   } else if (category === "記憶體") {
-    push("", spec.capacity_gb != null ? `${spec.capacity_gb}GB` : undefined)
+    push("", spec.ram_gb != null ? `${spec.ram_gb}GB` : undefined)
     push("", spec.clock_mhz != null ? `${spec.clock_mhz}MHz` : undefined)
   } else if (category === "SSD" || category === "HDD") {
     push("", spec.capacity_gb != null ? `${spec.capacity_gb}GB` : undefined)

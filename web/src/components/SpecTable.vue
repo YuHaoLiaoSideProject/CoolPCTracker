@@ -19,7 +19,7 @@ const SPEC_LABELS: Record<string, string> = {
   socket: "腳位",
   vram_gb: "VRAM(GB)",
   wattage_w: "功耗(W)",
-  capacity_gb: "容量(GB)",
+  capacity_gb: "儲存容量(GB)",
   ram_gb: "記憶體(GB)",
   chip: "晶片",
   interface: "介面",

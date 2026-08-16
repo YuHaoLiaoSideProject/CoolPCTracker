@@ -49,7 +49,7 @@ describe("parseCondition", () => {
     expect(SPEC_FIELD_LABELS.vram_gb.label).toBe("VRAM")
     expect(SPEC_FIELD_LABELS.cores.label).toBe("CPU核數")
     expect(SPEC_FIELD_LABELS.wattage_w.label).toBe("瓦數")
-    expect(SPEC_FIELD_LABELS.capacity_gb.label).toBe("容量")
+    expect(SPEC_FIELD_LABELS.capacity_gb.label).toBe("儲存容量")
     expect(SPEC_FIELD_LABELS.ram_gb.label).toBe("記憶體")
     expect(SPEC_FIELD_LABELS.tdp_w.label).toBe("TDP")
   })
