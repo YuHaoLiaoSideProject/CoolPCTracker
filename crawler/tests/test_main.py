@@ -13,6 +13,8 @@ Store 一律以 pytest tmp_path 作為 data_dir。
 - #12  單一分類抓取失敗 partial：其餘 8 分類照常更新、failed_categories=[主機板]、
        status=partial、return 0、主機板既有商品保留原樣（不誤判 gone）
 - 邊界 降幅恰為 20%（本次 = 前次 80%）：不判異常、正常寫入（007 §6.1）
+- 去重計數：同名同 ID 重複（BDD #18 最後解析者勝出）→ counts/total 以 unique id 計，
+  sum(counts) == total == items.json 筆數
 - #20  CLI --date 手動補爬（first_seen=指定日）；無 --date 預設今日
 - meta 完整欄位（crawled_at ISO UTC、counts、total、previous_total、changed、
        failed_categories、status；日期制快照改造後不再含 version）
@@ -162,10 +164,11 @@ class TestFullPipeline:
         assert cpu["history"] == [["2026-08-15", 9790], ["2026-08-16", 8990]]
         assert cpu["last_seen"] == "2026-08-16"
         assert cpu["first_seen"] == "2026-08-15"
-        # 無異動商品：原樣保留（不 append、last_seen 不變）
+        # 無異動商品：每日一點語意 → 仍 append 當日平價點、last_seen 更新（BDD #5）
         amd = item_by_name(doc2, AMD_7600)
-        assert amd["history"] == [["2026-08-15", 6990]]
-        assert amd["last_seen"] == "2026-08-15"
+        assert amd["history"] == [["2026-08-15", 6990], ["2026-08-16", 6990]]
+        assert amd["last_seen"] == "2026-08-16"
+        assert amd["first_seen"] == "2026-08-15"
 
         meta2 = load_meta(tmp_path)
         assert meta2["status"] == "ok"
@@ -267,12 +270,15 @@ class TestPartialFailure:
         doc2 = load_items_json(tmp_path)
         # 無誤判 gone：全部既有商品 ID 保留
         assert {i["id"] for i in doc2["items"]} == {i["id"] for i in doc1["items"]}
-        # 主機板既有商品保留原樣（last_seen / status / history 不變）
+        # 主機板既有商品原樣保留（今日未成功爬取 → 不 append 當日點、last_seen/status/history 不變）
         for iid, before in mobo_before.items():
             after = next(i for i in doc2["items"] if i["id"] == iid)
             assert after["last_seen"] == before["last_seen"] == "2026-08-15"
             assert after["status"] == "in_stock"
             assert after["history"] == before["history"]
+        # 其餘成功爬取分類（含無異動者）：每日一點 → 皆有 [D2, 平價]
+        amd = item_by_name(doc2, AMD_7600)
+        assert amd["history"] == [["2026-08-15", 6990], ["2026-08-16", 6990]]
         # CPU 異動照常更新
         cpu = item_by_name(doc2, CPU_13600K)
         assert cpu["history"] == [["2026-08-15", 9790], ["2026-08-16", 8990]]
@@ -305,6 +311,35 @@ class TestDropBoundary:
         assert meta["previous_total"] == 36  # 上次有效總數 = 本次成功 run 總數（下次基準）
         doc2 = load_items_json(tmp_path)
         assert len(doc2["items"]) == 45  # 36 現存 + 9 個消失標記 gone
+
+
+# ── 去重計數：counts/total 以 unique id 計（與 store.diff 覆蓋一致） ──────────────
+
+
+class TestDedupCount:
+    def test_counts_total_count_unique_ids_not_raw_rows(self, tmp_path, install_fake):
+        """同名同 ID 重複（BDD #18 最後解析者勝出）→ counts/total 依去重後 unique id。
+
+        修正前：counts/total 以 raw 解析筆數計（含重複）→ 與 items.json 實際筆數漂移；
+        修正後：以去重後計數，sum(counts) == total == items.json 筆數。
+        """
+        dup_page = make_page([
+            ("重複商品A", 1000), ("重複商品A", 1200),  # 同名同 ID → 最後一筆（1200）勝出
+            ("唯一商品B", 2000),
+        ])
+        install_fake(FakeFetcher(pages={4: dup_page}, others_empty=True))
+        assert run_crawler(tmp_path, today=D1) == 0
+
+        doc = load_items_json(tmp_path)
+        meta = load_meta(tmp_path)
+        assert len(doc["items"]) == 2  # raw 3 筆 → 去重 2 筆
+        assert meta["total"] == 2
+        assert meta["counts"]["CPU"] == 2
+        assert meta["counts"]["主機板"] == 0
+        assert sum(meta["counts"].values()) == meta["total"] == len(doc["items"])
+        assert meta["previous_total"] == 2
+        dup = item_by_name(doc, "重複商品A")
+        assert dup["history"] == [["2026-08-15", 1200]]  # 覆蓋語意：最後解析者價格勝出
 
 
 # ── #20 CLI --date 手動補爬 ──────────────────────────────────────────────────

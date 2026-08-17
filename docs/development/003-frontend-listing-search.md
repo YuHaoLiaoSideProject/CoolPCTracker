@@ -107,7 +107,7 @@ export interface Item {
   status: ItemStatus
   first_seen: string
   last_seen: string
-  history: PricePoint[] // 僅異動時 append；可能為空陣列或僅 1 筆
+  history: PricePoint[] // 每日一點累積（含平價日）；可能為空陣列或僅 1 筆（首次出現）
 }
 
 /** data/items.json 頂層契約 */
@@ -498,35 +498,21 @@ const specChips = computed(() => chipTexts(props.item.spec))       // 如 ['14�
 ```
 
 ```typescript
-// web/src/composables/usePriceDelta.ts
-import { computed } from 'vue'
-import type { Item } from '@/types/item'
+// web/src/lib/priceChange.ts（共用事實來源：003 卡片 badge / 004 詳情頁摘要）
+// 語意：current = history 最後一點；previous = 倒數第二點 = 「上一筆有紀錄的日期」
+// （非連續日如 08-10 → 08-15 仍以最後兩點比較，不補中間日、不以日曆昨日猜測）。
+// 僅 1 筆 / 空 → previous/diff/trend 全 null（上游優雅降級）。
+export function computePriceChange(history: PricePoint[]): PriceChange
 
-/** 漲跌基準 = 最後兩筆 history（今日 vs 昨日；history 為「僅異動 append」，
- *  故「昨日價」以倒數第二筆為準；僅 1 筆或空 → delta 為 null → 顯示「—」）。 */
+// web/src/composables/usePriceDelta.ts（卡片呈現；規格 chips 白名單 specChipTexts 亦於此檔）
 export function usePriceDelta(item: Item) {
-  const lastTwo = item.history.slice(-2)
-  const currentPrice = computed(() => lastTwo.at(-1)?.p ?? null)
-  const delta = computed(() =>
-    lastTwo.length >= 2 ? lastTwo[1].p - lastTwo[0].p : null,
-  )
-  // 漲紅 / 跌綠 / 持平灰 / 無昨日價「—」
-  const deltaClass = computed(() =>
-    delta.value == null ? '' : delta.value > 0 ? 'price-up' : delta.value < 0 ? 'price-down' : 'price-flat',
-  )
-  const deltaText = computed(() => {
-    if (delta.value == null) return '—'
-    if (delta.value === 0) return '持平'
-    const sign = delta.value > 0 ? '漲' : '跌'
-    return `${sign} ${Math.abs(delta.value).toLocaleString('zh-TW')}`
-  })
-  return { currentPrice, deltaClass, deltaText }
-}
-
-/** 規格 chips 白名單：核數/執行緒/時脈/TDP/VRAM/容量…（未解析欄位不顯示） */
-function chipTexts(spec: Item['spec']): string[] {
-  // TODO: 依分類決定優先欄位（CPU 顯核數時脈；GPU 顯 VRAM；SSD 顯容量）
-  return []
+  const change = computed(() => computePriceChange(item.history))
+  // 漲紅 price-up / 跌綠 price-down / 持平灰 price-flat / 首日「新」price-new / 空「—」
+  return {
+    currentPrice: computed(() => change.value.current),
+    deltaClass: computed(() => priceChangeBadgeClass(change.value)),
+    deltaText: computed(() => priceChangeBadgeText(change.value)),
+  }
 }
 ```
 
@@ -685,7 +671,7 @@ function onToggleCompare(item: Item) { /* TODO(005): store.toggle(item.id) */ }
 
 | # | 情境 | 觸發 | 處理 |
 |---|------|------|------|
-| E8 | **缺昨日價**（@edge-case @p1） | `history` 僅 1 筆或為空 | `delta=null` → 漲跌欄顯示「—」（無顏色 class）；名稱、價格、sparkline 照常 |
+| E8 | **缺昨日價**（@edge-case @p1） | `history` 僅 1 筆或為空 | `delta=null` → 僅 1 筆（有價）漲跌欄顯示「新」（中性色 `price-new`）；空 history 顯示「—」；名稱、價格、sparkline 照常 |
 | E9 | **無規格欄位商品**（@edge-case @p1，@business-rules @p1） | `spec` 為空物件（如「XC-5500 隨機贈品主機」） | 名稱搜尋仍命中（`matchesKeyword` 只看 name）；結構化篩選**靜默排除**（`matchesCondition` 回 false）、頁面不報錯 |
 | E10 | **sparkline 資料不足** | history < 2 筆 | 不畫線，顯示「—」；與 005 追蹤頁「資料不足」語意一致 |
 | E11 | **搜尋範圍限制**（@business-rules @p1） | 關鍵字「9999」僅存在於 history | `matchesKeyword` 只比對 name+spec → 不命中，列表為空狀態 |
@@ -785,6 +771,9 @@ function onToggleCompare(item: Item) { /* TODO(005): store.toggle(item.id) */ }
 .price-up   { color: var(--price-up); }   /* 漲 500（紅） */
 .price-down { color: var(--price-down); } /* 跌 500（綠） */
 .price-flat { color: var(--price-flat); } /* 持平（灰） */
+.price-new  { color: var(--text-dim);     /* 首日追蹤（僅 1 筆）：中性色 badge */
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 999px; padding: 1px 8px; font-size: .72rem; }
 ```
 
 ### 7.5 sparkline

@@ -410,7 +410,7 @@ flowchart LR
 | push 憑證 | `GITHUB_TOKEN`（contents: write）；token 觸發的 push **不會再觸發** workflow run（GitHub 防迴圈機制） |
 | 無異動 | 完全不 commit（`if changed` 分支）→ 不產生空 commit、避免 churn |
 | push 前 | `git pull --rebase` 併入並發期間 main 上其他人類 commit；實質衝突 → 失敗（保留工作目錄狀態供除錯） |
-| 資料成長 | 001 store 採 delta 歷史（僅異動 append `[d,p]`）+ 本規格日期制快照；`api/items/YYYYMMDD[_n].json` 每次異動會多一檔，但皆為增量、檔名唯一，可用 GitHub 檔案歷史管理 |
+| 資料成長 | 001 store 採每日一點累積（含平價日，同日重跑冪等不重複）+ 本規格日期制快照；`api/items/YYYYMMDD[_n].json` 每次異動會多一檔，但皆為增量、檔名唯一，可用 GitHub 檔案歷史管理 |
 
 ### 9.4 快取策略（api/items/YYYYMMDD[_n].json 日期檔名 + 前端引用）
 

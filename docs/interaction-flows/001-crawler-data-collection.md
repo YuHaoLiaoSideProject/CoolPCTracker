@@ -2,7 +2,7 @@
 
 ## 1. 功能概述
 
-**一句話描述**：每日自動抓取原價屋手機版 9 個分類頁，解析出約 1,449 個商品並與既有資料比對，僅在價格/狀態異動時增量記錄歷史，輸出供前端展示的最新商品資料。
+**一句話描述**：每日自動抓取原價屋手機版 9 個分類頁，解析出約 1,449 個商品並與既有資料比對，每次成功爬取都累積當日價格點（含價格未變的平價日），輸出供前端展示的最新商品資料。
 
 **核心價值**：以低成本、低風險、可恢復的方式持續累積跨日商品價格歷史，讓後續價格趨勢圖、降價通知、搜尋比價等功能有乾淨且穩定的資料來源。
 
@@ -41,14 +41,13 @@ flowchart TD
     Spec[規格解析<br/>深度: CPU/GPU/RAM/SSD/HDD/主機板<br/>輕量: 記憶卡/套裝/劈發價] --> Diff
     Diff[hash(主分類+正規化名稱) 產生 ID<br/>與 items.json 比對] --> Health
     Health{商品數驟降 &gt;20%<br/>或解析 0 商品?}
-    Health -- 否 --> Changed{價格或狀態異動?}
-    Changed -- 是 --> Append[append 歷史 [d,p]<br/>更新 status / first_seen / last_seen] --> Save
-    Changed -- 否 --> Keep[維持既有歷史不 append] --> Save
+    Health -- 否 --> Append[每日一點：成功爬取商品
+append [d,p]（含平價日）<br/>更新 status / first_seen / last_seen] --> Save
     Save[寫入 items.json + meta.json] --> End([結束，等待明日排程])
 
     subgraph 異常與恢復
         Retry[單頁重試 ≤ 3 次]
-        Skip[該分類沿用舊資料<br/>meta.json 標記 failed]
+        Skip[該分類沿用舊資料<br/>不 append 當日點<br/>meta.json 標記 failed]
         Health -- 是 --> Alert[不覆寫資料<br/>管理員 Telegram 警報] --> End
         Fetch -. 抓取失敗 .-> Retry
         Retry -. 重試成功 .-> Decode
@@ -134,7 +133,7 @@ flowchart TD
 |---|------|
 | **觸發** | store 依 diff 結果更新資料 |
 | **操作前** | diff 結果 + 既有 items.json |
-| **系統回應** | 僅價格/狀態異動時於 history 尾端 append `[d,p]`；更新 status / first_seen / last_seen；以原子方式寫出 `data/items.json` 與 `data/meta.json` |
+| **系統回應** | 每次成功爬取的商品於 history 尾端 append 當日價格點 `[d,p]`（含價格未變的平價日）；更新 status / first_seen / last_seen；失敗分類商品（今日未成功爬取）原樣保留；以原子方式寫出 `data/items.json` 與 `data/meta.json` |
 | **操作後** | 兩個資料檔更新完成（git commit 由 CI 後續處理） |
 | **下一步** | 步驟 9：回報結果 |
 
@@ -170,7 +169,7 @@ flowchart TD
 | 執行頻率 | 每日一次（06:00 UTC）；不支援即時/多頻次抓取 |
 | 並發 | 同一時間僅允許一個 run，避免同日重複 append 歷史 |
 | 重試與逾時 | 單頁重試 ≤ 3 次；HTTP 逾時需設定上限（建議 10–30 秒） |
-| 歷史增長 | 僅價格/狀態異動時 append `[d,p]`，控制 repo 體積 |
+| 歷史增長 | 每日一點：每次成功爬取（含平價日）append `[d,p]`，同日重跑冪等不重複；每日約 1,449 點、每點 2 欄位，repo 體積可控 |
 | 商品 ID | hash(主分類+正規化名稱)，跨日穩定；名稱正規化（全形/半形、空白）影響 ID 穩定性 |
 | 狀態判定 | in_stock / gone 以「商品是否出現在當日清單」判定 |
 | 價格缺失 | 價格資訊缺失時不記錄該日價格歷史，商品仍依出現與否判定狀態 |
@@ -187,7 +186,7 @@ flowchart TD
 - [ ] Hot！/ 任搭↓N / ↘ / 尾盤四種標記正確解析
 - [ ] CPU/GPU/RAM/SSD/HDD/主機板為深度規格解析；記憶卡/套裝/劈發價為輕量解析
 - [ ] 商品 ID = hash(主分類 + 正規化名稱)，同商品跨日 ID 一致、同日重跑一致
-- [ ] 僅價格或狀態異動時 append 歷史 `[d,p]`
+- [ ] 每次成功爬取的商品都 append 當日價格點 `[d,p]`（含平價日）；同日重跑不重複 append
 - [ ] 新商品 first_seen 設為當日；今日消失商品標記為 gone
 - [ ] 單頁失敗自動重試 ≤ 3 次；仍失敗該分類沿用舊資料並於 meta.json 標記
 - [ ] 商品數驟降 >20% 或解析 0 商品 → 不覆寫資料 + 發管理員 Telegram 警報

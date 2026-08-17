@@ -1,27 +1,17 @@
-// web/src/composables/usePriceDelta.ts — 漲跌計算（開發規格 003 §2.4/§2.10）
-// 漲跌基準 = 最後兩筆 history（今日 vs 昨日；history 為「僅異動 append」，
-// 故「昨日價」以倒數第二筆為準；僅 1 筆或空 → delta 為 null → 顯示「—」）。
-// 漲紅 / 跌綠 / 持平灰；文字（漲/跌/持平/—）與顏色並存（WCAG 1.4.1）。
+// web/src/composables/usePriceDelta.ts — 卡片漲跌呈現（開發規格 003 §2.4/§2.10）
+// 計算委派 @/lib/priceChange（與 004 詳情頁共用同一事實來源）；此處只做卡片介面。
+// 語意：漲跌基準 = history 最後兩筆（「前一日」= 上一筆有紀錄的日期，非日曆昨日）；
+// 僅 1 筆 →「新」（price-new 中性色）；空 →「—」；漲紅/跌綠/持平灰（WCAG 1.4.1 文字＋顏色並存）。
 
 import { computed } from "vue"
 import type { Item, ItemSpec } from "@/types/item"
-import { formatNumber } from "@/utils/format"
+import { computePriceChange, priceChangeBadgeClass, priceChangeBadgeText } from "@/lib/priceChange"
 
 export function usePriceDelta(item: Item) {
-  const lastTwo = item.history.slice(-2)
-  const currentPrice = computed(() => lastTwo.at(-1)?.p ?? null)
-  const delta = computed(() =>
-    lastTwo.length >= 2 ? lastTwo[1].p - lastTwo[0].p : null,
-  )
-  const deltaClass = computed(() =>
-    delta.value == null ? "" : delta.value > 0 ? "price-up" : delta.value < 0 ? "price-down" : "price-flat",
-  )
-  const deltaText = computed(() => {
-    if (delta.value == null) return "—"
-    if (delta.value === 0) return "持平"
-    const sign = delta.value > 0 ? "漲" : "跌"
-    return `${sign} ${formatNumber(Math.abs(delta.value))}`
-  })
+  const change = computed(() => computePriceChange(item.history))
+  const currentPrice = computed(() => change.value.current)
+  const deltaClass = computed(() => priceChangeBadgeClass(change.value))
+  const deltaText = computed(() => priceChangeBadgeText(change.value))
   return { currentPrice, deltaClass, deltaText }
 }
 

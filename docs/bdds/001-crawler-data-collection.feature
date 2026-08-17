@@ -1,7 +1,7 @@
 @crawler @crawler-data-collection @p0 @regression
 Feature: 爬蟲資料收集管道
   作為一個 系統（每日排程自動觸發）
-  我希望 自動抓取原價屋手機版 9 個分類頁、解析商品、與既有資料比對並僅在異動時增量存檔
+  我希望 自動抓取原價屋手機版 9 個分類頁、解析商品、與既有資料比對並每日累積當日價格點（含平價日）
   以便 前端能展示最新商品價格與跨日歷史趨勢
 
   Background:
@@ -28,7 +28,7 @@ Feature: 爬蟲資料收集管道
     And 該商品 history 含一筆今日價格記錄
 
   @happy-path
-  Scenario Outline: 商品價格異動時追加歷史
+  Scenario Outline: 商品價格異動時追加歷史（異動日）
     Given 商品「<商品名>」昨日價格為 <昨日價格> 元
     When 今日爬取到該商品價格為 <今日價格> 元
     Then 系統於 history 尾端 append 一筆 [今日, <今日價格>]
@@ -47,12 +47,12 @@ Feature: 爬蟲資料收集管道
     And 系統不新增今日價格歷史
 
   @business-rules @p1
-  Scenario: 價格與狀態皆無異動時不追加歷史
+  Scenario: 價格與狀態皆無異動時仍累積當日平價點（每日一點）
     Given 商品「Intel i5-13600K」昨日價格為 9990 元
     And 今日價格仍為 9990 元且狀態維持 in_stock
     When 爬蟲執行完畢
-    Then items.json 中該商品 history 維持原樣
-    And 系統不新增今日歷史記錄
+    Then items.json 中該商品 history 尾端 append 一筆 [今日, 9990]（平價日仍累積）
+    And 該商品 last_seen 更新為今日
 
   @business-rules @p1
   Scenario Outline: 商品 ID 由主分類與正規化名稱的 hash 產生且跨日穩定
@@ -128,7 +128,8 @@ Feature: 爬蟲資料收集管道
     Given 爬蟲正在執行
     When G=5 主機板分類頁連線逾時且重試 3 次仍失敗
     Then 系統跳過該分類，其餘 8 個分類照常解析與更新
-    And 該分類既有商品沿用舊資料
+    And 該分類既有商品沿用舊資料（不標 gone）
+    And 該分類商品不累積當日價格點（今日未成功爬取）
     And meta.json 標記該分類為失敗（failed_categories）
 
   @error-handling @p0
@@ -195,8 +196,8 @@ Feature: 爬蟲資料收集管道
     And 商品歷史以實際爬取日記錄
 
   @edge-case @p1
-  Scenario: 同日重複執行不重複追加歷史
+  Scenario: 同日重複執行不重複追加歷史（含平價日）
     Given 今日 06:00 已執行過一次爬蟲並更新資料
     When 今日再次執行爬蟲且價格與狀態皆無異動
-    Then 系統不重複 append 歷史
+    Then 系統不重複 append 歷史（末筆歷史已是今日且價格相同 → 不重複）
     And 同日同價格僅保留一筆歷史記錄

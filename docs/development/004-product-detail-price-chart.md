@@ -59,12 +59,12 @@ web/src/
 | `items[].id` | string | 唯一、跨日穩定 | `sha256(主分類 + 正規化名稱)` 取前 16 位 hex（001 產生，如 `3f9a1c2b8e4d5f6a`）；URL 直接帶入（hex 無特殊字元，仍以 encodeURIComponent 防呆） |
 | `items[].spec` | object | 欄位可缺省 | 結構化規格；空值欄位詳情頁不顯示 |
 | `items[].status` | `'in_stock' \| 'gone'` | - | gone＝已下架（不再出現於當日清單） |
-| `items[].history` | `PricePoint[]` | 依 `d` 升冪、非等間距、僅異動時 append | delta 時間序列；原始 JSON 為 compact `[d, p]` 陣列（001 格式決策），由 `useItems` 載入層正規化為 `{d, p}`；`history[last]` 即目前價格 |
+| `items[].history` | `PricePoint[]` | 依 `d` 升冪、每日一點（含平價日，跨日連續） | 每日累積時間序列；原始 JSON 為 compact `[d, p]` 陣列（001 格式決策），由 `useItems` 載入層正規化為 `{d, p}`；`history[last]` 即目前價格 |
 
 型別定義（`types/item.ts`）：
 
 ```typescript
-/** 歷史價格點：d=日期(YYYY-MM-DD)，p=價格(NT$)。delta 策略 → 非等間距，僅價格異動時 append。
+/** 歷史價格點：d=日期(YYYY-MM-DD)，p=價格(NT$)。每日一點累積（含平價日；失敗分類不累積 → 可能有跨日缺口）。
  *  ⚠️ items.json 原始格式為 compact 陣列 ["2026-08-15", 9990]（001 格式決策），
  *  由 useItems 載入層正規化為本物件型別。 */
 export interface PricePoint {
@@ -142,10 +142,10 @@ export function useItems() {
 
 ### 2.4 `usePriceHistory` — 漲跌／歷史最低計算
 
-**職責**：輸入 `history`（依日期升冪），輸出價格摘要（current／previous／diff／diffPercent／trend／low／lowDate）與圖表資料序列。純函數計算邏輯抽離為可單元測試的 util（Vitest 覆蓋 BDD 三組漲跌範例與多日最低範例）。
+**職責**：輸入 `history`（依日期升冪），輸出價格摘要（current／previous／diff／diffPercent／trend／low／lowDate）與圖表資料序列。漲跌計算委派 `@/lib/priceChange`（與 003 卡片 badge 共用同一事實來源，DRY）；本 composable 僅補歷史最低價與 empty/single 旗標。純函數計算邏輯為可單元測試（Vitest 覆蓋 BDD 三組漲跌範例與多日最低範例）。
 
-**漲跌計算規則**（BDD `@edge-case @business-rule` 三組範例）：
-- `previous = history[len-2]`、`current = history[len-1]`；`diff = current - previous`。
+**漲跌計算規則**（BDD `@edge-case @business-rule` 三組範例；語意 = 與「上一筆有紀錄的日期」比較，非連續日仍取最後兩點、不補中間日）：
+- `previous = history[len-2]`（上一筆有紀錄的日期）、`current = history[len-1]`；`diff = current - previous`。
 - `diff < 0` → 標籤 `降價 NT$510（-4.9%）`（金額取絕對值、千分位；百分比帶負號、1 位小數），綠色 ▼。
 - `diff > 0` → `漲價 NT$100（+5.3%）`，紅色 ▲。
 - `diff === 0` → `持平`，灰色 —（不顯示金額／百分比）。
@@ -175,13 +175,9 @@ export interface PriceStats {
 /** 以 history [d,p] 計算價格摘要（history 需依 d 升冪；PricePoint 由 useItems 自 compact [d,p] 正規化） */
 export function usePriceHistory(history: Ref<PricePoint[]>) {
   const stats = computed<PriceStats>(() => {
-    const h = history.value
-    if (h.length === 0) return /* empty: 全 null、empty=true */
-    const current = h[h.length - 1].p
-    const previous = h.length >= 2 ? h[h.length - 2].p : null
-    // diff / diffPercent / trend：previous 為 null 時全為 null
+    const change = computePriceChange(history.value)   // 委派 @/lib/priceChange
+    if (h.length === 0) return { ...change, low: null, lowDate: null, empty: true, single: false }
     // low = min(...p)；lowDate = 第一個 p===low 的 d（最早達成日）
-    // TODO: 依上述規則填值
   })
 
   /** 圖表資料序列（日期字串陣列、價格陣列） */
@@ -193,21 +189,13 @@ export function usePriceHistory(history: Ref<PricePoint[]>) {
   return { stats, chartSeries }
 }
 
-// ---- 格式化 util（可獨立 export 供 003 sparkline 與卡片漲跌複用） ----
+// ---- 格式化 util（實作移至 @/lib/priceChange，與 003 共用；此處 re-export 相容） ----
 
-/** NT$9,990 千分位格式 */
-export function formatPrice(n: number): string {
-  return n.toLocaleString('zh-TW')
-}
+export { formatDiffAmount, formatDiffPercent, formatTrendLabel } from '@/lib/priceChange'
 
-/** 漲跌金額標籤：diff<0 → 「降價 NT$510」；diff>0 → 「漲價 NT$100」 */
-export function formatDiffAmount(diff: number): string
-
-/** 漲跌百分比標籤：帶符號 1 位小數，「-4.9%」／「+5.3%」 */
-export function formatDiffPercent(diff: number, previous: number): string
-
-/** 完整漲跌標籤（view 直接使用）：降價 NT$510（-4.9%）／漲價 NT$100（+5.3%）／持平 */
-export function formatTrendLabel(diff: number, previous: number): string
+/** formatDiffAmount：diff<0 → 「降價 NT$510」；diff>0 → 「漲價 NT$100」（取絕對值、千分位） */
+/** formatDiffPercent：帶符號 1 位小數，「-4.9%」／「+5.3%」／「0.0%」 */
+/** formatTrendLabel：降價 NT$510（-4.9%）／漲價 NT$100（+5.3%）／持平 */
 ```
 
 ### 2.5 `PriceTrendChart` — lightweight-charts 趨勢圖元件
@@ -252,7 +240,7 @@ export type {
 
 | 項目 | 規格 |
 |------|------|
-| **非等間距 X 軸** | time 採 `'yyyy-mm-dd'` 字串（lightweight-charts BusinessDay）：資料點依實際日期定位，長間隔如實留白、**不補點**（delta 序列僅異動時有值，如實呈現）。tooltip 自寫 DOM（`subscribeCrosshairMove`）顯示完整 `YYYY-MM-DD` 與價格 |
+| **每日一點 X 軸** | time 採 `'yyyy-mm-dd'` 字串（lightweight-charts BusinessDay）：資料點每日累積（含平價日），跨日連續每日有值；間隔期（如失敗未爬取日）如實留白。tooltip 自寫 DOM（`subscribeCrosshairMove`）顯示完整 `YYYY-MM-DD` 與價格 |
 | **Y 軸** | 價格自動縮放（目標價 price line 一併納入可視範圍）；數值以 `formatNumber` 千分位呈現 → `NT$9,990` |
 | **tooltip** | 自寫 DOM tooltip（`subscribeCrosshairMove`：日期＋價格＋目標價，定位／clamp／離開隱藏）；若設有目標價一併顯示「目標價 NT$…」 |
 | **縮放／平移** | lwc 內建滾輪縮放＋拖曳平移；雙擊重置 → `timeScale().fitContent()` |

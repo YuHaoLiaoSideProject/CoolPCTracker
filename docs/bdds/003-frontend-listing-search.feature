@@ -133,11 +133,18 @@ Feature: 前端列表與搜尋篩選（frontend-listing-search）
     Then 該商品仍顯示於搜尋結果
 
   @edge-case @p1
-  Scenario: 商品缺少昨日價格時漲跌顯示「—」
-    Given 某商品的歷史價格僅有一筆（無昨日價）
+  Scenario: 商品缺少昨日價格時漲跌顯示「新」
+    Given 某商品的歷史價格僅有一筆（首日追蹤，無前一日可比較）
     When 我檢視該商品卡片
-    Then 該卡片漲跌欄位顯示「—」
+    Then 該卡片漲跌欄位顯示「新」（中性色 badge）
     And 其餘欄位（名稱、價格、sparkline）正常顯示
+
+  @edge-case @p2
+  Scenario: 非連續日仍與「上一筆有紀錄的日期」比較
+    Given 商品「某 SSD」最近一筆有紀錄日期為 08-15，價格 2,990
+    And 上一筆有紀錄日期為 08-10（中間無紀錄，非日曆昨日 08-14）
+    When 我檢視該商品卡片
+    Then 漲跌欄位顯示「跌 500」（以 08-10 為基準，不補中間日）
 
   @edge-case @p2
   Scenario: 分類下無任何商品

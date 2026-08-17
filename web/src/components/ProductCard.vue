@@ -174,6 +174,16 @@ const cardLabel = computed(() => {
   color: var(--price-flat);
 }
 
+.price-new {
+  color: var(--text-dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
 .pc-actions {
   display: flex;
   gap: 8px;

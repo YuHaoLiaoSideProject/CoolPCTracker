@@ -25,7 +25,7 @@
 |---|----------|--------|------|
 | A1 | `web/` 為綠地：僅 Vite 骨架（`src/main.ts` 最小消費實作：渲染版本號＋fetch `data/meta.json` 顯示 crawled_at），**無任何既有 UI 元件、無 CSS、無路由** | —（事實） | `web/src/main.ts`、`web/src/vite-env.d.ts` |
 | A2 | `docs/uiux/` 尚未存在，本功能為系列首份（與 003 平行） | —（事實） | `docs/uiux/` |
-| A3 | 資料契約已定型：`items.json` 的 `history` 為 compact `[d,p]` delta 序列（非等間距、僅異動 append）；`spec` 欄位可缺省 | —（上游契約） | 001 crawler `store.py`、004 規格 §2.2 |
+| A3 | 資料契約已定型：`items.json` 的 `history` 為 compact `[d,p]` 每日一點序列（含平價日、跨日連續）；`spec` 欄位可缺省 | —（上游契約） | 001 crawler `store.py`、004 規格 §2.2 |
 | A4 | 上游已決定：圖表庫 lightweight-charts（原 ECharts 已演進）、目標價 session 級不持久化、time 軸非等間距如實呈現、空值規格欄位隱藏、降價綠/漲價紅/持平灰 | —（既有決策） | Tech Decision §3.1/§3.4、004 規格 §2.4–2.6 |
 
 **結論**：本功能為全新設計，所有視覺與互動皆從零定義；沿用專案共用 Design Token 表（與 003 平行子任務一致，見 §3），確保兩功能上線後外觀一致。

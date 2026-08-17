@@ -1,5 +1,5 @@
 // web/src/composables/__tests__/usePriceDelta.test.ts — 漲跌三態＋缺昨日價
-// （開發規格 003 §2.4 / BDD：漲紅/跌綠/持平灰、僅 1 筆 →「—」）
+// （開發規格 003 §2.4 / BDD：漲紅/跌綠/持平灰、僅 1 筆 →「新」、空 history →「—」）
 import { describe, expect, it } from "vitest"
 import { usePriceDelta, specChipTexts } from "@/composables/usePriceDelta"
 import { makeItem } from "@/testing/fixtures"
@@ -39,15 +39,15 @@ describe("usePriceDelta", () => {
     expect(deltaText.value).toBe("漲 500")
   })
 
-  it("僅 1 筆 history → delta null →「—」且無顏色 class", () => {
+  it("僅 1 筆 history → delta null →「新」＋中性色 price-new（有價無前，不壞）", () => {
     const item = makeItem({ name: "美光 DDR5 32G", history: hist(2999) })
     const { currentPrice, deltaClass, deltaText } = usePriceDelta(item)
     expect(currentPrice.value).toBe(2999)
-    expect(deltaClass.value).toBe("")
-    expect(deltaText.value).toBe("—")
+    expect(deltaClass.value).toBe("price-new")
+    expect(deltaText.value).toBe("新")
   })
 
-  it("空 history → currentPrice null +「—」", () => {
+  it("空 history → currentPrice null +「—」且無顏色 class", () => {
     const item = makeItem({ name: "空歷史", history: [] })
     const { currentPrice, deltaClass, deltaText } = usePriceDelta(item)
     expect(currentPrice.value).toBeNull()

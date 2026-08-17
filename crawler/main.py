@@ -17,6 +17,10 @@
 本次有效總數（供下次 run 作基準）；failed 路徑經 store.write_meta 沿用既有值，
 因此失敗 run 不會污染基準（基準在成功 run 後更新，失敗後保持）。
 
+**counts/total 語意**（去重計數）：counts/total = 「本次解析（去重後）商品數」，
+以 unique id 計（store.diff 的 by_id dict 覆蓋同名同 ID，BDD #18）；失敗分類維持 0，
+無 failed/gone carryover 時與 data/items.json 實際筆數一致。
+
 **寫檔分工**：ok/partial → store.save(items, meta)（原子寫 items.json + meta.json，
 meta 含完整欄位）；failed → store.write_meta(...)（僅寫 meta.json 標記失敗，
 items.json 保持原狀）。
@@ -52,6 +56,10 @@ def run_crawler(data_dir: Path, today: date | None = None,
 
     0 = 成功（含 partial）；1 = 健康檢查擋下（failed，不覆寫 items.json）；
     2 = 其他執行失敗（由 main() 捕捉意外例外後回傳）。
+
+    counts/total = 「本次解析（去重後）商品數」：以 unique id 計（同名同 ID 重複只算
+    一筆，與 store.diff 的 by_id 覆蓋一致）；無 failed/gone carryover 時
+    與 data/items.json 實際筆數相同。失敗分類 counts=0、previous_total 語意不變。
     """
     day = today if today is not None else date.today()
     store = Store(data_dir)
@@ -66,7 +74,6 @@ def run_crawler(data_dir: Path, today: date | None = None,
     # 2-3. parse_page → RawItem；parse_spec + make_item_id → Item
     today_items: list[Item] = []
     failed_categories: list[str] = []
-    counts: dict[str, int] = {c.name: 0 for c in CATEGORIES}
     day_str = day.isoformat()
     for result in results:
         category = result.category
@@ -80,8 +87,17 @@ def run_crawler(data_dir: Path, today: date | None = None,
             failed_categories.append(category.name)
             continue
         items = [_to_item(raw, day_str) for raw in parsed.items]
-        counts[category.name] = len(items)
         today_items.extend(items)
+
+    # 去重計數：store.diff 以 by_id dict 覆蓋同名同 ID（BDD #18，最後解析者勝出），
+    # 因此 counts/total 依「去重後的今日商品 unique id」計數，與實際儲存筆數一致；
+    # 失敗分類不在今日清單 → counts 維持 0（「本次解析數」語意不變）。
+    counts: dict[str, int] = {c.name: 0 for c in CATEGORIES}
+    unique_ids: set[str] = set()
+    for item in today_items:
+        if item.id not in unique_ids:
+            unique_ids.add(item.id)
+            counts[item.category] += 1
 
     # BDD #16 / 007 rule 4：解析出 0 商品但上次有商品的分類 → 視為失敗分類（沿用舊資料）
     for category in CATEGORIES:
@@ -89,7 +105,7 @@ def run_crawler(data_dir: Path, today: date | None = None,
                 and any(i.category == category.name for i in previous_items.values())):
             failed_categories.append(category.name)
 
-    total = len(today_items)
+    total = sum(counts.values())  # == len(unique_ids)（各分類 unique id 數加總）
     previous_total = old_meta.get("previous_total")
     if previous_total is None:
         previous_total = old_meta.get("total")  # 首次/舊版 meta 無基準 → 沿用上次 run 總數
@@ -104,7 +120,8 @@ def run_crawler(data_dir: Path, today: date | None = None,
         logger.error("crawler %s: %s（不覆寫 items.json）", day.isoformat(), reason)
         return 1
 
-    # 5. diff → apply（partial：失敗分類既有商品視為未變動，不誤判 gone）
+    # 5. diff → apply（partial：失敗分類既有商品視為「今日未成功爬取」→ carryover，
+    #    不誤判 gone、不 append 當日點）
     diff = store.diff(today_items, previous_items)
     if failed_categories:
         diff = _exclude_failed_from_gone(diff, failed_categories, previous_items)
@@ -161,13 +178,18 @@ def _compute_status(total: int, previous_total: int | None,
 
 def _exclude_failed_from_gone(diff: DiffResult, failed_categories: list[str],
                               previous_items: dict[str, Item]) -> DiffResult:
-    """失敗分類（本次無新資料）既有商品視為「未變動」：自 gone_ids 移出併入 unchanged，
-    保留原樣（last_seen/status/history 不動，不誤判 gone；規格 §6.2 / BDD #12、#16）。"""
+    """失敗分類（本次無新資料）既有商品視為「今日未成功爬取」：自 gone_ids 移出，
+    併入 carryover_ids（apply 原樣保留：last_seen/status/history 不動、不 append 當日點、
+    不誤判 gone；規格 §6.2 / BDD #12、#16）。
+    refreshed_items 原樣帶過（失敗分類商品不在今日清單 → 天然不會進入 refreshed）。"""
     failed_ids = {iid for iid, item in previous_items.items()
                   if item.category in failed_categories}
     gone_ids = [iid for iid in diff.gone_ids if iid not in failed_ids]
     return DiffResult(new_items=diff.new_items, changed_items=diff.changed_items,
-                      gone_ids=gone_ids, unchanged_ids=diff.unchanged_ids | failed_ids)
+                      refreshed_items=diff.refreshed_items,
+                      gone_ids=gone_ids,
+                      unchanged_ids=set(diff.unchanged_ids),
+                      carryover_ids=set(diff.carryover_ids) | failed_ids)
 
 
 def _to_item(raw: RawItem, day: str) -> Item:

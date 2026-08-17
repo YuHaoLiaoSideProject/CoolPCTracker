@@ -85,7 +85,7 @@
 |------|------|------|------|
 | 爬蟲 | Python | 3.12 | httpx + selectolax（或 BeautifulSoup4） |
 | 排程 | GitHub Actions | - | cron `0 6 * * *`（UTC 06:00 = 台北 14:00，錯開原價屋上午更新） |
-| 資料 | JSON（git 版控） | - | delta 歷史，僅異動時 append |
+| 資料 | JSON（git 版控） | - | 每日一點累積歷史（含平價日），冪等防護同日重跑不重複 |
 | 前端 | Vue 3 + Vite + TypeScript | Vue 3.5 / Vite 6 | Composition API + Pinia（視需要） |
 | 圖表 | ECharts | 5.x | on-demand import，trend chart + markLine 目標價 |
 | 部署 | GitHub Pages | - | `actions/deploy-pages` 或 peaceiris/gh-pages |
@@ -158,7 +158,7 @@ coolpc-tracker/
       "status": "in_stock",                     // in_stock / gone（以是否出現在當日清單判定）
       "first_seen": "2026-08-15",
       "last_seen": "2026-08-16",
-      "history": [ ["2026-08-15", 9990] ]            // compact [d,p] 陣列；僅異動時 append
+      "history": [ ["2026-08-15", 9990], ["2026-08-16", 9990] ]  // compact [d,p] 陣列；每日一點累積（含平價日）
     }
   ]
 }

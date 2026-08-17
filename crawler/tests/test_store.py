@@ -1,5 +1,10 @@
-"""store.py 單元測試（BDD #2 新商品、#3 價格異動、#4 gone、#5 無異動、
-#18 重複名稱、#19 價格缺失、#21 同日重複執行 + 原子寫入 + meta）。
+"""store.py 單元測試（BDD #2 新商品、#3 價格異動、#4 gone、#5 平價日仍累積一點、
+#18 重複名稱、#19 價格缺失、#21 同日重複執行 + 原子寫入 + meta；
+refreshed：flags/spec/subcategory/name 異動傳播（code review 發現 #1 修復））。
+
+每日一點語意：每次成功爬取（商品出現在今日清單）都 append 當日價格點，含平價日；
+同日重跑（末筆歷史已是今日且價格相同）不重複 append。
+失敗分類商品（今日未成功爬取）→ carryover_ids → 原樣保留。
 
 store 測試一律使用 pytest tmp_path，不碰真實檔案系統。
 今日商品以「提議歷史 [[今日, 價格]]」傳入 diff；價格缺失時 history=[]。
@@ -165,7 +170,8 @@ class TestApply:
         """#2 新商品：first_seen=last_seen=今日、status=in_stock、history 一筆今日價格。"""
         store = Store(tmp_path)
         new_item = make_item("n1", name="Intel i5-13600K", price=9990)
-        diff = DiffResult(new_items=[new_item], changed_items=[], gone_ids=[], unchanged_ids=set())
+        diff = DiffResult(new_items=[new_item], changed_items=[], refreshed_items=[],
+                          gone_ids=[], unchanged_ids=set())
         result = store.apply(diff, TODAY, {})
         assert len(result) == 1
         r = result[0]
@@ -180,7 +186,8 @@ class TestApply:
         store = Store(tmp_path)
         new_item = make_item("n2", name="無標價新品", price=None)
         assert new_item.history == []
-        diff = DiffResult(new_items=[new_item], changed_items=[], gone_ids=[], unchanged_ids=set())
+        diff = DiffResult(new_items=[new_item], changed_items=[], refreshed_items=[],
+                          gone_ids=[], unchanged_ids=set())
         result = store.apply(diff, TODAY, {})
         r = result[0]
         assert r.history == []
@@ -197,7 +204,8 @@ class TestApply:
                             first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
         }
         changed = make_item("c1", name="Intel i5-13600K", price=9790)
-        diff = DiffResult(new_items=[], changed_items=[changed], gone_ids=[], unchanged_ids=set())
+        diff = DiffResult(new_items=[], changed_items=[changed], refreshed_items=[],
+                          gone_ids=[], unchanged_ids=set())
         result = store.apply(diff, TODAY, prev)
         assert len(result) == 1
         r = result[0]
@@ -214,7 +222,8 @@ class TestApply:
                             history=[[YESTERDAY_STR, 8888]],
                             first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
         }
-        diff = DiffResult(new_items=[], changed_items=[], gone_ids=["g1"], unchanged_ids=set())
+        diff = DiffResult(new_items=[], changed_items=[], refreshed_items=[],
+                          gone_ids=["g1"], unchanged_ids=set())
         result = store.apply(diff, TODAY, prev)
         r = result[0]
         assert r.status == STATUS_GONE
@@ -222,15 +231,32 @@ class TestApply:
         assert r.first_seen == YESTERDAY_STR
         assert r.history == [[YESTERDAY_STR, 8888]]
 
-    def test_unchanged_kept_as_is(self, tmp_path):
-        """#5 無異動：維持原樣、history 不變。"""
+    def test_unchanged_flat_day_appends_daily_point(self, tmp_path):
+        """#5 新語意（每日一點）：價格/狀態皆無異動 → 仍 append 當日平價點、last_seen=今日。"""
         store = Store(tmp_path)
         prev_item = make_item("u1", price=9990, history=[[YESTERDAY_STR, 9990]],
                               first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR)
-        diff = DiffResult(new_items=[], changed_items=[], gone_ids=[], unchanged_ids={"u1"})
+        diff = DiffResult(new_items=[], changed_items=[], refreshed_items=[],
+                          gone_ids=[], unchanged_ids={"u1"})
         result = store.apply(diff, TODAY, {"u1": prev_item})
+        assert result[0] is not prev_item
+        assert result[0].history == [[YESTERDAY_STR, 9990], [TODAY_STR, 9990]]  # 平價日仍累積
+        assert result[0].last_seen == TODAY_STR
+        assert result[0].first_seen == YESTERDAY_STR
+        assert result[0].status == STATUS_IN_STOCK
+
+    def test_carryover_failed_category_kept_as_is(self, tmp_path):
+        """失敗分類（今日未成功爬取，carryover）：原樣保留，不 append 當日點、last_seen 不更新。"""
+        store = Store(tmp_path)
+        prev_item = make_item("m1", price=9990, history=[[YESTERDAY_STR, 9990]],
+                              first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR)
+        diff = DiffResult(new_items=[], changed_items=[], refreshed_items=[],
+                          gone_ids=[], unchanged_ids=set(), carryover_ids={"m1"})
+        result = store.apply(diff, TODAY, {"m1": prev_item})
         assert result[0] is prev_item
-        assert result[0].history == [[YESTERDAY_STR, 9990]]
+        assert result[0].history == [[YESTERDAY_STR, 9990]]  # 不 append 當日點
+        assert result[0].last_seen == YESTERDAY_STR
+        assert result[0].status == STATUS_IN_STOCK
 
     def test_missing_price_no_history_but_in_stock(self, tmp_path):
         """#19 價格缺失：不記錄該日歷史、商品仍依出現與否判定 status（in_stock）。"""
@@ -241,7 +267,8 @@ class TestApply:
         }
         changed = make_item("p1", price=None)
         assert changed.price is None
-        diff = DiffResult(new_items=[], changed_items=[changed], gone_ids=[], unchanged_ids=set())
+        diff = DiffResult(new_items=[], changed_items=[changed], refreshed_items=[],
+                          gone_ids=[], unchanged_ids=set())
         result = store.apply(diff, TODAY, prev)
         r = result[0]
         assert r.history == [[YESTERDAY_STR, 9990]]  # 不 append
@@ -249,7 +276,8 @@ class TestApply:
         assert r.status == STATUS_IN_STOCK
 
     def test_same_day_rerun_unchanged_no_duplicate(self, tmp_path):
-        """#21 同日重複執行（diff+apply 全流程）：末筆歷史已是今日且價格相同 → 不重複 append。"""
+        """#21 同日重複執行（diff+apply 全流程）：末筆歷史已是今日且價格相同 →
+        不重複 append（平價日亦不重複）。"""
         store = Store(tmp_path)
         prev = {
             "u1": make_item("u1", price=9990, history=[[YESTERDAY_STR, 9990], [TODAY_STR, 9990]],
@@ -269,7 +297,8 @@ class TestApply:
                             first_seen=YESTERDAY_STR, last_seen=TODAY_STR),
         }
         changed = make_item("c1", price=9990)
-        diff = DiffResult(new_items=[], changed_items=[changed], gone_ids=[], unchanged_ids=set())
+        diff = DiffResult(new_items=[], changed_items=[changed], refreshed_items=[],
+                          gone_ids=[], unchanged_ids=set())
         result = store.apply(diff, TODAY, prev)
         assert result[0].history == [[TODAY_STR, 9990]]
 
@@ -288,6 +317,120 @@ class TestApply:
         assert r.status == STATUS_IN_STOCK
         assert r.last_seen == TODAY_STR
         assert r.history == [[YESTERDAY_STR, 8888], [TODAY_STR, 8888]]
+
+
+# ── refreshed（flags/spec 凍結缺陷修復：動態標記與 spec 修正須傳播） ──────────
+
+class TestRefreshed:
+    def test_flags_only_change_is_refreshed_not_unchanged(self, tmp_path):
+        """flags 變動（Hot！出現）、價格/狀態不變 → refreshed（非 changed、非 unchanged）。"""
+        store = Store(tmp_path)
+        prev = {
+            "f1": make_item("f1", name="Intel i5-13600K", price=9990,
+                            history=[[YESTERDAY_STR, 9990]],
+                            first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        }
+        today_items = [make_item("f1", name="Intel i5-13600K", price=9990,
+                                 flags={"hot": True})]
+        diff = store.diff(today_items, prev)
+        assert [i.id for i in diff.refreshed_items] == ["f1"]
+        assert diff.changed_items == []
+        assert diff.unchanged_ids == set()
+
+    def test_spec_fix_is_refreshed(self, tmp_path):
+        """spec 修正（brand 補上）→ refreshed。"""
+        store = Store(tmp_path)
+        prev = {
+            "s1": make_item("s1", name="Intel i5-13600K", price=9990,
+                            spec={"brand": None, "model": None, "extra": {}},
+                            history=[[YESTERDAY_STR, 9990]],
+                            first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        }
+        today_items = [make_item("s1", name="Intel i5-13600K", price=9990,
+                                 spec={"brand": "Intel", "model": "i5-13600K", "extra": {}})]
+        diff = store.diff(today_items, prev)
+        assert [i.id for i in diff.refreshed_items] == ["s1"]
+        assert diff.unchanged_ids == set()
+
+    def test_name_or_subcategory_change_is_refreshed(self, tmp_path):
+        """name/subcategory 異動（price/status 相同）→ refreshed。"""
+        store = Store(tmp_path)
+        prev = {
+            "n1": make_item("n1", name="舊名稱", subcategory="舊子分類", price=9990,
+                            history=[[YESTERDAY_STR, 9990]],
+                            first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        }
+        today_items = [make_item("n1", name="新名稱", subcategory="新子分類", price=9990)]
+        diff = store.diff(today_items, prev)
+        assert [i.id for i in diff.refreshed_items] == ["n1"]
+        assert diff.changed_items == []
+        assert diff.unchanged_ids == set()
+
+    def test_apply_refreshed_updates_fields_appends_daily_point(self, tmp_path):
+        """refreshed：name/subcategory/spec/flags 更新為今日值；append 當日平價點（每日一點）、
+        last_seen=今日（今日成功爬取）。"""
+        store = Store(tmp_path)
+        prev = {
+            "f1": make_item("f1", name="舊名稱", subcategory="舊子分類", price=9990,
+                            spec={"brand": None}, flags={},
+                            history=[[YESTERDAY_STR, 9990]],
+                            first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        }
+        refreshed = make_item("f1", name="新名稱", subcategory="新子分類", price=9990,
+                              spec={"brand": "Intel"}, flags={"hot": True})
+        diff = DiffResult(new_items=[], changed_items=[], refreshed_items=[refreshed],
+                          gone_ids=[], unchanged_ids=set())
+        result = store.apply(diff, TODAY, prev)
+        assert len(result) == 1
+        r = result[0]
+        assert r.name == "新名稱"
+        assert r.subcategory == "新子分類"
+        assert r.spec == {"brand": "Intel"}
+        assert r.flags == {"hot": True}
+        assert r.history == [[YESTERDAY_STR, 9990], [TODAY_STR, 9990]]  # 平價日仍 append
+        assert r.last_seen == TODAY_STR           # 今日成功爬取 → last_seen 更新
+        assert r.first_seen == YESTERDAY_STR
+        assert r.status == STATUS_IN_STOCK
+        assert r.price == 9990
+
+    def test_changed_with_flags_updates_flags_and_appends_history(self, tmp_path):
+        """價格異動同時 flags 變動 → changed 分支：flags/spec 一併更新、歷史照常 append。"""
+        store = Store(tmp_path)
+        prev = {
+            "c1": make_item("c1", name="Intel i5-13600K", price=9990, flags={},
+                            history=[[YESTERDAY_STR, 9990]],
+                            first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        }
+        changed = make_item("c1", name="Intel i5-13600K", price=9790,
+                            flags={"hot": True, "price_drop": True},
+                            spec={"brand": "Intel"})
+        diff = DiffResult(new_items=[], changed_items=[changed], refreshed_items=[],
+                          gone_ids=[], unchanged_ids=set())
+        result = store.apply(diff, TODAY, prev)
+        r = result[0]
+        assert r.flags == {"hot": True, "price_drop": True}
+        assert r.spec == {"brand": "Intel"}
+        assert r.history == [[YESTERDAY_STR, 9990], [TODAY_STR, 9790]]
+        assert r.last_seen == TODAY_STR
+
+    def test_unchanged_no_flags_diff_appends_daily_point(self, tmp_path):
+        """完全無異動（含 flags/spec/name/subcategory）→ unchanged：append 當日平價點、
+        last_seen=今日（每日一點語意）。"""
+        store = Store(tmp_path)
+        prev_item = make_item("u1", name="Intel i5-13600K", price=9990,
+                              flags={"hot": True}, spec={"brand": "Intel"},
+                              history=[[YESTERDAY_STR, 9990]],
+                              first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR)
+        today_items = [make_item("u1", name="Intel i5-13600K", price=9990,
+                                 flags={"hot": True}, spec={"brand": "Intel"})]
+        diff = store.diff(today_items, {"u1": prev_item})
+        assert diff.refreshed_items == []
+        assert diff.changed_items == []
+        assert diff.unchanged_ids == {"u1"}
+        result = store.apply(diff, TODAY, {"u1": prev_item})
+        assert result[0] is not prev_item
+        assert result[0].history == [[YESTERDAY_STR, 9990], [TODAY_STR, 9990]]  # 平價日仍累積
+        assert result[0].last_seen == TODAY_STR
 
 
 # ── save ────────────────────────────────────────────────────────────────────

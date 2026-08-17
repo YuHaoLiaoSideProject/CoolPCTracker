@@ -41,7 +41,7 @@
       "name": "Intel i5-13600K ...",
       "spec": { "brand": "Intel", "model": "i5-13600K", "cores": 14, /* … */ },
       "status": "in_stock",               // in_stock / gone（下架）
-      "history": [ ["2026-08-15", 9990] ]  // compact [d,p] 陣列（001 格式決策）；僅異動時 append
+      "history": [ ["2026-08-15", 9990] ]  // compact [d,p] 陣列（001 格式決策）；每日一點累積（含平價日）
     }
   ]
 }

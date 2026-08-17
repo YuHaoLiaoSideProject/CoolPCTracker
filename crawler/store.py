@@ -1,9 +1,13 @@
-"""diff → 歷史 append → 原子寫檔。資料真相：data/items.json + data/meta.json
+"""diff → 每日一點累積 → 原子寫檔。資料真相：data/items.json + data/meta.json
 （crawler 唯一寫入者）；對外 API 成品（api/index.json + api/items/）由
 scripts/version_data.py 依本目錄資料重建，本模組不寫 api/。
 
 本模組是資料的唯一寫入者（IF §5）：載入既有資料、與今日商品比對、
-僅在價格/狀態異動時增量 append 歷史 [d, p]、以 tempfile + os.replace 原子寫出。
+每次成功爬取（商品出現在今日清單且價格存在）都累積當日價格點 [d, p]
+（含價格未變的平價日），以 tempfile + os.replace 原子寫出。
+今日未成功爬取的商品（失敗分類）原樣保留，不累積當日點。
+
+冪等防護（BDD #21）：同日重跑時末筆歷史已是今日且價格相同 → 不重複 append。
 
 約定：今日商品的「目前價格」以提議歷史 [[今日, 價格]] 表示（價格缺失 → []），
 Item.price property 讀取歷史末筆；既有商品的價格即其最後記錄價格。
@@ -38,7 +42,7 @@ class Item:
     status: str = STATUS_IN_STOCK
     first_seen: str = ""
     last_seen: str = ""
-    history: list[list] = field(default_factory=list)  # compact [[d, p], ...]；僅異動 append
+    history: list[list] = field(default_factory=list)  # compact [[d, p], ...]；每日一點累積（含平價日）
 
     @property
     def price(self) -> int | None:
@@ -50,10 +54,15 @@ class Item:
 
 @dataclass
 class DiffResult:
-    new_items: list[Item]        # 首次出現
-    changed_items: list[Item]    # 價格或狀態異動（將 append 歷史）
-    gone_ids: list[str]          # 今日消失（標記 gone）
-    unchanged_ids: set[str]      # 維持原樣
+    new_items: list[Item]          # 首次出現
+    changed_items: list[Item]      # 價格或狀態異動（將 append 歷史）
+    refreshed_items: list[Item]    # flags/spec/subcategory/name 異動（價格/狀態不變；
+                                   # 仍 append 當日平價點、更新 last_seen）
+    gone_ids: list[str]            # 今日消失（標記 gone）
+    unchanged_ids: set[str]        # 今日有且完全無異動（仍 append 當日平價點）
+    carryover_ids: set[str] = field(default_factory=set)  # 今日未成功爬取（失敗分類，
+                                   # main._exclude_failed_from_gone 併入）：原樣保留、
+                                   # 不 append 當日點、不更新 last_seen
 
 
 class Store:
@@ -105,8 +114,14 @@ class Store:
         """逐商品分類：
         - 今日有、舊無 → new_items
         - 兩者皆有且價格或 status 異動 → changed_items
+        - 兩者皆有且價格/status 相同，但 name/subcategory/spec/flags 任一異動 →
+          refreshed_items（動態標記 Hot！/任搭↓N/尾盤/↘ 與 spec 修正須傳播，
+          不得凍結在 first_seen 當日）
         - 今日無、舊有 → gone_ids
-        - 其餘 → unchanged_ids
+        - 其餘 → unchanged_ids（今日有、價格/status/name/subcategory/spec/flags
+          皆無異動；apply 仍會 append 當日平價點，每日一點語意）
+        carryover_ids 由本方法保持空（失敗分類商品不在今日清單 → 落入 gone_ids，
+        由 main._exclude_failed_from_gone 移入 carryover_ids 原樣保留）。
         重複名稱同 ID 時以最後解析到的價格為準（dict 覆蓋，BDD #18）。"""
         by_id: dict[str, Item] = {}
         for item in today_items:
@@ -114,6 +129,7 @@ class Store:
 
         new_items: list[Item] = []
         changed_items: list[Item] = []
+        refreshed_items: list[Item] = []
         unchanged_ids: set[str] = set()
         for item in by_id.values():
             prev = previous.get(item.id)
@@ -121,41 +137,62 @@ class Store:
                 new_items.append(item)
             elif item.price != prev.price or item.status != prev.status:
                 changed_items.append(item)
+            elif (item.name != prev.name or item.subcategory != prev.subcategory
+                    or item.spec != prev.spec or item.flags != prev.flags):
+                refreshed_items.append(item)
             else:
                 unchanged_ids.add(item.id)
 
         gone_ids = [iid for iid in previous if iid not in by_id]
         return DiffResult(new_items=new_items, changed_items=changed_items,
+                          refreshed_items=refreshed_items,
                           gone_ids=gone_ids, unchanged_ids=unchanged_ids)
 
     # ── apply ───────────────────────────────────────────────────────────────
 
     def apply(self, diff: DiffResult, today: date, previous: dict[str, Item]) -> list[Item]:
-        """產生新的完整 items 清單：
+        """產生新的完整 items 清單（每日一點累積語意，含平價日）：
         - new：first_seen=last_seen=今日，history=[[今日, 價格]]（價格 None → 空）
         - changed：append [今日, 新價格]（價格 None 不 append），last_seen=今日；
-          冪等防護：末筆歷史已是今日且價格相同 → 不重複 append（BDD #21）
+          name/subcategory/spec/flags 一併更新為今日值
+        - refreshed：append [今日, 平價]（每日一點，含平價日）、last_seen=今日；
+          name/subcategory/spec/flags 更新為今日值
+        - 無異動：append [今日, 平價]（每日一點，含平價日）、last_seen=今日（BDD #5）
+        - carryover（今日未成功爬取，失敗分類）：原樣保留，不 append、不更新 last_seen
         - gone：status=gone，last_seen 保持，不新增歷史（BDD #4）
-        - 無異動：原樣保留（BDD #5）"""
+        冪等防護（所有 append 路徑）：末筆歷史已是今日且價格相同 → 不重複 append（BDD #21）"""
         today_str = today.isoformat()
         changed_by_id = {item.id: item for item in diff.changed_items}
+        refreshed_by_id = {item.id: item for item in diff.refreshed_items}
         unchanged = set(diff.unchanged_ids)
+        carryover = set(diff.carryover_ids)
         gone = set(diff.gone_ids)
 
         result: list[Item] = []
         for iid, prev in previous.items():
-            if iid in unchanged:
-                result.append(prev)  # 原樣保留，不 append
+            if iid in carryover:
+                result.append(prev)  # 今日未成功爬取（失敗分類）：原樣保留
+            elif iid in unchanged:
+                history = list(prev.history)
+                _append_daily_point(history, today_str, prev.price)
+                result.append(replace(prev, last_seen=today_str, history=history))
+            elif iid in refreshed_by_id:
+                current = refreshed_by_id[iid]
+                history = list(prev.history)
+                _append_daily_point(history, today_str, current.price)
+                result.append(replace(prev, last_seen=today_str, history=history,
+                                      name=current.name, subcategory=current.subcategory,
+                                      spec=current.spec, flags=current.flags))
             elif iid in gone:
                 result.append(replace(prev, status=STATUS_GONE))  # last_seen 保持
             elif iid in changed_by_id:
                 current = changed_by_id[iid]
                 history = list(prev.history)
-                price = current.price
-                if price is not None and not _is_same_day_same_price(history, today_str, price):
-                    history.append([today_str, price])
+                _append_daily_point(history, today_str, current.price)
                 result.append(replace(prev, status=current.status,
-                                      last_seen=today_str, history=history))
+                                      last_seen=today_str, history=history,
+                                      name=current.name, subcategory=current.subcategory,
+                                      spec=current.spec, flags=current.flags))
             else:  # 防禦：diff 未涵蓋的既有 id（不應發生）→ 不誤刪，維持原樣
                 result.append(prev)
 
@@ -226,6 +263,13 @@ class Store:
             except OSError:
                 pass
             raise
+
+
+def _append_daily_point(history: list[list], day: str, price: int | None) -> None:
+    """每日一點：成功爬取商品當日累積一點（含平價日）；價格缺失不記錄（BDD #19）。
+    冪等防護（BDD #21）：末筆歷史已是今日且價格相同 → 不重複 append。"""
+    if price is not None and not _is_same_day_same_price(history, day, price):
+        history.append([day, price])
 
 
 def _is_same_day_same_price(history: list[list], day: str, price: int | None) -> bool:

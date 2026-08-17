@@ -219,11 +219,11 @@ def run() -> int:
 
     # ③ 依狀態分支寫入（001 store diff→apply→save 原子寫入；不覆寫原則在此落實）
     if report.status == HealthStatus.OK:
-        # 001：diff → apply（僅異動 append [d,p]、gone 標記）→ 全量覆寫
+        # 001：diff → apply（每日一點 append [d,p]、含平價日、冪等防護；gone 標記）→ 全量覆寫
         applied = store.apply(store.diff(new_items, previous_items), today, previous_items)
         store.save(applied, meta={})                    # items.json 原子寫入（meta 由步驟 ④ 輸出）
     elif report.status == HealthStatus.PARTIAL:
-        # 007 §1.5：成功分類跑 001 diff/append 邏輯；失敗分類沿用既有資料（不 append、不標 gone）
+        # 007 §1.5：成功分類跑 001 diff/append 邏輯；失敗分類沿用既有資料（不 append 當日點、不標 gone）
         merged = store.merge_items(previous_items, new_items, report.failed_categories)
         store.save(merged, meta={})
     else:                                               # FAILED
@@ -263,7 +263,7 @@ def write_meta(meta: MetaDoc) -> None:
 
 def merge_items(previous_items: list[Item], new_items: list[Item],
                 failed_categories: list[str]) -> list[Item]:
-    """partial 合併：失敗分類（依 item.category 歸類）沿用既有資料（不 append 歷史、不標 gone），
+    """partial 合併：失敗分類（依 item.category 歸類）沿用既有資料（不 append 當日點、不標 gone），
     成功分類以本次解析結果更新（含 diff / history append，001 邏輯）。"""
 ```
 
@@ -475,7 +475,7 @@ build_meta：                              build_meta：                        
 | 2 | `health.compute_status` 決策核心（純函數）：20% 門檻（整數比較）、首次跳過、partial/failed/parser 優先序；`health_test.py` 單元測試 20% 邊界四例 | #1 |
 | 3 | `health.build_meta` + `build_alert_text`：完整健康指標輸出（sources / failed_categories / anomaly、crawled_at 更新規則）、警報文案模板 | #2 |
 | 4 | `main.py` 管道整合：fetcher/parser 例外傳遞（`FetchError` / `ParserError` 分類級捕獲）、呼叫 health、三路分支寫入、exit code 0/1 | #2、#3、001 fetcher/parser |
-| 5 | `store.merge_items`：partial 合併（成功分類更新、失敗分類沿用舊資料、不 append 歷史） | #4 |
+| 5 | `store.merge_items`：partial 合併（成功分類更新、失敗分類沿用舊資料、不 append 當日點） | #4 |
 | 6 | `telegram_bot.send_admin_alert`：006 共用 send_message + `TELEGRAM_ADMIN_CHAT_ID` secret；發送失敗僅 log 不影響 exit code | #4、006 telegram_bot |
 | 7 | 前端 `useDataFreshness`：crawled_at → 今日/昨日/N 天前/>7 天過期提示，掛載於 App 全域 | #3 |
 | 8 | crawl.yml 整合（002）：exit code 契約（failed → 停止 commit/deploy）、workflow_dispatch 同管道受保護、concurrency | #4、#6 |
