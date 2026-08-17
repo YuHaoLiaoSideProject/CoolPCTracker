@@ -105,7 +105,7 @@ function createItemsState() {
   }
   function itemFileUrl(file: string): string {
     const v = meta.value?.crawled_at ? `?v=${encodeURIComponent(meta.value.crawled_at)}` : ""
-    return `${import.meta.env.BASE_URL}api/items/${file}${v}`
+    return `${import.meta.env.BASE_URL}${file}${v}`
   }
 
   /** 抓取單一分類檔（不含 active 指派 — loadAll 併發用）。已載入→立即返回；in-flight→等待同一 Promise。 */

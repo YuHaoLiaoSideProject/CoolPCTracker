@@ -12,15 +12,14 @@ import type { ItemsFile } from "@/types/item"
 
 const DAY = 86_400_000
 const INDEX_MARK = "api/index.json"
-const ITEMS_API = "api/items/"
 const TRENDS_MARK = "api/trends/"
 const CRAWLED_AT = "2026-08-16T06:00:00.000Z"
 
 // 三個分類（依 categories 順序：第一 = 預設選中）
 const CATS = [
-  { id: "c4", name: "CPU", file: "g4.json", count: 2 },
-  { id: "c12", name: "顯示卡", file: "g12.json", count: 1 },
-  { id: "c6", name: "記憶體", file: "g6.json", count: 1 },
+  { id: "c4", name: "CPU", file: "api/items/g4.json", count: 2 },
+  { id: "c12", name: "顯示卡", file: "api/items/g12.json", count: 1 },
+  { id: "c6", name: "記憶體", file: "api/items/g6.json", count: 1 },
 ]
 // 分類檔內容：**純陣列**（每筆無 category；history compact [d,p] ≤2 點）
 const CPU_ITEMS = [
@@ -123,7 +122,7 @@ describe("useItems（v2：index → 分類 lazy 載入）", () => {
     expect(s.error.value).toBeNull()
     // 兩段式順序：index → 第一個分類檔（g4）；未載入其餘分類（lazy）
     expect(urls[0]).toContain(INDEX_MARK)
-    expect(urls[1]).toContain(`${ITEMS_API}g4.json?v=`)
+    expect(urls[1]).toContain(`api/items/g4.json?v=`)
     expect(urls[1]).toContain(encodeURIComponent(CRAWLED_AT)) // 快取穿透參數
     expect(urls.length).toBe(2)
     expect(s.categories.value).toEqual(CATS)
