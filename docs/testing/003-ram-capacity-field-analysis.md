@@ -1,5 +1,7 @@
 # 調查報告：「記憶體」篩選欄位與 `capacity_gb` 語意（RAM vs 儲存）分析
 
+> ⚠️ 歷史紀錄：本文撰寫於資料改為 api/ + 日期制命名之前，路徑（data/items.v{n}.json 等）已過時，現行架構見 README「資料/API 組織」。
+
 - 日期：2026-08-16（以 `crawler/spec_parser.py` 原始碼 + `data/items.json` 1,447 筆實際內容驗證）
 - 範圍：**唯讀調查**，未修改任何 `web/src/`、`crawler/`、`data/`。
 - 目的：回答使用者顧慮——「若把『記憶體』篩選改指 `capacity_gb`，套裝電腦（DESKTOP/劈發價組合區 BUNDLE）是否無法分辨 RAM 容量 vs SSD/HDD 儲存容量？」並給出修正建議。

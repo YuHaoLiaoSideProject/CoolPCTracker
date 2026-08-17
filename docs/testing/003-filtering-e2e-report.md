@@ -1,5 +1,7 @@
 # 003 列表＋搜尋篩選 — 篩選功能 E2E 測試報告
 
+> ⚠️ 歷史紀錄：本文撰寫於資料改為 api/ + 日期制命名之前，路徑（data/items.v{n}.json、web/public/data/ 等）已過時，現行架構見 README「資料/API 組織」。
+
 - 日期：2026-08-15（UTC）
 - 測試範圍：規格篩選（SpecFilterPanel / useFilters / specFilter / ProductList 空狀態）
 - 測試工具：Playwright（`@playwright/test` 1.62.1，chromium 1234 headless shell）

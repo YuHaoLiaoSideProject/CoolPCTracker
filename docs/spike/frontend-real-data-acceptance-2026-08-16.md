@@ -1,5 +1,7 @@
 # 前端真資料驗收報告（frontend real-data acceptance）
 
+> ⚠️ 歷史紀錄：本文撰寫於資料改為 api/ + 日期制命名之前，路徑（data/items.v{n}.json、meta.json version、__DATA_VERSION__、copyDataPlugin、web/public/data/ 等）已過時，現行架構見 README「資料/API 組織」。
+
 - **日期**：2026-08-16
 - **範圍**：002 §1.7 版本化命名契約驗證 ＋ 003/004 前端以真實爬蟲資料（1,447 筆）驗收
 - **產物**：repo 根 `data/` 版本化檔（items.v2.json + meta.json）、前端相容修正、真資料 smoke（30 項）

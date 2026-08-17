@@ -1,5 +1,7 @@
 # AirTicketsPrice 資料/API 組織模式研究 → CoolPCTracker 設計提案
 
+> ⚠️ 歷史紀錄：本文為 api/ + 日期制命名改造前的設計提案；文中草擬的 latest_version／versions[]／v{n}.json 於實作時改為 latest_file／files[]／YYYYMMDD[_n].json，現行架構見 README「資料/API 組織」。
+
 - 日期：2026-08-16
 - 性質：spike（唯讀研究，未改任何程式/資料檔）
 - 研究對象：`/fork/YuHaoLiaoSideProject/AirTicketsPrice`

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""004 真資料 smoke test（playwright）— 以 repo 根 data/ 版本化真資料為期望值驗證前端。
+"""004 真資料 smoke test（playwright）— 以 api/ 日期制快照為期望值驗證前端。
 
-前置：`npm run build` 後 `npx vite preview`（dist/data/ 內為版本化真資料 items.v{n}.json + meta.json）。
+前置：`npm run build` 後 `npx vite preview`（build 收尾把 ../api/** 複製進 dist/api/）。
 
-驗證（2026-08-16 真資料驗收，1,447 筆）：
-1. 列表載入：全部商品卡片 = items 陣列數（1,447）；側欄 9 分類計數與真資料逐項一致（合計 1,447）
-2. 點分類（CPU → 47）／回全部
+驗證（真資料，期望值由資料動態計算，不硬編碼）：
+1. 列表載入：全部商品卡片 = items 陣列數；側欄 9 分類計數與真資料逐項一致
+2. 點分類（CPU）／回全部
 3. 搜尋「RTX 5060」（以 search.ts 相同語意計算期望值：name + spec 平鋪值 lowercase 子字串）
-4. 規格篩選 VRAM≥12G（88）→ 清除
-5. 詳情頁（真 GPU deep link）：目前價／首日追蹤／歷史最低／規格表／ECharts canvas／目標價 markLine 流程
+4. 規格篩選 VRAM≥12G → 清除
+5. 詳情頁（真 GPU deep link）：目前價／首日追蹤／歷史最低／規格表／價格趨勢圖 canvas／目標價 markLine 流程
 6. 邊界：無效 id → 找不到此商品；console/pageerror 無錯誤
-期望值一律由 ../data/meta.json（version）＋ ../data/items.v{version}.json 計算，不硬編碼。
+期望值一律由 api/index.json（latest_file）→ api/items/YYYYMMDD[_n].json 計算，不硬編碼。
 """
 import json
 import re
@@ -22,8 +22,6 @@ from playwright.sync_api import sync_playwright
 
 WEB_ROOT = Path(__file__).resolve().parent.parent  # web/
 REPO_ROOT = WEB_ROOT.parent
-DATA_DIR = REPO_ROOT / "data"
-
 BASE = "http://localhost:4173/CoolPCTracker/"  # vite preview 預設綁定 ::1（IPv6 localhost）
 failures = []
 
@@ -35,12 +33,12 @@ def check(name, cond, extra=""):
         failures.append(name)
 
 
-# ── 期望值：讀取版本化真資料（與 vite build 複製進 dist/data/ 同一檔案） ──
+# ── 期望值：讀 api/index.json 的 latest_file → 對應日期制快照（與 vite build 複製進 dist/api/ 同一檔案） ──
 def load_real_data():
-    meta = json.loads((DATA_DIR / "meta.json").read_text(encoding="utf-8"))
-    version = int(meta.get("version", 0))
-    doc = json.loads((DATA_DIR / f"items.v{version}.json").read_text(encoding="utf-8"))
-    return version, doc["items"]
+    index = json.loads((REPO_ROOT / "api" / "index.json").read_text(encoding="utf-8"))
+    latest_file = index["latest_file"]
+    doc = json.loads((REPO_ROOT / latest_file).read_text(encoding="utf-8"))
+    return latest_file, doc["items"]
 
 
 def flatten_spec(spec):
@@ -70,7 +68,7 @@ def match_keyword(it, q):
 
 
 def main():
-    version, items = load_real_data()
+    latest_file, items = load_real_data()
     total = len(items)
     counts = {}
     for it in items:
@@ -92,7 +90,7 @@ def main():
             break
     assert gpu_detail is not None, "找不到 RTX 3060 12G 真商品"
 
-    print(f"=== 真資料期望值：version={version} total={total} "
+    print(f"=== 真資料期望值：latest_file={latest_file} total={total} "
           f"搜尋「{q_rtx}」={len(exp_rtx)} VRAM≥12G={len(exp_vram)} 詳情={gpu_detail['name'][:30]}…")
 
     with sync_playwright() as p:
@@ -102,7 +100,7 @@ def main():
         page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
         page.on("pageerror", lambda e: errors.append(str(e)))
 
-        # ── 1. 列表載入：全部 1,447 卡 + 側欄分類計數 ──
+        # ── 1. 列表載入：全部商品卡 + 側欄分類計數 ──
         t0 = time.time()
         page.goto(BASE, wait_until="networkidle")
         page.wait_for_selector(".product-card", timeout=15000)
@@ -116,17 +114,17 @@ def main():
             cnt = el.locator(".cat-cnt").inner_text().strip()
             check(f"側欄 {cat} 計數 = {exp}", cnt == str(exp), f"got {cnt}")
         all_cnt = page.locator(".sidebar .cat", has_text="全部").locator(".cat-cnt").inner_text().strip()
-        check("側欄 全部 計數 = 1,447", all_cnt == str(total), f"got {all_cnt}")
+        check(f"側欄 全部 計數 = {total}", all_cnt == str(total), f"got {all_cnt}")
 
-        # ── 2. 點分類 CPU（真資料 47 筆）→ URL 帶 category → 回全部 ──
+        # ── 2. 點分類 CPU → URL 帶 category → 回全部 ──
         page.locator(".sidebar .cat", has_text="CPU").click()
         page.wait_for_url(re.compile(r"category=CPU"))
         check("點 CPU → URL category=CPU", "category=CPU" in page.url, page.url)
-        check("CPU 分類卡片 = 47", page.locator(".product-card").count() == counts["CPU"],
+        check(f"CPU 分類卡片 = {counts['CPU']}", page.locator(".product-card").count() == counts["CPU"],
               f"got {page.locator('.product-card').count()}")
         page.locator(".sidebar .cat", has_text="全部").click()
         page.wait_for_selector(".product-card")
-        check("回全部 → 卡片 = 1,447", page.locator(".product-card").count() == total)
+        check(f"回全部 → 卡片 = {total}", page.locator(".product-card").count() == total)
 
         # ── 3. 搜尋 RTX 5060 ──
         page.locator(".search-input").fill("RTX 5060")
@@ -143,7 +141,7 @@ def main():
         page.locator(".search-input").fill("")
         page.wait_for_function(f"document.querySelectorAll('.product-card').length === {total}")
 
-        # ── 4. 規格篩選 VRAM≥12G（88）→ 清除全部條件 ──
+        # ── 4. 規格篩選 VRAM≥12G → 清除全部條件 ──
         page.locator('select[aria-label="規格欄位"]').select_option("vram_gb")
         page.locator(".spec-value").fill("12")
         page.locator(".spec-form .btn-primary").click()
@@ -155,7 +153,7 @@ def main():
               f"got {page.locator('.product-card').count()}")
         page.locator(".pl-clear").click()
         page.wait_for_function(f"document.querySelectorAll('.product-card').length === {total}")
-        check("清除全部條件 → 回 1,447", page.locator(".product-card").count() == total)
+        check(f"清除全部條件 → 回 {total}", page.locator(".product-card").count() == total)
 
         # ── 5. 詳情頁（真 GPU deep link）：目前價／首日追蹤／歷史最低／規格／圖表／目標價 ──
         page.goto(BASE + f"#/product/{gpu_detail['id']}", wait_until="networkidle")
@@ -173,7 +171,7 @@ def main():
         spec_text = page.locator(".spec-table").inner_text()
         check("規格含晶片 RTX 3060", "RTX 3060" in spec_text, spec_text[:80])
         check("規格含 VRAM 12", "12" in spec_text, "")
-        check("ECharts canvas 渲染", page.locator(".price-trend-chart canvas").count() == 1)
+        check("價格趨勢圖 canvas 渲染（lightweight-charts）", page.locator(".price-trend-chart canvas").count() >= 1)
 
         # 目標價 markLine 流程：9500 套用 → 修改 9800 → abc 錯誤 → 清除
         page.locator(".target-input").fill("9500")
@@ -204,7 +202,7 @@ def main():
 
         browser.close()
 
-    print(f"\n=== smoke（真資料 v{version}）: {len(failures)} failed / total 30 ===")
+    print(f"\n=== smoke（真資料 {latest_file}）: {len(failures)} failed / total 30 ===")
     sys.exit(1 if failures else 0)
 
 

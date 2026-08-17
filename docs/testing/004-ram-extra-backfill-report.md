@@ -1,5 +1,7 @@
 # 004 記憶體 spec.extra 回填報告（Biwin / Origin code）
 
+> ⚠️ 歷史紀錄：本文撰寫於資料改為 api/ + 日期制命名之前，路徑（data/items.v{n}.json、web/public/data/ 等）已過時，現行架構見 README「資料/API 組織」。
+
 日期：2026-08-16
 狀態：完成（全部測試通過）
 

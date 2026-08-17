@@ -92,7 +92,7 @@ scripts/version_data.py ──讀 data/ 比對上次最新快照──▶
 crawler/    Python 爬蟲套件（categories/fetcher/parser/spec_parser/store/main + tests/）
 data/       爬蟲輸出（items.json / meta.json，git 版控，首跑由 store 建立）—— 原始真相
 api/        衍生 API 成品（version_data.py 產出：index.json / latest.json / items/YYYYMMDD[_n].json）
-scripts/    version_data.py（diff → 日期制快照 + 重建 api/index.json）與一次性遷移工具
+scripts/    version_data.py（diff → 日期制快照 + 重建 api/index.json）
 docs/       全部文件（tech-decisions / interaction-flows / bdds / development）
 web/        Vue3 + Vite 前端（runtime fetch api/index.json；build 產出 dist/）
 ```
