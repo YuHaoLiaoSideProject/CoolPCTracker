@@ -6,22 +6,25 @@
 - 比較基準：掃描 api/items/*.json 依 (日期 YYYYMMDD, 後綴) 升冪排序取最大者
   （上次最新快照；不存在 → 首次執行）
 - 比較範圍：僅 items payload（crawled_at 不參與，避免時間戳造成永遠「有異動」）
-- 有異動：date = crawled_at 轉 Asia/Taipei（UTC+8）日期 YYYYMMDD；掃 api/items/
-  既有同日期檔決定下一檔名（無 → {date}.json；有 → {date}_1.json、{date}_2.json…），
+- 防線：meta.status == "failed" 或 meta.total == 0 → 判定 changed=false，不寫任何
+  檔案（含快照/index/latest），並輸出明確訊息（健康檢查延伸到衍生層，防人工手術
+  壞資料覆寫既有快照）
+- 有異動：date = crawled_at 轉 Asia/Taipei（UTC+8）日期 YYYYMMDD；單檔覆寫制：
+  同台北日期檔已存在 → 覆寫 {date}.json，不存在 → 新建 {date}.json（不再 _N 後綴），
   寫該檔（頂層含 crawled_at 與 items，separators=(",", ":")）→ 寫 api/latest.json
   （同內容，穩定端點）→ 重建 api/index.json（掃 api/items/*.json 得完整 files[] +
   併入 data/meta.json 的 merged meta + latest_file 指標）
 - 無異動：不動任何檔案（工作目錄無變化 → 工作流跳過 commit）
-- 輸出：stdout 印 changed=true|false 與 filename（異動時為新檔名，無異動為空）；
+- 輸出：stdout 印 changed=true|false 與 filename（異動時為檔名，無異動為空）；
   若環境變數 GITHUB_OUTPUT 存在（GitHub Actions），以 key=value 追加寫入，供
   crawl.yml steps.version.outputs.changed / outputs.filename 使用
 
 職責分層（AirTicketsPrice 模式）：data/ 是 crawler 唯一真相，api/ 是本模組
 產出的對外 API 面（index.json 單一入口 + 日期制快照 + latest.json）。
 
-對應 BDD：@business-rule @cache-busting（同日多份 → YYYYMMDD / YYYYMMDD_1 / …）、
-@initial-setup（首次執行建立 api/items/{date}.json + meta.json）、
-@regression（無異動 → changed=false、不寫檔）。
+對應 BDD：@business-rule @cache-busting（單檔覆寫：同日期覆寫 {date}.json，
+跨日新建，檔名含日期維持跨日 cache-busting）、@initial-setup（首次執行建立
+api/items/{date}.json + meta.json）、@regression（無異動 → changed=false、不寫檔）。
 """
 from __future__ import annotations
 
@@ -67,29 +70,23 @@ def _taipei_date(crawled_at: str) -> str:
     return dt.astimezone(TAIPEI_TZ).strftime("%Y%m%d")
 
 
-def _file_key(name: str) -> tuple[int, int] | None:
-    """解析日期制快照檔名 → (date_int, suffix)。suffix 0 = 無後綴。
+def _file_key(name: str) -> int | None:
+    """解析日期制快照檔名 → date_int（YYYYMMDD）。
 
-    接受 YYYYMMDD.json / YYYYMMDD_N.json；不符合格式回傳 None（忽略該檔）。"""
+    只認 YYYYMMDD.json（單檔覆寫制）；YYYYMMDD_N.json 等舊後綴檔不再產生，
+    殘留者回傳 None（忽略，不參與 files[]/baseline）。"""
     stem = name[:-5] if name.endswith(".json") else name
-    if "_" in stem:
-        date_part, suffix_part = stem.split("_", 1)
-        if len(date_part) != 8 or not date_part.isdigit():
-            return None
-        if not suffix_part.isdigit():
-            return None
-        return (int(date_part), int(suffix_part))
     if len(stem) == 8 and stem.isdigit():
-        return (int(stem), 0)
+        return int(stem)
     return None
 
 
 def _snapshot_paths(api_dir: Path) -> list[Path]:
-    """掃 api/items/*.json 得日期制快照路徑（依 (date, suffix) 升冪排序）。"""
+    """掃 api/items/*.json 得日期制快照路徑（依日期升冪排序；每日一檔）。"""
     items_dir = api_dir / "items"
     if not items_dir.is_dir():
         return []
-    entries: list[tuple[tuple[int, int], Path]] = []
+    entries: list[tuple[int, Path]] = []
     for p in items_dir.glob("*.json"):
         key = _file_key(p.name)
         if key is not None:
@@ -99,7 +96,7 @@ def _snapshot_paths(api_dir: Path) -> list[Path]:
 
 
 def _scan_files(api_dir: Path) -> list[dict]:
-    """掃 api/items/*.json 得完整日期檔清單（依 (date, suffix) 升冪）。
+    """掃 api/items/*.json 得完整日期檔清單（依日期升冪，每日一列）。
 
     每檔含 file/crawled_at/total/url；「changed」僅由 build_index 依 meta.json
     補到最新檔（歷史檔省略）。"""
@@ -116,21 +113,6 @@ def _scan_files(api_dir: Path) -> list[dict]:
             "url": f"api/items/{p.name}",
         })
     return files
-
-
-def _next_filename(api_dir: Path, date_str: str) -> str:
-    """依 api/items/ 既有同日期檔決定下一檔名：無 → {date}.json；有 → {date}_N.json。"""
-    items_dir = api_dir / "items"
-    suffixes: set[int] = set()
-    if items_dir.is_dir():
-        for p in items_dir.glob(f"{date_str}*.json"):
-            key = _file_key(p.name)
-            if key is not None and key[0] == int(date_str):
-                suffixes.add(key[1])
-    suffix = 0
-    while suffix in suffixes:
-        suffix += 1
-    return f"{date_str}.json" if suffix == 0 else f"{date_str}_{suffix}.json"
 
 
 def build_index(api_dir: Path, data_dir: Path) -> dict:
@@ -172,13 +154,15 @@ def main(argv: list[str] | None = None) -> int:
 
     流程：
     1. 讀 data/meta.json 與 data/items.json
-    2. 掃 api/items/*.json 取最新快照（依 (date, suffix) 排序取最大）作為 diff baseline
-    3. baseline 不存在（首次執行）→ 判定異動
-    4. 否則 canonical JSON 僅比較 items payload：
-       - 有異動 → date = crawled_at 轉台北日期；決定下一檔名；寫新快照 +
-         api/latest.json + 重建 api/index.json
+    2. 防線：meta.status == "failed" 或 meta.total == 0 → changed=false，
+       不寫任何檔案（含快照/index/latest），直接輸出
+    3. 掃 api/items/*.json 取最新快照（依日期升冪取最大）作為 diff baseline
+    4. baseline 不存在（首次執行）→ 判定異動
+    5. 否則 canonical JSON 僅比較 items payload：
+       - 有異動 → date = crawled_at 轉台北日期；單檔覆寫制：同日期檔存在 → 覆寫
+         {date}.json，不存在 → 新建；寫快照 + api/latest.json + 重建 api/index.json
        - 無異動 → 不動任何檔案
-    5. stdout 輸出 changed / filename，並依 GITHUB_OUTPUT 追加寫入。
+    6. stdout 輸出 changed / filename，並依 GITHUB_OUTPUT 追加寫入。
     """
     arg_parser = argparse.ArgumentParser(prog="version_data")
     arg_parser.add_argument("--data-dir", default="data", type=Path)
@@ -191,6 +175,14 @@ def main(argv: list[str] | None = None) -> int:
     meta = json.loads((data_dir / "meta.json").read_text(encoding="utf-8"))
     items = json.loads((data_dir / "items.json").read_text(encoding="utf-8"))
 
+    # 防線：crawler 健康檢查（failed / total==0）延伸到衍生層 —— 人工手術或
+    # 壞資料不得覆寫既有快照：判定 changed=false，不寫任何檔案（含快照/index/latest）。
+    if meta.get("status") == "failed" or meta.get("total") == 0:
+        print("changed=false")
+        print("filename=")
+        _write_github_output(False, None)
+        return 0
+
     paths = _snapshot_paths(api_dir)
     changed = False
     if not paths:
@@ -202,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
     filename: str | None = None
     if changed:
         date_str = _taipei_date(meta["crawled_at"])
-        filename = _next_filename(api_dir, date_str)
+        filename = f"{date_str}.json"  # 單檔覆寫制：同台北日 → 覆寫；跨日 → 新建
         items_dir.mkdir(parents=True, exist_ok=True)
         snapshot_payload = {"crawled_at": meta["crawled_at"], "items": items["items"]}
         snapshot_text = json.dumps(snapshot_payload, ensure_ascii=False,

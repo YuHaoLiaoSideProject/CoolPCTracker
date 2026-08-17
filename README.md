@@ -8,7 +8,7 @@ GitHub Pages 靜態站 + Telegram 通知。
 | 功能 | 狀態 | 說明 |
 |------|------|------|
 | 001 crawler-data-collection | ✅ 完成 | TDD 開發，155 tests 全綠；fetcher/parser/spec_parser/store/main 6 模組 |
-| 002 排程與 Pages 部署 | ✅ 完成 | crawl.yml 每日排程 + workflow_dispatch + cache-busting 版本化 |
+| 002 排程與 Pages 部署 | ✅ 完成 | crawl.yml 每日排程 + workflow_dispatch + 日期制單檔快照（同日覆寫） |
 | 003-005 前端（Vue 3） | ⏳ Issue #3/#4/#5 | 需 data/*.json 產出後開發 |
 | 006 Telegram 價格警報 | ⏳ Issue #7 | |
 | 007 健康監控＋警報 | ⏳ Issue #8 | notify hook 簽名已預留 |
@@ -35,7 +35,7 @@ docs/development/       ← 開發規格（模組介面、資料結構、測試�
 # 手動跑爬蟲（002 完成前之本地驗證）
 .venv/bin/python -m crawler.main --data-dir data [--date YYYY-MM-DD]
 
-# 資料異動判定 + 重建 api/（index.json / latest.json / items/YYYYMMDD[_n].json）
+# 資料異動判定 + 重建 api/（index.json / latest.json / items/YYYYMMDD.json 每日一份、同日覆寫）
 .venv/bin/python scripts/version_data.py
 
 # 前端（web/）
@@ -70,19 +70,20 @@ Issue 內已含：目標、對應文件路徑、驗收要點 → 指向 issue �
 crawler/main.py ──寫──▶ data/items.json + data/meta.json   （原始真相，git 版控）
                                 │
 scripts/version_data.py ──讀 data/ 比對上次最新快照──▶
-    ├─ 有異動：寫 api/items/{YYYYMMDD[_n]}.json（= {crawled_at, items}）
-    │          寫 api/latest.json（穩定端點，同內容）
-    │          重建 api/index.json（files[] 完整日期檔清單 + latest_file + merged meta）
-    └─ 無異動：不動任何檔
+    ├─ 防線：meta.status == "failed" 或 total == 0 → 不寫任何檔
+    ├─ 有異動：寫 api/items/{YYYYMMDD}.json（= {crawled_at, items}；同台北日期檔存在 → 覆寫，不再產生 _1/_2 後綴）
+    │          寫 api/latest.json（穩定端點，最新快照覆寫語意）
+    │          重建 api/index.json（files[] 每日一列的乾淨日期檔日誌 + latest_file + merged meta）
+    └─ 無異動：不動任何檔（同日重跑資料未變 → 無空 commit）
 
 前端 useItems.ts ──runtime──▶
     1. GET api/index.json  → latest_file
-    2. GET {latest_file}（api/items/YYYYMMDD[_n].json）→ parse → 渲染
+    2. GET {latest_file}（api/items/YYYYMMDD.json）→ parse → 渲染
 ```
 
 - `data/` 是唯一真相（crawler 只寫這裡）；`api/` 是對外 API 面（version_data.py 產出、可重建）。
 - `api/index.json` 是前端唯一入口：`files[]` 列完整日期檔歷史、`latest_file` 指向最新檔。
-- 快照檔名取自 `crawled_at` 轉 Asia/Taipei（UTC+8）的日期 YYYYMMDD；同日多份依序加 `_1`/`_2`… 後綴。
+- 快照檔名取自 `crawled_at` 轉 Asia/Taipei（UTC+8）的日期 YYYYMMDD，**每日一份**；同台北日期檔存在 → **覆寫**（不再產生 `_1`/`_2` 後綴）；`meta.status == "failed"` 或 `total == 0` → 不寫任何檔。
 - 前端 runtime 發現資料檔（不再 build 注入 `__DATA_VERSION__`）；dev 由 vite middleware 服務 `../api`，
   build 時自動把 `../api/**` 複製進 `dist/api/`（非手動 drift）。
 
@@ -91,7 +92,7 @@ scripts/version_data.py ──讀 data/ 比對上次最新快照──▶
 ```
 crawler/    Python 爬蟲套件（categories/fetcher/parser/spec_parser/store/main + tests/）
 data/       爬蟲輸出（items.json / meta.json，git 版控，首跑由 store 建立）—— 原始真相
-api/        衍生 API 成品（version_data.py 產出：index.json / latest.json / items/YYYYMMDD[_n].json）
+api/        衍生 API 成品（version_data.py 產出：index.json / latest.json / items/YYYYMMDD.json 每日一份、同日覆寫）
 scripts/    version_data.py（diff → 日期制快照 + 重建 api/index.json）
 docs/       全部文件（tech-decisions / interaction-flows / bdds / development）
 web/        Vue3 + Vite 前端（runtime fetch api/index.json；build 產出 dist/）

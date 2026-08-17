@@ -14,7 +14,7 @@
 讓 GitHub Actions 每日 06:00 UTC（台北 14:00）自動執行「checkout → setup-python 3.12 → pip install → 爬蟲（001 整合）→ 異動判定與日期制快照 → Telegram 通知整合點（006，commit 前）→ commit data/ api/（含 telegram.json）→ 前端 Vite build → 部署 GitHub Pages」完整管線；資料有異動才 commit 並寫入日期制快照，維護者可隨時以 workflow_dispatch 手動補爬。核心包含：
 
 1. **crawl.yml 工作流**：cron `'0 6 * * *'` + `workflow_dispatch` 雙觸發、concurrency 並發控制、crawl / deploy 雙 job 切分（失敗即停止、天然隔離「資料寫入」與「部署」兩階段權限）。
-2. **scripts/version_data.py**：爬蟲產出（001）→ 資料異動判定 → 日期制快照（`api/items/YYYYMMDD[_n].json`，取自 `crawled_at` 轉台北日期）＋重建 `api/index.json` 的自訂 script。
+2. **scripts/version_data.py**：爬蟲產出（001）→ 資料異動判定 → 日期制單檔快照（`api/items/YYYYMMDD.json`，取自 `crawled_at` 轉台北日期；同台北日期檔存在 → 覆寫）＋重建 `api/index.json` 的自訂 script；`meta.status == "failed"` 或 `total == 0` → 不寫任何檔。
 3. **scripts/telegram_hook.py**：爬蟲完成後、資料 commit 前的 Telegram 通知整合點（006 預留，未實作不中斷 run；telegram.json 異動併入本次 commit）。
 4. **前端 build 整合合約**：Vite build 收尾把 `../api/**` 複製進 `dist/api/`；前端 runtime 讀 `api/index.json` 的 `latest_file` 取得日期制資料檔（003-005 消費此合約）。
 5. **GitHub Pages 部署**：`actions/configure-pages` + `upload-pages-artifact` + `deploy-pages`，Pages Source 設為「GitHub Actions」。
@@ -28,9 +28,9 @@ flowchart TD
         C1[checkout] --> C2[setup-python 3.12]
         C2 --> C3[pip install -e ./crawler]
         C3 --> C4[python -m crawler.main<br/>001: items.json + meta.json]
-        C4 --> C5[python scripts/version_data.py<br/>diff → api/items/YYYYMMDD[_n].json + api/index.json]
+        C4 --> C5[python scripts/version_data.py<br/>diff → api/items/YYYYMMDD.json（同日覆寫）+ api/index.json]
         C5 --> TG[[telegram_hook.py<br/>006 預留（commit 前）]]
-        TG -->|changed=true| C6[commit data/ api/ + push<br/>YYYYMMDD[_n].json + index.json + meta.json + telegram.json]
+        TG -->|changed=true| C6[commit data/ api/ + push<br/>YYYYMMDD.json + index.json + meta.json + telegram.json]
         TG -->|changed=false| C7[跳過 commit]
     end
     Job1 -->|needs: crawl| Job2
@@ -71,12 +71,12 @@ CoolPCTracker/
 ├── .github/workflows/
 │   └── crawl.yml                  ← 新增：完整工作流（觸發/並發/資料/部署）
 ├── scripts/
-│   ├── version_data.py            ← 新增：異動判定 + cache-busting 版本化（本功能核心自訂 script）
+│   ├── version_data.py            ← 新增：異動判定 + 日期制單檔快照（同日覆寫 + failed/total==0 防線）（本功能核心自訂 script）
 │   └── telegram_hook.py           ← 新增：006 通知整合點佔位
 ├── crawler/
 │   └── main.py                    ← 既有（001 產出）：以 `python -m crawler.main` 呼叫，輸出 data/items.json + data/meta.json
 ├── data/                          ← git 版控：items.json（001 來源真相）、meta.json（crawled_at/計數，不再含 version）
-├── api/                           ← git 版控：衍生 API 成品（version_data.py 產出：index.json / latest.json / items/YYYYMMDD[_n].json）
+├── api/                           ← git 版控：衍生 API 成品（version_data.py 產出：index.json / latest.json / items/YYYYMMDD.json 每日一份）
 └── web/
     └── vite.config.ts             ← 修改（本功能定義合約，003-005 實作）：dev 以 middleware 服務 ../api、build 時複製 ../api/** 至 dist/api/
 ```
@@ -102,9 +102,9 @@ CoolPCTracker/
 | 2 | `actions/setup-python@v5`（3.12 + pip cache） | Python 3.12 環境 |
 | 3 | `pip install -e ./crawler` | 依 `crawler/pyproject.toml` 安裝 httpx/selectolax 等 |
 | 4 | `python -m crawler.main`（001 整合） | 寫出 `data/items.json` + `data/meta.json`（含 `crawled_at`、各分類計數、失敗分類） |
-| 5 | `python scripts/version_data.py`（`id: version`） | 異動判定 + 日期制快照；輸出 `changed=true|false`、`filename={YYYYMMDD[_n]}.json` |
+| 5 | `python scripts/version_data.py`（`id: version`） | 異動判定 + 日期制單檔快照（同日覆寫 + 防線）；輸出 `changed=true|false`、`filename={YYYYMMDD}.json` |
 | 6 | `python scripts/telegram_hook.py` + `continue-on-error: true` | 006 整合點：每 run 皆觸發（**資料 commit 之前**，telegram.json 異動可併入本次 commit）；未實作不中斷 |
-| 7 | commit data/ api/（`if: steps.version.outputs.changed == 'true'`） | bot 身分 commit + push，範圍 `data/` + `api/`（`items/YYYYMMDD[_n].json` + `index.json` + `meta.json` + `telegram.json`（有變更時））；無異動則整個跳過（不產生空 commit） |
+| 7 | commit data/ api/（`if: steps.version.outputs.changed == 'true'`） | bot 身分 commit + push，範圍 `data/` + `api/`（`items/YYYYMMDD.json` + `index.json` + `meta.json` + `telegram.json`（有變更時））；無異動則整個跳過（不產生空 commit） |
 
 **Job 2 `deploy`（前端 build + Pages）** — `needs: crawl`，crawl 失敗則不啟動：
 
@@ -164,7 +164,7 @@ jobs:
       - name: Version data (diff + cache-busting)
         id: version
         run: python scripts/version_data.py
-        # 輸出 changed=true|false、filename={YYYYMMDD[_n]}.json（見 1.5）
+        # 輸出 changed=true|false、filename={YYYYMMDD}.json（見 1.5）
 
       - name: Telegram notification hook (feature 006 placeholder)
         run: python scripts/telegram_hook.py
@@ -178,7 +178,7 @@ jobs:
         run: |
           git config user.name "coolpc-tracker[bot]"
           git config user.email "coolpc-tracker[bot]@users.noreply.github.com"
-          git add data/ api/    # YYYYMMDD[_n].json + index.json + meta.json + telegram.json（有變更時）
+          git add data/ api/    # YYYYMMDD.json + index.json + meta.json + telegram.json（有變更時）
           git commit -m "chore(data): 更新商品資料 ${{ steps.version.outputs.filename }}"
           git pull --rebase        # 併入並發期間他人對 main 的異動；實質衝突 → 失敗
           git push
@@ -232,34 +232,38 @@ jobs:
 - **GITHUB_TOKEN push 不觸發新 workflow run**（GitHub 內建防迴圈），與 cron/dispatch 並無衝突。
 - `git pull --rebase` 為防呆（其他 contributor 同時 push 到 main）；若 data/ 有實質衝突則失敗，符合「commit 失敗 → run 失敗」的 BDD 行為。
 
-### 1.5 scripts/version_data.py（自訂 script：異動判定 + 日期制快照）
+### 1.5 scripts/version_data.py（自訂 script：異動判定 + 日期制單檔快照）
 
 **輸入**（工作目錄內，爬蟲步驟已產出）：`data/items.json`、`data/meta.json`。
 
 **流程**：
-1. 掃 `api/items/*.json`，依 `(日期 YYYYMMDD, 後綴)` 升冪排序取最大者作為 diff baseline。
+1. 掃 `api/items/*.json`，依日期 `YYYYMMDD` 排序取最大者作為 diff baseline。
 2. 若 baseline 不存在（**首次執行**）→ 判定為異動。
-3. 否則以 **canonical JSON 僅比較 `items` payload**（不含 `crawled_at`，避免時間戳造成永遠「有異動」）：
-   - 有異動 → `date = crawled_at 轉 Asia/Taipei（UTC+8）日期`；掃既有同日期檔決定下一檔名（無 → `{date}.json`；有 → `{date}_1.json`、`{date}_2.json`…），寫 `api/items/{date[_n]}.json`（含 `crawled_at` 與 `items`）→ 更新 `api/latest.json` → 重建 `api/index.json`（`files[]` 完整日期檔清單 + `latest_file` + merged meta）。
-   - 無異動 → **不動任何檔案**，輸出 `changed=false`（工作目錄無變化 → workflow 跳過 commit）。
-4. 以 `changed=true|false` 與 `filename={YYYYMMDD[_n]}.json` 輸出（無異動 filename 為空），供 workflow 分支。
+3. **防線**：`meta.status == "failed"` 或 `meta.get("total") == 0` → 判定 `changed=false`、**不寫任何檔案**（健康檢查保護延伸到衍生層，防人工手術/壞資料覆寫好快照）。
+4. 否則以 **canonical JSON 僅比較 `items` payload**（不含 `crawled_at`，避免時間戳造成永遠「有異動」）：
+   - 有異動 → `date = crawled_at 轉 Asia/Taipei（UTC+8）日期`；`api/items/{date}.json` 同台北日期檔存在 → **覆寫**（不再產生 `_1`/`_2` 後綴）、不存在 → 新建；寫 `api/items/{date}.json`（含 `crawled_at` 與 `items`）→ 更新 `api/latest.json`（最新快照穩定端點，覆寫語意）→ 重建 `api/index.json`（`files[]` 每日一列的乾淨日期檔日誌 + `latest_file` + merged meta）。
+   - 無異動 → **不動任何檔案**，輸出 `changed=false`（工作目錄無變化 → workflow 跳過 commit；同日重跑資料未變 → 不寫檔、無空 commit）。
+5. 以 `changed=true|false` 與 `filename={YYYYMMDD}.json` 輸出（無異動 filename 為空），供 workflow 分支。
 
 ```python
 #!/usr/bin/env python3
-"""data/ 異動判定 + api/ 日期制快照（功能 002 + AirTicketsPrice 模式）。"""
+"""data/ 異動判定 + api/ 日期制單檔快照（功能 002 + AirTicketsPrice 模式）。"""
 # 詳細實作見 scripts/version_data.py；此處僅列核心契約：
-# - baseline = max(掃 api/items/*.json, key=(YYYYMMDD, 後綴))
+# - baseline = max(掃 api/items/*.json, key=YYYYMMDD)
+# - 防線：meta.status == "failed" 或 total == 0 → changed=false、不寫任何檔案
 # - changed = canonical(items["items"]) != canonical(baseline["items"])（首次執行 → True）
-# - 有異動：date = _taipei_date(meta["crawled_at"])；filename = _next_filename(date)；
-#   寫 api/items/{filename}.json + api/latest.json + 重建 api/index.json
-# - 無異動：不動任何檔案
-# - 輸出：changed=true|false、filename={filename}（GITHUB_OUTPUT 同步寫入）
+# - 有異動：date = _taipei_date(meta["crawled_at"])；filename = {date}.json
+#   （同台北日期檔存在 → 覆寫，不再產生 _N 後綴）；
+#   寫 api/items/{filename}.json + api/latest.json（覆寫語意）+ 重建 api/index.json
+# - 無異動：不動任何檔案（同日重跑資料未變 → 無空 commit）
+# - 輸出：changed=true|false、filename={YYYYMMDD}.json（GITHUB_OUTPUT 同步寫入）
 ```
 
 **行為對照 BDD**：
-- 同日多份（Scenario Outline）：`YYYYMMDD.json` → `YYYYMMDD_1.json` → `YYYYMMDD_2.json`。✓
-- 資料檔含 `crawled_at`：寫入 `api/items/{date[_n]}.json` 頂層。✓
-- `api/index.json` 記錄 `files[]` 完整日期檔清單 + `latest_file`；`data/meta.json` 不再含 `version`。✓
+- 單檔覆寫（Scenario Outline）：同日檔存在 → 覆寫 `{date}.json`（不再產生 `_1`/`_2` 後綴）；不存在 → 新建。✓
+- 防線：`meta.status == "failed"` 或 `total == 0` → 不寫任何檔案（`changed=false`）。✓
+- 資料檔含 `crawled_at`：寫入 `api/items/{date}.json` 頂層。✓
+- `api/index.json` 記錄 `files[]` 每日一列的乾淨日期檔日誌 + `latest_file`；`data/meta.json` 不再含 `version`。✓
 - 首次執行建立 `api/items/{date}.json` + `api/index.json` + `api/latest.json`。✓
 - 無異動 → 跳過 commit（配合 §1.4 step 6 的 `if`）。✓
 
@@ -312,7 +316,9 @@ if __name__ == "__main__":
 ```ts
 // 前端資料讀取合約（003-005 使用）：
 //   1. fetch(`${import.meta.env.BASE_URL}api/index.json`) → latest_file（唯一入口/目錄）
-//   2. fetch(`${import.meta.env.BASE_URL}${latest_file}`) → 日期制快照（檔名含日期，快取必然失效）
+//   2. fetch(`${import.meta.env.BASE_URL}${latest_file}`) → 日期制快照
+//      - 跨日：新日期 = 新 URL → 檔名級 cache-busting 天然失效
+//      - 同日覆寫：失去檔名級 cache-busting（Pages 預設 max-age=600）；如需強制取新，可選用 `?v={crawled_at}`
 ```
 
 ---
@@ -332,10 +338,11 @@ BDD 之 @edge-case 與 @error-handling 全數反映如下（含 2 個 @business-
 | 7 | **首次執行（repo 尚無快照）** | @edge-case @initial-setup | `version_data.py`：`api/items/*.json` 不存在 → 視為異動 → 建立 `api/items/{date}.json` + `api/index.json` + `api/latest.json`（含 `crawled_at` 與完整商品清單） | §1.5 |
 | 8 | **資料無異動**（價格/狀態完全一致） | @business-rule @regression | `version_data.py` 輸出 `changed=false` → commit step 因 `if` 條件**跳過**（不產生空 commit）；前端仍完成 Vite build 並部署（重部署 idempotent，且可帶上前端程式碼異動） | §1.4 step 5-6、§1.5 |
 | 9 | **Telegram 整合點尚未實作** | @integration @placeholder @p2 | 專屬 step 每 run 觸發（commit 前）；script 無 token 時 exit 0 + `continue-on-error: true` → 不中斷 run | §1.4 step 6、§1.6 |
-| 10 | **cache-busting 同日多份**（YYYYMMDD → YYYYMMDD_1 → YYYYMMDD_2） | @business-rule @regression | 檔名取自 `crawled_at` 轉台北日期；同日依序加後綴；`api/index.json` 的 `files[]`/`latest_file` 同步更新；快照內含本次 `crawled_at` | §1.5 |
+| 10 | **單檔覆寫**（同台北日期檔存在 → 覆寫 `{date}.json`，不再產生 `_1`/`_2`） | @business-rule @regression | 檔名取自 `crawled_at` 轉台北日期；`api/items/{date}.json` 存在即覆寫、不存在即新建；`api/index.json` 的 `files[]`/`latest_file` 同步更新；快照內含本次 `crawled_at`；同日覆寫失去檔名級 cache-busting（可選用 `?v={crawled_at}`，見 §1.7） | §1.5 |
+| 11 | **健康檢查擋下**（`meta.status == "failed"` 或 `total == 0`） | @business-rule @regression | version_data 判定 `changed=false`、不寫任何檔案 → `api/` 維持上次成功快照（健康檢查保護延伸到衍生層） | §1.5 |
 
 **其他降級考量（非 BDD 但屬 CI/CD 穩健性）**：
-- **快取命中與回源**：`api/items/YYYYMMDD[_n].json` 檔名含日期 → 瀏覽器/Pages 快取（預設約 `max-age=600`）對新檔必然失效；`api/index.json` 為固定檔名、內容小，允許短暫快取；前端 runtime 讀 `latest_file` 直接定位資料檔，不依賴 build 注入（見 §1.7 合約）。
+- **快取命中與回源**：跨日時 `api/items/YYYYMMDD.json` 新日期 = 新 URL → 瀏覽器/Pages 快取（預設約 `max-age=600`）必然失效；**同日覆寫失去檔名級 cache-busting**（回頭客最長 10 分鐘看到舊資料；同日異動罕見可接受，如需前端 fetch 快照時選用 `?v={crawled_at}`，見 §1.7）；`api/index.json` 為固定檔名、內容小，允許短暫快取；前端 runtime 讀 `latest_file` 直接定位資料檔，不依賴 build 注入（見 §1.7 合約）。
 - **Pages 頻寬額度**：免費 100GB/月，超限僅暫停服務，成本可控（Tech Decision 風險登錄）。
 - **base 路徑**：Pages project site 掛載於 `/{repo}/`，build 以 `BASE_PATH` 注入，repo 改名時無需改前端程式碼。
 
@@ -347,7 +354,7 @@ BDD 之 @edge-case 與 @error-handling 全數反映如下（含 2 個 @business-
 |------|------|------|
 | 1 | repo 基建：`.github/workflows/crawl.yml` 骨架（triggers + concurrency + permissions 佔位）、`scripts/` 目錄建立 | - |
 | 2 | 前置整合：001 爬蟲可於 repo 根以 `python -m crawler.main` 執行並產出 `data/items.json` + `data/meta.json` | 001 功能交付（外部） |
-| 3 | `scripts/version_data.py`：diff 判定 + 日期制快照 + 重建 `api/index.json`（含單元測試：同日 `_1`/`_2` 後綴、台北日期轉換、首次執行、無異動） | #1 |
+| 3 | `scripts/version_data.py`：diff 判定 + 日期制單檔快照（同日覆寫）+ 防線（failed/total==0 不寫檔）+ 重建 `api/index.json`（含單元測試：同日覆寫、防線、台北日期轉換、首次執行、無異動） | #1 |
 | 4 | crawl job 資料管線：checkout → setup-python 3.12 → pip install → 執行爬蟲 | #2, #3 |
 | 5 | Telegram 整合點：`scripts/telegram_hook.py` 佔位 + `continue-on-error: true`（**commit 之前**，telegram.json 併入同次 commit） | #4 |
 | 6 | commit 步驟：bot 身分（name/email 常數）、`if changed` 分支、`git pull --rebase` + push（範圍含 telegram.json） | #4, #5 |
@@ -405,18 +412,18 @@ flowchart LR
 | 項目 | 設定 |
 |------|------|
 | bot 身分 | name: `coolpc-tracker[bot]`；email: `coolpc-tracker[bot]@users.noreply.github.com`（`git config` 於 commit step 內設定，僅影響該 run 工作目錄） |
-| commit message | `chore(data): 更新商品資料 {YYYYMMDD[_n]}.json`（檔名來自 version_data.py 輸出的 filename） |
-| commit 範圍 | 僅 `data/` + `api/`（`items/YYYYMMDD[_n].json` + `index.json` + `latest.json` + `meta.json` + `telegram.json`（有變更時））；爬蟲程式碼改動另以 PR 流程進行 |
+| commit message | `chore(data): 更新商品資料 {YYYYMMDD}.json`（檔名來自 version_data.py 輸出的 filename） |
+| commit 範圍 | 僅 `data/` + `api/`（`items/YYYYMMDD.json` + `index.json` + `latest.json` + `meta.json` + `telegram.json`（有變更時））；爬蟲程式碼改動另以 PR 流程進行 |
 | push 憑證 | `GITHUB_TOKEN`（contents: write）；token 觸發的 push **不會再觸發** workflow run（GitHub 防迴圈機制） |
 | 無異動 | 完全不 commit（`if changed` 分支）→ 不產生空 commit、避免 churn |
 | push 前 | `git pull --rebase` 併入並發期間 main 上其他人類 commit；實質衝突 → 失敗（保留工作目錄狀態供除錯） |
-| 資料成長 | 001 store 採每日一點累積（含平價日，同日重跑冪等不重複）+ 本規格日期制快照；`api/items/YYYYMMDD[_n].json` 每次異動會多一檔，但皆為增量、檔名唯一，可用 GitHub 檔案歷史管理 |
+| 資料成長 | 001 store 採每日一點累積（含平價日，同日重跑冪等不重複）+ 本規格日期制單檔快照；`api/items/YYYYMMDD.json` 每日一份，同台北日期有異動 → 覆寫同一檔（git 歷史保留每次內容，`git log -p` 可取得同日版本差異） |
 
-### 9.4 快取策略（api/items/YYYYMMDD[_n].json 日期檔名 + 前端引用）
+### 9.4 快取策略（api/items/YYYYMMDD.json 日期制單檔 + 前端引用）
 
 | 層級 | 策略 |
 |------|------|
-| 資料檔 | `api/items/YYYYMMDD[_n].json`：**內容異動才寫新檔**（`version_data.py`，檔名取自 `crawled_at` 轉台北日期）；檔名含日期 → 瀏覽器/CDN 快取（GH Pages 預設 `Cache-Control: max-age=600`）對新檔必然失效 → 使用者永遠看到最新資料 |
+| 資料檔 | `api/items/YYYYMMDD.json`：**內容異動才寫檔**（`version_data.py`，檔名取自 `crawled_at` 轉台北日期；同台北日期檔存在 → 覆寫）；跨日新日期 = 新 URL → 瀏覽器/CDN 快取（GH Pages 預設 `Cache-Control: max-age=600`）必然失效；**同日覆寫失去檔名級 cache-busting** → 回頭客最長 10 分鐘看到舊資料（同日異動罕見可接受；如需可選用 `?v={crawled_at}` 查詢參數） |
 | 版本發現 | 前端 runtime `fetch(api/index.json)` → `latest_file` → `fetch(latest_file)`，不依賴 meta.json 的即時性 |
 | index.json | 固定檔名、內容小（crawled_at/計數/失敗分類/`files[]`/`latest_file`）；前端唯一入口；因檔名不變，允許預設快取（誤差 ≤ 10 分鐘可接受，且資料主體已由日期檔名保證新鮮） |
 | 前端資源 | Vite build 產物（`dist/`）含 content hash 檔名 → 前端 bundle 快取安全；`index.html` 不設長快取 |
@@ -430,7 +437,7 @@ flowchart LR
 |---|---|
 | 1. 每日排程觸發且資料有異動時完成爬蟲與部署 | §1.2、§1.3、§1.4（cron、依序 steps、commit、build、deploy、成功結束） |
 | 2. 維護者手動觸發補爬成功 | §1.2（workflow_dispatch 共用管線） |
-| 3. 資料異動時寫入日期制 cache-busting 資料檔（同日多份 → YYYYMMDD → YYYYMMDD_1 → …） | §1.5（date = crawled_at 轉台北日期、後綴遞增、crawled_at） |
+| 3. 資料異動時以單檔覆寫寫入日期制資料檔（同日存在 → 覆寫，不再產生 _N） | §1.5（date = crawled_at 轉台北日期、單檔覆寫、crawled_at） |
 | 4. 資料無異動時跳過 commit 仍完成部署 | §1.4 step 5-6（if changed）、§1.5、§6 #8 |
 | 5. 爬蟲完成後觸發 Telegram 通知整合點（006 預留） | §1.4 step 6、§1.6、§6 #9 |
 | 6. 爬蟲執行失敗時保留舊資料且不部署 | §1.3（needs: crawl）、§6 #1 |
@@ -440,3 +447,4 @@ flowchart LR
 | 10. cron 排程延遲或跳過時可手動補爬 | §1.2、§6 #5 |
 | 11. 排程與手動並發觸發時不產生 commit 衝突 | §1.2 concurrency、§6 #6 |
 | 12. 首次執行建立初始資料檔（api/items/{date}.json + api/index.json + api/latest.json） | §1.5、§6 #7 |
+| 13. 健康檢查擋下（meta.status=failed / total=0）時不寫入 api/ 衍生層 | §1.5（防線）、§6 #11 |

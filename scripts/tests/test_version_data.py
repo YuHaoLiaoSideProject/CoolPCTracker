@@ -2,8 +2,9 @@
 @initial-setup、@regression）＋ AirTicketsPrice 模式（api/ 衍生 API 成品）。
 
 涵蓋：首次執行（無 api/items/*.json → 建立 {YYYYMMDD}.json）、crawled_at 轉台北日期
-（UTC+8，跨日邊界）、同日多份後綴（YYYYMMDD → YYYYMMDD_1 → YYYYMMDD_2）、
-index.json 完整 files[] + merged meta + changed 僅最新檔、latest.json 穩定端點、
+（UTC+8，跨日邊界）、同日單檔覆寫（{date}.json 已存在 → 直接覆寫，不再 _N 後綴）、
+index.json 完整 files[]（每日一列）+ merged meta + changed 僅最新檔、latest.json 穩定端點、
+防線（meta.status == "failed" 或 total == 0 → 不寫任何檔案）、
 無異動不寫檔、crawled_at 差異不視為異動、--data-dir/--api-dir 自訂目錄、
 GITHUB_OUTPUT 寫入（changed/filename）。
 測試一律使用 pytest tmp_path（可 chdir），不碰真實檔案系統。
@@ -156,9 +157,9 @@ class TestFirstRun:
 # ── 同日後綴 / 跨日（BDD @business-rule @cache-busting）────────────────────
 
 class TestDateSuffix:
-    def test_same_day_creates_suffix(self, tmp_path, capsys):
-        """同日已有一份 → 第二份 {date}_1.json；index latest_file 指向後綴檔、
-        files[] 依 (date, suffix) 升冪、changed 僅最新檔。"""
+    def test_same_day_overwrites_existing(self, tmp_path, capsys):
+        """同日已有一份 → 覆寫 {date}.json（不再 _N 後綴）；index latest_file 指向
+        {date}.json、files[] 每日一列、changed 在該檔。"""
         api_dir = tmp_path / "api"
         write_snapshot(api_dir, "20260816.json", CRAWLED_NEW, [ITEM_A])
         write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[ITEM_B], changed=1)
@@ -166,41 +167,42 @@ class TestDateSuffix:
         changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
 
         assert changed_line == "changed=true"
-        assert filename_line == "filename=20260816_1.json"
+        assert filename_line == "filename=20260816.json"
 
-        payload = json.loads((api_dir / "items" / "20260816_1.json").read_text(encoding="utf-8"))
+        payload = json.loads((api_dir / "items" / "20260816.json").read_text(encoding="utf-8"))
         assert payload["crawled_at"] == CRAWLED_NEW
-        assert payload["items"] == [ITEM_B]
+        assert payload["items"] == [ITEM_B]  # 舊內容被覆寫
 
         latest = json.loads((api_dir / "latest.json").read_text(encoding="utf-8"))
         assert latest == payload
 
         index = json.loads((api_dir / "index.json").read_text(encoding="utf-8"))
-        assert index["latest_file"] == "api/items/20260816_1.json"
-        assert [f["file"] for f in index["files"]] == ["20260816.json", "20260816_1.json"]
-        assert [f["url"] for f in index["files"]] == [
-            "api/items/20260816.json", "api/items/20260816_1.json"]
-        assert "changed" not in index["files"][0]
-        assert index["files"][1]["changed"] == 1
+        assert index["latest_file"] == "api/items/20260816.json"
+        assert [f["file"] for f in index["files"]] == ["20260816.json"]  # 每日一列
+        assert [f["url"] for f in index["files"]] == ["api/items/20260816.json"]
+        assert index["files"][0]["changed"] == 1
 
-        # 舊快照不被覆寫
-        assert json.loads((api_dir / "items" / "20260816.json").read_text(encoding="utf-8"))["items"] == [ITEM_A]
-
-    def test_second_suffix_creates_third(self, tmp_path, capsys):
-        """同日已有兩份 → 第三份 {date}_2.json。"""
+    def test_same_day_overwrites_repeatedly(self, tmp_path, capsys):
+        """同日多次異動 → 每次皆寫 {date}.json（不再 _2/_3）；files[] 維持一列。"""
         api_dir = tmp_path / "api"
         write_snapshot(api_dir, "20260816.json", CRAWLED_NEW, [ITEM_A])
-        write_snapshot(api_dir, "20260816_1.json", CRAWLED_NEW, [ITEM_B])
+        write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[ITEM_B], changed=1)
+        _, filename_line = run_main(capsys, tmp_path, api_dir)
+        assert filename_line == "filename=20260816.json"
+
         write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[ITEM_C], changed=1)
-
         changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
-
         assert changed_line == "changed=true"
-        assert filename_line == "filename=20260816_2.json"
-        assert (api_dir / "items" / "20260816_2.json").exists()
+        assert filename_line == "filename=20260816.json"
+        assert not (api_dir / "items" / "20260816_2.json").exists()
 
-    def test_next_day_creates_no_suffix(self, tmp_path, capsys):
-        """次日新日期 → {date}.json（無後綴）。"""
+        index = json.loads((api_dir / "index.json").read_text(encoding="utf-8"))
+        assert [f["file"] for f in index["files"]] == ["20260816.json"]
+        payload = json.loads((api_dir / "items" / "20260816.json").read_text(encoding="utf-8"))
+        assert payload["items"] == [ITEM_C]
+
+    def test_next_day_creates_new_file(self, tmp_path, capsys):
+        """次日新日期 → 新建 {date}.json（跨日 cache-busting 不變）。"""
         api_dir = tmp_path / "api"
         write_snapshot(api_dir, "20260816.json", CRAWLED_NEW, [ITEM_A])
         write_data(tmp_path, crawled_at=CRAWLED_NEXT_DAY, items=[ITEM_B], changed=1)
@@ -210,35 +212,37 @@ class TestDateSuffix:
         assert changed_line == "changed=true"
         assert filename_line == "filename=20260817.json"
         assert (api_dir / "items" / "20260817.json").exists()
+        # 前一日檔案不受影響
+        assert json.loads((api_dir / "items" / "20260816.json").read_text(encoding="utf-8"))["items"] == [ITEM_A]
 
 
 class TestIndexHistory:
-    def test_files_full_history_and_changed_only_latest(self, tmp_path, capsys):
-        """多檔累積：index.files[] 為完整日期檔清單（依 (date, suffix) 升冪）；
-        merged meta 併入 index；changed 僅最新檔（20260816）有，歷史檔省略。"""
+    def test_files_daily_history_and_changed_only_latest(self, tmp_path, capsys):
+        """多日累積：index.files[] 每日一列（依日期升冪）；merged meta 併入 index；
+        changed 僅最新檔有，歷史檔省略。"""
         api_dir = tmp_path / "api"
         write_snapshot(api_dir, "20260815.json", CRAWLED_OLD, [ITEM_A])
-        write_snapshot(api_dir, "20260815_1.json", CRAWLED_OLD, [ITEM_B])
-        write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[ITEM_C],
+        write_snapshot(api_dir, "20260816.json", CRAWLED_NEW, [ITEM_B])
+        write_data(tmp_path, crawled_at=CRAWLED_NEXT_DAY, items=[ITEM_C],
                    total=1, counts={"CPU": 1}, changed=1)
 
         changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
 
         assert changed_line == "changed=true"
-        assert filename_line == "filename=20260816.json"
+        assert filename_line == "filename=20260817.json"
 
         index = json.loads((api_dir / "index.json").read_text(encoding="utf-8"))
-        assert index["latest_file"] == "api/items/20260816.json"
-        assert index["crawled_at"] == CRAWLED_NEW
+        assert index["latest_file"] == "api/items/20260817.json"
+        assert index["crawled_at"] == CRAWLED_NEXT_DAY
         assert index["total"] == 1
         assert index["counts"] == {"CPU": 1}
         assert index["status"] == "ok"
         assert [f["file"] for f in index["files"]] == [
-            "20260815.json", "20260815_1.json", "20260816.json"]
+            "20260815.json", "20260816.json", "20260817.json"]
         assert [f["total"] for f in index["files"]] == [1, 1, 1]
         assert [f["url"] for f in index["files"]] == [
-            "api/items/20260815.json", "api/items/20260815_1.json",
-            "api/items/20260816.json"]
+            "api/items/20260815.json", "api/items/20260816.json",
+            "api/items/20260817.json"]
         assert "changed" not in index["files"][0]
         assert "changed" not in index["files"][1]
         assert index["files"][2]["changed"] == 1
@@ -249,7 +253,8 @@ class TestIndexHistory:
 class TestNoChange:
     def test_no_change_writes_nothing(self, tmp_path, capsys):
         """items 完全一致（含 dict key 順序不同，驗證 canonical sort_keys）→
-        changed=false、filename 為空、data 與 api 目錄內無任何檔案新增或變更。"""
+        changed=false、filename 為空、data 與 api 目錄內無任何檔案新增或變更
+        （同日覆寫制下也不產生任何 _N 檔）。"""
         api_dir = tmp_path / "api"
         write_snapshot(api_dir, "20260816.json", CRAWLED_OLD, [ITEM_A])
         write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[ITEM_A_SHUFFLED])
@@ -260,7 +265,7 @@ class TestNoChange:
         assert changed_line == "changed=false"
         assert filename_line == "filename="
         assert snapshot_all(tmp_path, api_dir) == before          # 一個 byte 都沒變
-        assert not (api_dir / "items" / "20260816_1.json").exists()
+        assert sorted(p.name for p in (api_dir / "items").iterdir()) == ["20260816.json"]
 
     def test_no_change_when_only_crawled_at_differs(self, tmp_path, capsys):
         """crawled_at 不同但 items 相同 → 判為無異動（時間戳不參與比對）。"""
@@ -273,6 +278,49 @@ class TestNoChange:
         assert changed_line == "changed=false"
         assert filename_line == "filename="
         assert not (api_dir / "items" / "20260817.json").exists()
+
+
+# ── 防線（meta.status == "failed" / total == 0 → 不寫任何檔案）──────────────
+
+class TestGuardRail:
+    def test_failed_status_writes_nothing(self, tmp_path, capsys):
+        """meta.status == "failed" → changed=false、filename 空、data 與 api 全部
+        檔案一個 byte 都不變（含快照/index/latest 不被覆寫）。"""
+        api_dir = tmp_path / "api"
+        write_snapshot(api_dir, "20260816.json", CRAWLED_OLD, [ITEM_A])
+        write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[ITEM_B], status="failed")
+        before = snapshot_all(tmp_path, api_dir)
+
+        changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
+
+        assert changed_line == "changed=false"
+        assert filename_line == "filename="
+        assert snapshot_all(tmp_path, api_dir) == before
+
+    def test_failed_status_first_run_creates_nothing(self, tmp_path, capsys):
+        """首次執行即 failed（無既有快照）→ 不建立 api/ 任何檔案。"""
+        api_dir = tmp_path / "api"
+        write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[ITEM_A], status="failed")
+
+        changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
+
+        assert changed_line == "changed=false"
+        assert filename_line == "filename="
+        assert not api_dir.exists()          # 未建立任何檔案
+
+    def test_zero_total_writes_nothing(self, tmp_path, capsys):
+        """meta.total == 0 → changed=false、不寫任何檔案
+        （防人工手術壞資料覆寫好快照）。"""
+        api_dir = tmp_path / "api"
+        write_snapshot(api_dir, "20260816.json", CRAWLED_OLD, [ITEM_A])
+        write_data(tmp_path, crawled_at=CRAWLED_NEW, items=[], total=0, status="ok")
+        before = snapshot_all(tmp_path, api_dir)
+
+        changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
+
+        assert changed_line == "changed=false"
+        assert filename_line == "filename="
+        assert snapshot_all(tmp_path, api_dir) == before
 
 
 # ── 目錄參數與 GITHUB_OUTPUT ────────────────────────────────────────────────

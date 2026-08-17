@@ -46,8 +46,8 @@ def test_api_artifacts_not_ignored() -> None:
     for path in [
         "api/index.json",           # 目錄/總覽（前端唯一入口）
         "api/latest.json",          # 穩定端點
-        "api/items/20260815.json",  # 日期制快照（無後綴）
-        "api/items/20260815_1.json",  # 同日後綴（_1 起）
+        "api/items/20260815.json",  # 日期制快照
+        "api/items/20260816.json",  # 跨日第二檔（單檔覆寫制，無後綴）
     ]:
         assert not _git_check_ignore(path), f"{path} 應不被 .gitignore 忽略"
 

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-17T03:33:31.186076+00:00",
+  "generated_at": "2026-08-17T03:52:51.014322+00:00",
   "source": "https://www.coolpc.com.tw/m/m-list.php",
   "description": "原價屋商品價格追蹤資料 API",
-  "latest_file": "api/items/20260816_1.json",
+  "latest_file": "api/items/20260816.json",
   "latest": "api/latest.json",
   "crawled_at": "2026-08-16T06:20:49.650053+00:00",
   "status": "ok",
@@ -22,26 +22,14 @@
     {
       "file": "20260815.json",
       "crawled_at": "2026-08-15T15:40:15.770082+00:00",
-      "total": 16,
-      "url": "api/items/20260815.json"
-    },
-    {
-      "file": "20260815_1.json",
-      "crawled_at": "2026-08-15T15:40:15.770082+00:00",
       "total": 1447,
-      "url": "api/items/20260815_1.json"
+      "url": "api/items/20260815.json"
     },
     {
       "file": "20260816.json",
       "crawled_at": "2026-08-16T06:20:49.650053+00:00",
       "total": 1448,
-      "url": "api/items/20260816.json"
-    },
-    {
-      "file": "20260816_1.json",
-      "crawled_at": "2026-08-16T06:20:49.650053+00:00",
-      "total": 1448,
-      "url": "api/items/20260816_1.json",
+      "url": "api/items/20260816.json",
       "changed": 1
     }
   ]

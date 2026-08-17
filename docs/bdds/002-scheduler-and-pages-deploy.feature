@@ -29,16 +29,26 @@ Feature: 每日排程與 GitHub Pages 部署
     And 工作流以成功狀態結束
 
   @business-rule @cache-busting @regression
-  Scenario Outline: 資料異動時寫入日期制 cache-busting 資料檔
+  Scenario Outline: 資料異動時以單檔覆寫寫入日期制資料檔
     Given 上次部署後 api/items/ 已有的同日檔案為 <同日既存>
     When 本次爬蟲產出與上次有異動的資料
-    Then 工作流寫入 api/items/<filename>.json 並更新 api/index.json
+    Then 工作流寫入 api/items/20260816.json（<行為>）並更新 api/index.json
     And 資料檔內含本次爬取時間 crawled_at
     Examples:
-      | 同日既存                         | filename  |
-      | 無                                | 20260816  |
-      | 20260816.json                     | 20260816_1 |
-      | 20260816.json, 20260816_1.json   | 20260816_2 |
+      | 同日既存       | 行為                            |
+      | 無              | 新建                            |
+      | 20260816.json   | 覆寫（不再產生 20260816_1）    |
+
+  @business-rule @health-guard @regression
+  Scenario Outline: 健康檢查擋下時不寫入 api/ 衍生層
+    Given 爬蟲產出 meta.status 為 <status> 且商品總數 total 為 <total>
+    When scripts/version_data.py 執行異動判定
+    Then 判定 changed=false 且不寫入任何 api/items/*.json 與 api/latest.json
+    And api/index.json 維持不變（保留上次成功快照）
+    Examples:
+      | status  | total |
+      | failed  | 1449  |
+      | ok      | 0     |
 
   @business-rule @regression
   Scenario: 資料無異動時跳過 commit 仍完成部署
