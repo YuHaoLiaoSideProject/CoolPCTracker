@@ -1,20 +1,20 @@
 {
-  "crawled_at": "2026-08-16T06:20:49.650053+00:00",
+  "crawled_at": "2026-08-17T06:31:06.835096+00:00",
   "source": "https://www.coolpc.com.tw/m/m-list.php",
   "counts": {
-    "套裝/準系統": 158,
-    "劈發價組合區": 86,
-    "CPU": 48,
-    "主機板": 373,
-    "記憶體": 216,
+    "套裝/準系統": 156,
+    "劈發價組合區": 83,
+    "CPU": 47,
+    "主機板": 372,
+    "記憶體": 217,
     "SSD": 171,
     "HDD": 89,
     "記憶卡": 54,
-    "顯示卡": 255
+    "顯示卡": 251
   },
-  "total": 1450,
-  "previous_total": 1450,
-  "changed": 1,
+  "total": 1440,
+  "previous_total": 1440,
+  "changed": 4,
   "failed_categories": [],
   "status": "ok"
 }

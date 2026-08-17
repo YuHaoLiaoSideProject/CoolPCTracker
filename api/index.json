@@ -1,22 +1,22 @@
 {
-  "generated_at": "2026-08-17T03:52:51.014322+00:00",
+  "generated_at": "2026-08-17T06:31:07.052134+00:00",
   "source": "https://www.coolpc.com.tw/m/m-list.php",
   "description": "原價屋商品價格追蹤資料 API",
-  "latest_file": "api/items/20260816.json",
+  "latest_file": "api/items/20260817.json",
   "latest": "api/latest.json",
-  "crawled_at": "2026-08-16T06:20:49.650053+00:00",
+  "crawled_at": "2026-08-17T06:31:06.835096+00:00",
   "status": "ok",
-  "total": 1450,
+  "total": 1440,
   "counts": {
-    "套裝/準系統": 158,
-    "劈發價組合區": 86,
-    "CPU": 48,
-    "主機板": 373,
-    "記憶體": 216,
+    "套裝/準系統": 156,
+    "劈發價組合區": 83,
+    "CPU": 47,
+    "主機板": 372,
+    "記憶體": 217,
     "SSD": 171,
     "HDD": 89,
     "記憶卡": 54,
-    "顯示卡": 255
+    "顯示卡": 251
   },
   "files": [
     {
@@ -29,8 +29,14 @@
       "file": "20260816.json",
       "crawled_at": "2026-08-16T06:20:49.650053+00:00",
       "total": 1448,
-      "url": "api/items/20260816.json",
-      "changed": 1
+      "url": "api/items/20260816.json"
+    },
+    {
+      "file": "20260817.json",
+      "crawled_at": "2026-08-17T06:31:06.835096+00:00",
+      "total": 1452,
+      "url": "api/items/20260817.json",
+      "changed": 4
     }
   ]
 }
