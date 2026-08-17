@@ -135,8 +135,10 @@ def _daily_records(data_dir: Path) -> list[tuple[Path, int]]:
 
 
 def _nat_key(stem: str) -> tuple[int, int | str]:
-    """自然排序鍵：純數字 stem（G 索引）依數值排序，其餘依字串排序。"""
-    return (0, int(stem)) if stem.isdigit() else (1, stem)
+    """自然排序鍵：G 索引檔名（g{index} 或純數字，剝離前導 "g"）依數值排序，
+    其餘依字串排序。g 前綴下若用字串排序會讓 g12 排在 g3 前，故必須剝離前綴。"""
+    digits = stem[1:] if stem.startswith("g") else stem
+    return (0, int(digits)) if digits.isdigit() else (1, stem)
 
 
 def _items_paths(data_dir: Path) -> list[Path]:
@@ -159,13 +161,15 @@ def _read_items_file(path: Path) -> list | None:
 
 
 def _resolve_category(stem: str) -> tuple[str, str]:
-    """檔名 stem → (g, name)。
+    """檔名 stem → (id, name)。
 
-    g = 檔名原樣（對外 id 由檔名繼承）；name 優先取 G→name 對照（stem 為純 G 索引
-    或 g-開頭複合名時以對應中文名）→ 查無則以檔名本身為 name。"""
-    head = re.split(r"[-_]", stem, maxsplit=1)[0]
-    if head in G_NAME_MAP:
-        return stem, G_NAME_MAP[head]
+    id = 檔名 stem 原樣（g-prefix，如 "g4"/"g12"；對外 id 由檔名繼承）；
+    name 優先取 G→name 對照：剝離前導 "g" 後的數字（g4→"4"）或純數字 stem
+    （"4"）對應中文名 → 查無（未知分類）則以檔名 stem 本身為 name（fallback）。
+    同時相容 g-prefix 與純數字兩種舊 stem。"""
+    digits = stem[1:] if stem.startswith("g") else stem
+    if digits in G_NAME_MAP:
+        return stem, G_NAME_MAP[digits]
     return stem, stem
 
 
@@ -211,7 +215,7 @@ def _migrate_legacy_single_file(data_dir: Path) -> None:
     items_dir.mkdir(parents=True, exist_ok=True)
     for category, payload in sorted(by_category.items()):
         g = NAME_TO_G.get(category) or _safe_g(category)
-        (items_dir / f"{g}.json").write_text(
+        (items_dir / f"g{g}.json").write_text(
             json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8")
     print(f"[version_data] 警告：data/items.json（舊單檔）仍在但 data/items/ 不存在，"

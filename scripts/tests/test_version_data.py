@@ -41,7 +41,7 @@ ITEM_GPU = {"id": "gpu-1", "name": "RTX 4070", "price": 19990,
             "history": [["2026-08-15", 19990], ["2026-08-16", 19990]]}
 
 # 分類檔真相層：{g: [items]}（g = G 索引，依檔名繼承）
-CATS = {"4": [ITEM_A], "12": [ITEM_GPU]}
+CATS = {"g4": [ITEM_A], "g12": [ITEM_GPU]}
 
 # 每日價格點（data/daily/YYYYMMDD.json 的 {id: price}）
 DAILY_15 = {"cpu-1": 9990, "gpu-1": 19990}
@@ -123,7 +123,7 @@ class TestApiItems:
         """首次執行（無 api/）→ changed=true、filename=最新 daily 檔名；
         api/items/{g}.json = data/items/{g} 內容原樣（純 items 陣列，零轉換）。"""
         write_data(tmp_path, crawled_at=CRAWLED_NEW,
-                   categories={"4": [ITEM_A], "12": [ITEM_GPU]},
+                   categories={"g4": [ITEM_A], "g12": [ITEM_GPU]},
                    counts={"CPU": 1, "顯示卡": 1}, daily={"20260816.json": DAILY_16})
 
         changed_line, filename_line = run_main(capsys, tmp_path, tmp_path / "api")
@@ -131,18 +131,18 @@ class TestApiItems:
         assert changed_line == "changed=true"
         assert filename_line == "filename=20260816.json"
 
-        cpu = json.loads((tmp_path / "api" / "items" / "4.json").read_text(encoding="utf-8"))
+        cpu = json.loads((tmp_path / "api" / "items" / "g4.json").read_text(encoding="utf-8"))
         assert cpu == [ITEM_A]
-        gpu = json.loads((tmp_path / "api" / "items" / "12.json").read_text(encoding="utf-8"))
+        gpu = json.loads((tmp_path / "api" / "items" / "g12.json").read_text(encoding="utf-8"))
         assert gpu == [ITEM_GPU]
 
     def test_category_files_use_compact_separators(self, tmp_path, capsys):
         """api/items/{g}.json 寫入格式：separators=(",", ":")、純陣列（無 category/meta）。"""
-        write_data(tmp_path, crawled_at=CRAWLED_NEW, categories={"4": [ITEM_A]},
+        write_data(tmp_path, crawled_at=CRAWLED_NEW, categories={"g4": [ITEM_A]},
                    daily={"20260816.json": DAILY_16})
         run_main(capsys, tmp_path, tmp_path / "api")
 
-        text = (tmp_path / "api" / "items" / "4.json").read_text(encoding="utf-8")
+        text = (tmp_path / "api" / "items" / "g4.json").read_text(encoding="utf-8")
         assert text.startswith("[")            # 純 items 陣列
         assert '", "' not in text              # 逗號後無空白
         assert '": "' not in text              # 冒號後無空白
@@ -155,15 +155,15 @@ class TestApiItems:
         write_data(tmp_path, crawled_at=CRAWLED_NEW, categories=CATS,
                    daily={"20260816.json": DAILY_16})
         run_main(capsys, tmp_path, api_dir)
-        gpu_before = (api_dir / "items" / "12.json").read_bytes()
+        gpu_before = (api_dir / "items" / "g12.json").read_bytes()
 
         write_data(tmp_path, crawled_at=CRAWLED_NEW,
-                   categories={"4": [ITEM_B], "12": [ITEM_GPU]},
+                   categories={"g4": [ITEM_B], "g12": [ITEM_GPU]},
                    daily={"20260816.json": DAILY_16})
         run_main(capsys, tmp_path, api_dir)
 
-        assert json.loads((api_dir / "items" / "4.json").read_text(encoding="utf-8")) == [ITEM_B]
-        assert (api_dir / "items" / "12.json").read_bytes() == gpu_before
+        assert json.loads((api_dir / "items" / "g4.json").read_text(encoding="utf-8")) == [ITEM_B]
+        assert (api_dir / "items" / "g12.json").read_bytes() == gpu_before
 
     def test_stale_api_items_left_untouched(self, tmp_path, capsys):
         """api/items/ 中的殘留檔（data/items 已無）不刪除：契約只要求鏡像新增/更新。"""
@@ -171,7 +171,7 @@ class TestApiItems:
         (api_dir / "items").mkdir(parents=True)
         stale = api_dir / "items" / "20260814.json"
         stale.write_text('[{"id": "old"}]', encoding="utf-8")
-        write_data(tmp_path, crawled_at=CRAWLED_NEW, categories={"4": [ITEM_A]},
+        write_data(tmp_path, crawled_at=CRAWLED_NEW, categories={"g4": [ITEM_A]},
                    daily={"20260816.json": DAILY_16})
 
         run_main(capsys, tmp_path, api_dir)
@@ -201,7 +201,7 @@ class TestDailyMirror:
         run_main(capsys, tmp_path, api_dir)
 
         write_data(tmp_path, crawled_at=CRAWLED_NEW,
-                   categories={"4": [ITEM_B], "12": [ITEM_GPU]},  # 分類檔同步異動（內容更新必然隨價格異動）
+                   categories={"g4": [ITEM_B], "g12": [ITEM_GPU]},  # 分類檔同步異動（內容更新必然隨價格異動）
                    daily={"20260816.json": DAILY_17})  # 同檔名、內容更新
         changed_line, _ = run_main(capsys, tmp_path, api_dir)
 
@@ -250,7 +250,7 @@ class TestTrends:
         before = (api_dir / "trends" / "cpu-1.json").read_bytes()
 
         write_data(tmp_path, crawled_at=CRAWLED_NEW,
-                   categories={"4": [ITEM_B], "12": [ITEM_GPU]},
+                   categories={"g4": [ITEM_B], "g12": [ITEM_GPU]},
                    daily={"20260816.json": DAILY_16})
         changed_line, _ = run_main(capsys, tmp_path, api_dir)
 
@@ -276,7 +276,7 @@ class TestIndex:
         對照、依 G 數值序，與寫入順序無關）、daily_files[] 依檔名升冪含 records、
         trends_prefix、merged meta、**不含 latest_file/latest**。"""
         write_data(tmp_path, crawled_at=CRAWLED_NEXT_DAY,
-                   categories={"12": [ITEM_GPU], "4": [ITEM_A]},  # 亂序寫入 → 輸出仍升冪
+                   categories={"g12": [ITEM_GPU], "g4": [ITEM_A]},  # 亂序寫入 → 輸出仍升冪
                    total=2, counts={"CPU": 1, "顯示卡": 1},
                    daily={"20260817.json": DAILY_17,      # 亂序寫入 → 輸出仍升冪
                           "20260816.json": DAILY_16,
@@ -294,8 +294,8 @@ class TestIndex:
         assert index["source"] == SOURCE
         assert index["description"] == version_data.DESCRIPTION
         assert index["categories"] == [
-            {"id": "4", "name": "CPU", "file": "api/items/4.json", "count": 1},
-            {"id": "12", "name": "顯示卡", "file": "api/items/12.json", "count": 1},
+            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 1},
+            {"id": "g12", "name": "顯示卡", "file": "api/items/g12.json", "count": 1},
         ]
         assert index["daily_files"] == [
             {"file": "20260815.json", "url": "api/daily/20260815.json", "records": 2},
@@ -306,13 +306,13 @@ class TestIndex:
 
     def test_category_count_is_payload_length(self, tmp_path, capsys):
         """categories[].count = 該分類檔 items 陣列長度（非 meta.counts 值）。"""
-        write_data(tmp_path, crawled_at=CRAWLED_NEW, categories={"4": [ITEM_A, ITEM_B]},
+        write_data(tmp_path, crawled_at=CRAWLED_NEW, categories={"g4": [ITEM_A, ITEM_B]},
                    counts={"CPU": 99}, daily={"20260816.json": DAILY_16})
         run_main(capsys, tmp_path, tmp_path / "api")
 
         index = json.loads((tmp_path / "api" / "index.json").read_text(encoding="utf-8"))
         assert index["categories"] == [
-            {"id": "4", "name": "CPU", "file": "api/items/4.json", "count": 2}]
+            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 2}]
 
     def test_unknown_g_stem_falls_back_to_stem_name(self, tmp_path, capsys):
         """檔名非已知 G 索引（G→name 對照查無）→ name 直接取檔名 stem。"""
@@ -335,7 +335,7 @@ class TestNoLatestJson:
         run_main(capsys, tmp_path, tmp_path / "api")
 
         assert not (tmp_path / "api" / "latest.json").exists()
-        assert (tmp_path / "api" / "items" / "4.json").exists()
+        assert (tmp_path / "api" / "items" / "g4.json").exists()
 
     def test_stale_latest_json_not_deleted(self, tmp_path, capsys):
         """既有 api/latest.json 殘留檔不刪（本模組只做新增/更新，不做清理）。"""
@@ -412,7 +412,7 @@ class TestNoChange:
         run_main(capsys, tmp_path, api_dir)  # 建立 api/
 
         write_data(tmp_path, crawled_at=CRAWLED_NEW,
-                   categories={"4": [ITEM_A_SHUFFLED], "12": [ITEM_GPU]},
+                   categories={"g4": [ITEM_A_SHUFFLED], "g12": [ITEM_GPU]},
                    daily={"20260816.json": DAILY_16})
         before = snapshot_all(tmp_path, api_dir)
         changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
@@ -459,10 +459,10 @@ class TestChangedTriggers:
         assert filename_line == "filename=20260817.json"
         assert (api_dir / "daily" / "20260817.json").exists()
         assert (api_dir / "trends" / "cpu-1.json").exists()
-        assert json.loads((api_dir / "items" / "4.json").read_text(encoding="utf-8")) == [ITEM_A]
+        assert json.loads((api_dir / "items" / "g4.json").read_text(encoding="utf-8")) == [ITEM_A]
         index = json.loads((api_dir / "index.json").read_text(encoding="utf-8"))
         assert index["crawled_at"] == CRAWLED_NEXT_DAY
-        assert index["categories"][0]["id"] == "4"
+        assert index["categories"][0]["id"] == "g4"
 
     def test_items_change_in_category_triggers_change(self, tmp_path, capsys):
         """daily 無新檔但任一分類檔異動（同日價變）→ changed=true。"""
@@ -472,12 +472,12 @@ class TestChangedTriggers:
         run_main(capsys, tmp_path, api_dir)
 
         write_data(tmp_path, crawled_at=CRAWLED_NEW,
-                   categories={"4": [ITEM_B], "12": [ITEM_GPU]},
+                   categories={"g4": [ITEM_B], "g12": [ITEM_GPU]},
                    daily={"20260816.json": DAILY_16})
         changed_line, _ = run_main(capsys, tmp_path, api_dir)
 
         assert changed_line == "changed=true"
-        assert json.loads((api_dir / "items" / "4.json").read_text(encoding="utf-8")) == [ITEM_B]
+        assert json.loads((api_dir / "items" / "g4.json").read_text(encoding="utf-8")) == [ITEM_B]
 
     def test_no_daily_files_but_items_change(self, tmp_path, capsys):
         """data/daily 為空但分類檔異動 → changed=true、filename 空。"""
@@ -486,7 +486,7 @@ class TestChangedTriggers:
         run_main(capsys, tmp_path, api_dir)
 
         write_data(tmp_path, crawled_at=CRAWLED_NEXT_DAY,
-                   categories={"4": [ITEM_B], "12": [ITEM_GPU]})
+                   categories={"g4": [ITEM_B], "g12": [ITEM_GPU]})
         changed_line, filename_line = run_main(capsys, tmp_path, api_dir)
 
         assert changed_line == "changed=true"
@@ -513,15 +513,15 @@ class TestMigration:
         assert lines == ["changed=true", "filename=20260816.json"]
         assert "警告" in captured.err and "data/items" in captured.err
 
-        cpu = json.loads((tmp_path / "items" / "4.json").read_text(encoding="utf-8"))
+        cpu = json.loads((tmp_path / "items" / "g4.json").read_text(encoding="utf-8"))
         assert cpu == [ITEM_A]     # 已移除 category 欄位
-        mobo = json.loads((tmp_path / "items" / "5.json").read_text(encoding="utf-8"))
+        mobo = json.loads((tmp_path / "items" / "g5.json").read_text(encoding="utf-8"))
         assert mobo == [ITEM_GPU]
 
         index = json.loads((tmp_path / "api" / "index.json").read_text(encoding="utf-8"))
         assert index["categories"] == [
-            {"id": "4", "name": "CPU", "file": "api/items/4.json", "count": 1},
-            {"id": "5", "name": "主機板", "file": "api/items/5.json", "count": 1},
+            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 1},
+            {"id": "g5", "name": "主機板", "file": "api/items/g5.json", "count": 1},
         ]
 
     def test_legacy_unknown_category_uses_safe_g(self, tmp_path, capsys):
@@ -534,10 +534,10 @@ class TestMigration:
         capsys.readouterr()
 
         assert code == 0
-        assert (tmp_path / "items" / "新分類-X.json").exists()
+        assert (tmp_path / "items" / "g新分類-X.json").exists()
         index = json.loads((tmp_path / "api" / "index.json").read_text(encoding="utf-8"))
         assert index["categories"] == [
-            {"id": "新分類-X", "name": "新分類-X", "file": "api/items/新分類-X.json",
+            {"id": "g新分類-X", "name": "g新分類-X", "file": "api/items/g新分類-X.json",
              "count": 1}]
 
     def test_migration_skipped_when_items_dir_exists(self, tmp_path, capsys):
@@ -547,7 +547,7 @@ class TestMigration:
                    daily={"20260816.json": DAILY_16})
         # 手工建立 data/items/（模擬爬蟲已切檔）——內容與舊單檔不同
         (tmp_path / "items").mkdir(parents=True)
-        (tmp_path / "items" / "4.json").write_text(
+        (tmp_path / "items" / "g4.json").write_text(
             json.dumps([ITEM_B], ensure_ascii=False), encoding="utf-8")
 
         code = version_data.main(["--data-dir", str(tmp_path),
@@ -557,7 +557,7 @@ class TestMigration:
         assert code == 0
         assert "警告" not in captured.err
         assert captured.out.strip().splitlines() == ["changed=true", "filename=20260816.json"]
-        assert json.loads((tmp_path / "api" / "items" / "4.json").read_text(
+        assert json.loads((tmp_path / "api" / "items" / "g4.json").read_text(
             encoding="utf-8")) == [ITEM_B]
 
     def test_migration_not_run_when_guard_rail_fires(self, tmp_path, capsys):
@@ -588,7 +588,7 @@ class TestCliAndOutput:
                                   "--api-dir", str(custom_api)])
 
         assert code == 0
-        assert (custom_api / "items" / "4.json").exists()
+        assert (custom_api / "items" / "g4.json").exists()
         assert (custom_api / "daily" / "20260816.json").exists()
         assert (custom_api / "trends" / "cpu-1.json").exists()
         assert (custom_api / "index.json").exists()
@@ -603,7 +603,7 @@ class TestCliAndOutput:
         code = version_data.main([])
 
         assert code == 0
-        assert (tmp_path / "api" / "items" / "4.json").exists()
+        assert (tmp_path / "api" / "items" / "g4.json").exists()
         assert (tmp_path / "api" / "daily" / "20260816.json").exists()
         assert (tmp_path / "data" / "meta.json").exists()
         assert "filename=20260816.json" in capsys.readouterr().out

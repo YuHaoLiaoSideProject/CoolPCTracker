@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T09:36:03.207652+00:00",
+  "generated_at": "2026-08-17T09:42:59.859338+00:00",
   "source": "https://www.coolpc.com.tw/m/m-list.php",
   "description": "原價屋商品價格追蹤資料 API",
   "crawled_at": "2026-08-17T09:35:20.629126+00:00",
@@ -19,57 +19,57 @@
   "categories": [
     {
       "id": "g1",
-      "name": "g1",
+      "name": "套裝/準系統",
       "file": "api/items/g1.json",
       "count": 156
     },
     {
-      "id": "g12",
-      "name": "g12",
-      "file": "api/items/g12.json",
-      "count": 251
-    },
-    {
       "id": "g3",
-      "name": "g3",
+      "name": "劈發價組合區",
       "file": "api/items/g3.json",
       "count": 83
     },
     {
       "id": "g4",
-      "name": "g4",
+      "name": "CPU",
       "file": "api/items/g4.json",
       "count": 47
     },
     {
       "id": "g5",
-      "name": "g5",
+      "name": "主機板",
       "file": "api/items/g5.json",
       "count": 372
     },
     {
       "id": "g6",
-      "name": "g6",
+      "name": "記憶體",
       "file": "api/items/g6.json",
       "count": 217
     },
     {
       "id": "g7",
-      "name": "g7",
+      "name": "SSD",
       "file": "api/items/g7.json",
       "count": 171
     },
     {
       "id": "g8",
-      "name": "g8",
+      "name": "HDD",
       "file": "api/items/g8.json",
       "count": 89
     },
     {
       "id": "g9",
-      "name": "g9",
+      "name": "記憶卡",
       "file": "api/items/g9.json",
       "count": 54
+    },
+    {
+      "id": "g12",
+      "name": "顯示卡",
+      "file": "api/items/g12.json",
+      "count": 251
     }
   ],
   "daily_files": [
