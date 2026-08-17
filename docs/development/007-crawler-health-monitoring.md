@@ -293,7 +293,7 @@ def send_admin_alert(text: str) -> None:
 
 ### 1.7 前端消費點（meta.json 新鮮度顯示）
 
-BDD 之「前端新鮮度」場景由一個 composable 消費 meta.json（無新 API）：
+BDD 之「前端新鮮度」場景由一個 composable 消費載入資料的 `meta.crawled_at`（來自 `api/index.json` merged meta／日期制快照，無新 API）：
 
 ```typescript
 // web/src/composables/useDataFreshness.ts
@@ -313,7 +313,7 @@ export function useDataFreshness(meta: { crawled_at: string } | null): Freshness
 | 功能 | 整合點 | 契約 |
 |------|--------|------|
 | **001 爬蟲管道** | fetcher 拋 `FetchError`、parser 拋 `ParserError`（逐分類捕獲，單頁失敗不中斷）；store 原子寫入共用；meta.json 欄位擴充（001 已有 crawled_at / counts / failed_categories，007 新增 status / sources / anomaly / previous_total）；001 BDD「驟降 >20% 不覆寫 + 警報」與「解析 0 商品」場景由 health 模組正式化 | `CategoryResult` 為管道與健康檢查的資料契約 |
-| **002 排程與部署** | **exit code 契約**：`0` = ok/partial（工作流繼續 commit + deploy）；`1` = failed（健康檢查擋下，工作流停止後續步驟、不部署，對應 002 BDD「爬蟲失敗保留舊資料且不部署」）；`2` = 其他執行失敗（寫檔失敗等），同樣使工作流停止（002 僅以 0/非 0 判斷）；`workflow_dispatch` 手動補爬走相同管道 → **同受健康檢查保護**；concurrency 控制沿用（防並發 commit）；meta.json `version` 供 cache-busting（build_meta 沿用 previous 值，002 維護） | exit code 為健康狀態對工作流的唯一通道 |
+| **002 排程與部署** | **exit code 契約**：`0` = ok/partial（工作流繼續 commit + deploy）；`1` = failed（健康檢查擋下，工作流停止後續步驟、不部署，對應 002 BDD「爬蟲失敗保留舊資料且不部署」）；`2` = 其他執行失敗（寫檔失敗等），同樣使工作流停止（002 僅以 0/非 0 判斷）；`workflow_dispatch` 手動補爬走相同管道 → **同受健康檢查保護**；concurrency 控制沿用（防並發 commit）；meta.json **不含 `version`**（版本發現改由 `api/index.json` 的 `latest_file`／`files[]`，002 維護） | exit code 為健康狀態對工作流的唯一通道 |
 | **006 Telegram** | 共用 `send_message`（token 存 secrets `TELEGRAM_BOT_TOKEN`）；新增管理員 chat id secret `TELEGRAM_ADMIN_CHAT_ID`；警報發送失敗僅 log、**不影響資料 commit 與 exit code**（006 同規則：token 失效不影響資料更新） | 管理員警報為單向通知，無需回覆處理 |
 
 ---

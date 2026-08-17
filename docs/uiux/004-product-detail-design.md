@@ -1,6 +1,6 @@
 # 004 商品詳情與歷史趨勢圖 — UI/UX 設計文件
 
-> 功能：商品詳情頁（`/product/:id`）+ ECharts 歷史趨勢圖 + 目標價 markLine（session 級）
+> 功能：商品詳情頁（`/product/:id`）+ lightweight-charts 歷史趨勢圖 + 目標價線（session 級）
 > 對應規格：`docs/development/004-product-detail-price-chart.md`（§2.1–2.6、§6、§7）
 > 操作流程：`docs/interaction-flows/004-product-detail-price-chart.md`
 > BDD：`docs/bdds/004-product-detail-price-chart.feature`
@@ -26,7 +26,7 @@
 | A1 | `web/` 為綠地：僅 Vite 骨架（`src/main.ts` 最小消費實作：渲染版本號＋fetch `data/meta.json` 顯示 crawled_at），**無任何既有 UI 元件、無 CSS、無路由** | —（事實） | `web/src/main.ts`、`web/src/vite-env.d.ts` |
 | A2 | `docs/uiux/` 尚未存在，本功能為系列首份（與 003 平行） | —（事實） | `docs/uiux/` |
 | A3 | 資料契約已定型：`items.json` 的 `history` 為 compact `[d,p]` delta 序列（非等間距、僅異動 append）；`spec` 欄位可缺省 | —（上游契約） | 001 crawler `store.py`、004 規格 §2.2 |
-| A4 | 上游已決定：ECharts 5 on-demand import、目標價 session 級不持久化、time 軸非等間距如實呈現、空值規格欄位隱藏、降價綠/漲價紅/持平灰 | —（既有決策） | Tech Decision §3.1/§3.4、004 規格 §2.4–2.6 |
+| A4 | 上游已決定：圖表庫 lightweight-charts（原 ECharts 已演進）、目標價 session 級不持久化、time 軸非等間距如實呈現、空值規格欄位隱藏、降價綠/漲價紅/持平灰 | —（既有決策） | Tech Decision §3.1/§3.4、004 規格 §2.4–2.6 |
 
 **結論**：本功能為全新設計，所有視覺與互動皆從零定義；沿用專案共用 Design Token 表（與 003 平行子任務一致，見 §3），確保兩功能上線後外觀一致。
 
@@ -35,8 +35,8 @@
 ## 2. 設計原則
 
 1. **一致性（Consistency）** — 全站共用同一組 Design Token（`--brand`、`--price-up/down/flat`、`--h`、`--fs`…）；詳情頁與 003 列表共用 `useItems`／`useCrawledAt`／`types/item.ts`，錯誤與空狀態語義一致，不另起爐灶。
-2. **漸進式揭露（Progressive Disclosure）** — 預設只展示「目前價＋漲跌＋歷史最低」三大決策資訊；目標價輸入、dataZoom 縮放、完整歷史細節屬於進階操作，由使用者主動觸發（點擊、懸停、滾輪）。
-3. **Contextual 不佔位（Contextual, Not Placeholder）** — 目標價是「期望線」語意，用琥珀色 dashed markLine 與漲跌綠/紅明確區分；「資料不足」情境（history 空／僅一筆）以降級呈現而非空白畫面。
+2. **漸進式揭露（Progressive Disclosure）** — 預設只展示「目前價＋漲跌＋歷史最低」三大決策資訊；目標價輸入、縮放／平移、完整歷史細節屬於進階操作，由使用者主動觸發（點擊、懸停、滾輪）。
+3. **Contextual 不佔位（Contextual, Not Placeholder）** — 目標價是「期望線」語意，用琥珀色 dashed 目標價線（price line）與漲跌綠/紅明確區分；「資料不足」情境（history 空／僅一筆）以降級呈現而非空白畫面。
 4. **語意化圖示（Semantic Icons）** — 圖示一律 inline SVG（`aria-hidden`）；漲跌方向用 SVG 箭頭，顏色僅為輔助，不以顏色單獨傳達（WCAG 1.4.1）。
 5. **觸控與鍵盤優先（Touch & Keyboard First）** — desktop 控制元件 36px、mobile ≤767px 44px（WCAG 2.5.5）；目標價可 Enter 提交；所有互動有 focus ring（WCAG 2.4.7）。
 
@@ -74,7 +74,7 @@
 | 強調 `--accent` | `#1a73e8` | 連結、focus、圖表互動元素 |
 | 成功 `--success` | `#188038` | 成功／可執行 |
 | 危險 `--danger` | `#c5221f` | 錯誤紅框、錯誤訊息 |
-| 警告 `--warning` | `#e37400` | 圖表琥珀 markLine `#f59e0b`、警告 |
+| 警告 `--warning` | `#e37400` | 圖表琥珀目標價線 `#f59e0b`、警告 |
 | `--transition` | `0.2s ease` | hover/focus/狀態轉場 |
 | 淡入 | `150ms` | 內容淡入（尊重 `prefers-reduced-motion`） |
 | 字體 | `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei"` | 正體中文 |
@@ -91,7 +91,7 @@
 | 狀態 | 視覺 | 互動 | 對應規格 |
 |------|------|------|----------|
 | **載入中 loading** | 全頁 skeleton：標題列、價格摘要卡、規格列、圖表區灰階漸層佔位（shimmer 動畫） | 不可互動；載入完成自動切就緒 | §2.6、E1 |
-| **載入失敗 error** | 全頁置中：警示圖示＋「資料載入失敗」＋次行「無法讀取 data/items.json（網路或伺服器錯誤）」＋「重新載入」主按鈕＋「返回列表」連結 | 點「重新載入」→ 回 loading → 成功就緒／失敗停留；可返回列表 | §2.3 `retry`、E1/E2 |
+| **載入失敗 error** | 全頁置中：警示圖示＋「資料載入失敗」＋次行「無法讀取商品資料 API（網路或伺服器錯誤）」＋「重新載入」主按鈕＋「返回列表」連結 | 點「重新載入」→ 回 loading → 成功就緒／失敗停留；可返回列表 | §2.3 `retry`、E1/E2 |
 | **找不到商品 not-found** | 全頁置中：「找不到此商品」＋「返回列表」連結（deep link 失效／id 格式錯誤） | 點「返回列表」回到 003 列表（保留分類 context） | §2.6 `notFound`、E3/E15 |
 | **就緒 ready** | 完整版面：麵包屑→標題（＋下架 badge）→價格摘要卡→規格表→趨勢圖＋目標價輸入→WatchActions（005 預留） | 全部互動可用：漲跌閱讀、trend 懸停/縮放、目標價套用/修改/清除 | §2.6、E4–E14 |
 
@@ -108,15 +108,15 @@
 |------|------|------|
 | **idle** | 160px 輸入框（`--border` 邊框、`--radius-sm` 圓角）＋「設定目標價」按鈕 | 鍵盤輸入數字（含小數） |
 | **focus** | 邊框 `--brand`、`0 0 0 3px --brand-soft` 光圈 | Enter 等同點「設定目標價」 |
-| **error** | 紅框 `--danger`＋`rgba(220,38,38,.15)` 光圈＋紅字提示；**不套用 markLine** | 4 組訊息：空白「請輸入目標價」／`abc`「請輸入有效數字」／`0`、`-100`「請輸入大於 0 的有效數字」；修正後重新套用 |
-| **有效套用** | markLine 出現；輸入框回正常 | 目標價 session 級 `ref`，離開路由即銷毀（E12） |
+| **error** | 紅框 `--danger`＋`rgba(220,38,38,.15)` 光圈＋紅字提示；**不套用目標價線** | 4 組訊息：空白「請輸入目標價」／`abc`「請輸入有效數字」／`0`、`-100`「請輸入大於 0 的有效數字」；修正後重新套用 |
+| **有效套用** | 目標價線出現；輸入框回正常 | 目標價 session 級 `ref`，離開路由即銷毀（E12） |
 
-### 4.4 markLine（顯示 / 清除 / 超區間）
+### 4.4 目標價線（顯示 / 清除 / 超區間）
 
 | 狀態 | 視覺 | 互動 |
 |------|------|------|
-| **顯示** | 琥珀 `#f59e0b` dashed 橫線（`width:1.5`、`symbol:none`、`silent:true`）＋標籤「目標價 NT$9,500」（白底琥珀字、圓角） | tooltip 懸停一併顯示「目標價 NT$…」；修改輸入重新套用→線更新 |
-| **清除** | 線與標籤消失 | 點「清除目標價」→ `targetPrice=null` |
+| **顯示** | 琥珀 `#f59e0b` dashed 橫線＋價格軸 title「目標價」 | tooltip 懸停一併顯示「目標價 NT$…」；修改輸入重新套用→線更新 |
+| **清除** | 線與價格軸 title 消失 | 點「清除目標價」→ `targetPrice=null` |
 | **超出區間** | 線仍顯示；`yMin/yMax` 擴展納入目標價（×0.98/×1.02）；提示「目標價超出歷史區間」（`--warn-*` 底） | 可調整或清除（E7） |
 
 ---
@@ -129,7 +129,7 @@
 | 內容寬度 | `.detail-page` max-width 1080px 置中 | 100%（含 16px padding） | 100%（含 16px padding） |
 | 價格摘要卡 | `grid auto-fit minmax(180px,1fr)` 多欄 | 多欄（自動折欄） | **單欄堆疊** |
 | 規格表 | `grid-template-columns:140px 1fr` | 140px 1fr | **`120px 1fr`**（欄位名窄化） |
-| 趨勢圖 | 高 360px 全寬 | 全寬 | 全寬；**觸控拖曳縮放**（dataZoom inside）；手勢取代滾輪 |
+| 趨勢圖 | 高 360px 全寬 | 全寬 | 全寬；**觸控拖曳縮放／平移**（lwc 內建）；手勢取代滾輪 |
 | 目標價輸入 | 輸入框＋按鈕同列 | 同列 | **按鈕全寬 44px**、輸入框拉伸 |
 | 漲跌/歷史最低 | 摘要卡內並排 | 並排 | 同摘要卡堆疊 |
 | 麵包屑／返回 | 文字連結 | 文字連結 | 文字連結（觸控區 ≥44px） |
@@ -154,12 +154,12 @@
 
 ## 7. 實作建議
 
-1. **檔案依 004 規格 §2.1 建立**：`router`（hash history）、`types/item.ts`、`lib/echarts.ts`（on-demand）、`composables/useItems+usePriceHistory+useCrawledAt`、`components/SpecTable+PriceTrendChart+WatchActions`、`views/ProductDetailView.vue`。
+1. **檔案依 004 規格 §2.1 建立**：`router`（hash history）、`types/item.ts`、`lib/lightweight-charts.ts`（re-export）、`composables/useItems+usePriceHistory+useCrawledAt`、`components/SpecTable+PriceTrendChart+WatchActions`、`views/ProductDetailView.vue`。
 2. **共用契約優先**：`useItems` 以 003 契約為準（items/meta/loading/error/retry/isStale 單例共享），004 不重複 fetch；`types/item.ts` 若 003 已建則直接複用。
 3. **漲跌計算抽 util**（`formatPrice/formatDiffAmount/formatDiffPercent/formatTrendLabel`）供 003 sparkline 與 005 複用；Vitest 覆蓋 BDD E8（三態）、E9（最早達成日）、E5（單筆）範例資料。
-4. **圖表降級順序**：history 空 → 不渲染圖；1 筆 → 單點＋label；多筆 → 完整互動。`init` 前檢查容器寬度（E16），ResizeObserver 驅動 `chart.resize()`，`onUnmounted` dispose。
+4. **圖表降級順序**：history 空 → 不渲染圖；1 筆 → 單點＋marker；多筆 → 完整互動。`init` 前檢查容器寬度（E16），ResizeObserver 驅動 `chart.applyOptions({width,height})`，`onUnmounted` `chart.remove()`。
 5. **目標價**：view 內 `ref`（session 級）；驗證訊息文案以 BDD Examples 為唯一事實來源；`yMin/yMax` 統一由 view 計算傳入（含目標價 ×0.98/×1.02 擴展）。
-6. **CSS 全部走共用 token**（§3），不得硬編碼色值；markLine 樣式於 ECharts option 內設定（dashed `#f59e0b`），如需覆寫標籤用 `:deep(.echarts-mark-line-label)`。
+6. **CSS 全部走共用 token**（§3），不得硬編碼色值；目標價線以 `series.createPriceLine()` 設定（dashed `#f59e0b`、價格軸 title「目標價」）。
 7. **無障礙收尾**：`prefers-reduced-motion`、`aria-live` 錯誤提示、圖表 `role="img"`＋文字摘要（最高/最低/目前價）在互動稿驗證通過後再交付。
 8. **驗收以 BDD 驅動**：先跑 §8 驗收清單，再依 004 規格 §8 DAG step 10 補 E2E（列表點入、目標價線、載入失敗重試）。
 
@@ -170,11 +170,11 @@
 - [ ] `web/` 綠地審計結果如實記錄於 §1（無既有 UI，不宣稱不存在的問題）
 - [ ] Design Token 與共用表完全一致（§3，含深色主題對應值）
 - [ ] 互動稿含詳情頁四態 Demo：loading skeleton／載入失敗重試／找不到商品／就緒
-- [ ] 目標價輸入四組驗證訊息（空白／abc／0／-100）皆顯示紅框＋提示，且不套用 markLine
-- [ ] 有效目標價套用後 markLine 出現（標籤「目標價 NT$9,500」）；修改更新；清除消失
+- [ ] 目標價輸入四組驗證訊息（空白／abc／0／-100）皆顯示紅框＋提示，且不套用目標價線
+- [ ] 有效目標價套用後目標價線出現（價格軸 title「目標價」）；修改更新；清除消失
 - [ ] 目標價超出歷史區間（9,000 vs 9,990–11,500）仍套用、Y 軸擴展、顯示「目標價超出歷史區間」
 - [ ] 漲跌四態 Demo：降價綠▼／漲價紅▲／持平灰—／無昨日價「首日追蹤，尚無漲跌比較」
-- [ ] 趨勢圖示意支援 tooltip 懸停（日期＋價格）、dataZoom 縮放（＋/－/重置）、歷史最低標示、單筆降級「資料不足」
+- [ ] 趨勢圖示意支援 tooltip 懸停（日期＋價格）、縮放／平移（滾輪／拖曳、雙擊重置）、歷史最低標示、單筆降級「資料不足」
 - [ ] 規格表示範空值欄位（turbo_ghz）不渲染
 - [ ] WatchActions（005 預留）佔位渲染、不報錯
 - [ ] RWD：mobile 控制元件 44px（實測）、價格摘要單欄、規格表欄位名 120px

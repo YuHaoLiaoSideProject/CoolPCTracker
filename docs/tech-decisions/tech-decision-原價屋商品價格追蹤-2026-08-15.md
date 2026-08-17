@@ -1,5 +1,7 @@
 # 開發方案決策文件：原價屋商品價格追蹤
 
+> **已演進註記**：本文為 2026-08-15 的歷史決策記錄；圖表庫已由 ECharts 演進為 lightweight-charts、對外資料面已改為 `api/` 日期制命名（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）、`__DATA_VERSION__` build 注入已移除（改 runtime 發現），以現行 development/uiux 規格為準。
+
 ## 📌 決策摘要
 
 | 項目 | 內容 |

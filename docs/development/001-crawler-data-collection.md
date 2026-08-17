@@ -382,9 +382,9 @@ class Store:
                    changed: int, failed_categories: list[str], status: str) -> None:
         """輸出 meta.json 基礎欄位（crawled_at / counts / total / changed / failed_categories / status）。
         status 僅取 ok / partial / failed（007 健康模組定義，不再有 aborted）。
-        完整模型（含 sources / anomaly / previous_total / checked_at / version）由 007 build_meta 擴充；
-        注意：本方法必須自上次 meta.json 沿用 `version`（002 cache-busting 版本號）與 `previous_total`，
-        不得因覆寫而遺失（否則 002 version_data.py 的 prev 判定失效）。"""
+        完整模型（含 sources / anomaly / previous_total / checked_at）由 007 build_meta 擴充；
+        注意：本方法必須自上次 meta.json 沿用 `previous_total`，
+        不得因覆寫而遺失（否則 007 驟降偵測的 prev 判定失效）。"""
 ```
 
 ### 1.8 main.py — 管道編排
@@ -550,7 +550,7 @@ flowchart TD
   }
 }
 
-> **meta.json 完整模型**：`checked_at` / `anomaly` / `previous_total` / `sources` / `version` 等欄位由功能 007（§1.3 / §6.6）擴充並維護；本節為 001 產出的基礎欄位，status 語意與三態枚舉以 007 為準。`version` 由 002 `scripts/version_data.py` 維護，001/007 寫 meta 時必須沿用既有值（不存在則 0）。
+> **meta.json 完整模型**：`checked_at` / `anomaly` / `previous_total` / `sources` 等欄位由功能 007（§1.3 / §6.6）擴充並維護；本節為 001 產出的基礎欄位，status 語意與三態枚舉以 007 為準。meta.json **不再含 `version`**（版本發現改由前端 runtime 讀 `api/index.json` 的 `latest_file`／`files[]`，由 002 `version_data.py` 維護）。
 ```
 
 ---

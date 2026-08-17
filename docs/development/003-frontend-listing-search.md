@@ -11,9 +11,9 @@
 
 ## 概述
 
-提供公開訪客以「9 大分類瀏覽、全文搜尋、結構化規格篩選」三種方式收斂 1,449 筆追蹤商品，並以商品卡片一眼掌握目前價格、昨日漲跌與迷你趨勢。**本功能為純前端**（無後端 API、無 WebSocket），唯一外部依賴為同 origin 的 `data/items.json` 靜態檔案。核心包含：
+提供公開訪客以「9 大分類瀏覽、全文搜尋、結構化規格篩選」三種方式收斂 1,449 筆追蹤商品，並以商品卡片一眼掌握目前價格、昨日漲跌與迷你趨勢。**本功能為純前端**（無後端 API、無 WebSocket），唯一外部依賴為同 origin 的資料 API（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json` 靜態檔案，crawler 產出 `data/items.json` 後由 002 衍生）。核心包含：
 
-1. **`useItems`（資料載入 composable）**：fetch `data/items.json`、解析驗證、錯誤分類（載入失敗／格式錯誤）、重試、資料過期判定。
+1. **`useItems`（資料載入 composable）**：runtime 兩段式 fetch（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）、解析驗證、錯誤分類（載入失敗／格式錯誤）、重試、資料過期判定。
 2. **`useFilters`（篩選狀態 composable）**：搜尋關鍵字、規格條件（AND 組合）、目前分類三態狀態機與過濾運算（純函數、可測試）。
 3. **`CategorySidebar`**：固定 9 大分類側欄（含深層連結 `?category=<key>` 雙向同步）。
 4. **`ProductList` / `ProductCard`**：商品卡片（名稱、規格 chips、目前價、昨日漲跌、sparkline），並預留 004 詳情頁／005 追蹤／005 比價之 props 與事件入口。
@@ -160,7 +160,7 @@ export function labelOf(key: CategoryKey): string {
 
 ### 2.4 `useItems` — 資料載入 composable
 
-職責：單次 fetch `data/items.json`（含 GitHub Pages 快取穿透）、解析與 shape 驗證、錯誤分類、重試、過期判定。**錯誤分類決定 ErrorState 顯示文案**；任何失敗都不能影響側欄／搜尋框渲染（錯誤只在列表區域呈現）。
+職責：runtime 兩段式 fetch（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`，日期制檔名自帶快取失效）、解析與 shape 驗證、錯誤分類、重試、過期判定。**錯誤分類決定 ErrorState 顯示文案**；任何失敗都不能影響側欄／搜尋框渲染（錯誤只在列表區域呈現）。
 
 ```typescript
 // web/src/composables/useItems.ts
@@ -173,9 +173,9 @@ export type LoadError = 'fetch' | 'parse' | null
 
 export class ParseError extends TypeError {}  // 供 error 分類判別
 
-const DATA_URL = `${import.meta.env.BASE_URL}data/items.json`
-// 快取穿透：Pages 可能快取 items.json（tech decision §4.2 spike）
-// P1 先以 query `?t=<lastModified>` 或 `?v=<n>` 追加；待 002 產出 items.v{n}.json 後改用檔名
+const INDEX_URL = `${import.meta.env.BASE_URL}api/index.json`
+// runtime 發現（002 §1.7 合約）：index.json 是唯一入口（latest_file），
+// 日期制快照 api/items/YYYYMMDD[_n].json 檔名含日期 → 新檔必然 miss 快取，無需 query 穿透。
 
 export function useItems() {
   const items = ref<Item[]>([]) as Ref<Item[]>
@@ -187,10 +187,14 @@ export function useItems() {
     loading.value = true
     error.value = null
     try {
-      const res = await fetch(`${DATA_URL}?t=${Date.now()}`)  // TODO: cache-busting 策略
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const raw: unknown = await res.json()          // 壞 JSON → SyntaxError
-      const parsed = parseItemsFile(raw)             // shape 驗證失敗 → ParseError
+      const indexRes = await fetch(INDEX_URL)               // 1. 取入口（latest_file）
+      if (!indexRes.ok) throw new Error(`HTTP ${indexRes.status}`)
+      const index: unknown = await indexRes.json()
+      const { latest_file } = parseIndex(index)             // shape 驗證 latest_file
+      const itemsRes = await fetch(`${import.meta.env.BASE_URL}${latest_file}`)  // 2. 取日期制快照
+      if (!itemsRes.ok) throw new Error(`HTTP ${itemsRes.status}`)
+      const raw: unknown = await itemsRes.json()            // 壞 JSON → SyntaxError
+      const parsed = parseItemsFile(raw)                    // shape 驗證失敗 → ParseError
       items.value = parsed.items
       meta.value = parsed.meta
     } catch (e) {
@@ -664,7 +668,7 @@ function onToggleCompare(item: Item) { /* TODO(005): store.toggle(item.id) */ }
 
 | # | 情境 | 觸發 | 處理 |
 |---|------|------|------|
-| E1 | **載入失敗**（BDD @error-handling @smoke @p0） | 網路中斷／items.json 回應 404 | `error='fetch'` → 列表區域 `ErrorState` 顯示「資料載入失敗」＋「重試」；側欄、搜尋框、篩選面板**照常渲染**，不白屏 |
+| E1 | **載入失敗**（BDD @error-handling @smoke @p0） | 網路中斷／`api/index.json` 或日期制快照回應 404 | `error='fetch'` → 列表區域 `ErrorState` 顯示「資料載入失敗」＋「重試」；側欄、搜尋框、篩選面板**照常渲染**，不白屏 |
 | E2 | **JSON 格式錯誤**（@error-handling @p1） | 檔案被截斷、`res.json()` 拋 SyntaxError 或 shape 驗證失敗 | `error='parse'` → 「資料格式錯誤」＋「重試」；若先前載入過成功資料，保留舊資料可顯示（以 `items` 非空為準），否則空列表＋錯誤狀態 |
 | E3 | **資料過期**（@error-handling @p2） | `meta.crawled_at` 距今 > 7 天（超過 7 天，與 007 §6.4 共用） | 頂部黃色橫幅「資料可能已過期（最後更新：X，台北時間）」；**資料仍正常顯示** |
 
@@ -709,8 +713,8 @@ function onToggleCompare(item: Item) { /* TODO(005): store.toggle(item.id) */ }
 | 7 | 瀏覽商品卡片資訊（@happy-path @p0） | §2.10、§2.4 usePriceDelta、§7 |
 | 8 | 清除全部搜尋與篩選條件（@happy-path @p1） | §2.5 `clearAll()`（保留目前分類） |
 | 9 | 直接以分類頁網址進入（deep link）（@happy-path @p1） | §2.12（initial + watch route.query） |
-| 10 | items.json 載入失敗（@error-handling @smoke @p0） | §6.1 E1、§2.4 |
-| 11 | items.json 格式錯誤（@error-handling @p1） | §6.1 E2、§2.4 |
+| 10 | 資料 API 載入失敗（@error-handling @smoke @p0） | §6.1 E1、§2.4 |
+| 11 | 資料格式錯誤（@error-handling @p1） | §6.1 E2、§2.4 |
 | 12 | 搜尋無結果（@error-handling @p0） | §6.2 E4、§2.11 |
 | 13 | 篩選組合無結果（@error-handling @p1） | §6.2 E5、§2.11 |
 | 14 | 資料過期提示（@error-handling @p2） | §6.1 E3、§2.4 `isStale`（>7 天，與 007 新鮮度規則一致） |

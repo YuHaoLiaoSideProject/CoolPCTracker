@@ -436,7 +436,7 @@ body.view-mobile .frame.desktop-frame { display: none; }
           <div class="error-state" style="padding:22px 12px" role="alert">
             <span class="es-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></span>
             <h3>資料載入失敗</h3>
-            <p>無法取得 data/items.json（網路中斷或檔案暫時不可得）。</p>
+            <p>無法取得商品資料 API（網路中斷或檔案暫時不可得）。</p>
             <button class="retry-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>重試</button>
           </div>
         </div>
@@ -645,7 +645,7 @@ function errorHTML(){
   return '<div class="error-state fade-in" role="alert">' +
     '<span class="es-ico">' + ico('alert') + '</span>' +
     '<h3>資料載入失敗</h3>' +
-    '<p>無法取得 data/items.json（網路中斷或檔案暫時不可得）。</p>' +
+    '<p>無法取得商品資料 API（網路中斷或檔案暫時不可得）。</p>' +
     '<button class="retry-btn" data-retry>' + ico('refresh') + '重試</button>' +
   '</div>';
 }

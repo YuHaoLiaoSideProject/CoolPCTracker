@@ -339,7 +339,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
           </div>
           <div class="skel-spec shimmer"></div>
           <div class="skel-chart shimmer"></div>
-          <p style="font-size:12px;color:var(--text-dim);text-align:center;">載入中…（fetch data/items.json → 依 id 定位商品）</p>
+          <p style="font-size:12px;color:var(--text-dim);text-align:center;">載入中…（fetch api/index.json → latest_file → 依 id 定位商品）</p>
         </div>
       </div>
 
@@ -348,7 +348,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
         <div class="state-box">
           <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <h3>資料載入失敗</h3>
-          <p>無法讀取 data/items.json（網路或伺服器錯誤）。<br>此為錯誤態：error='fetch'（解析失敗顯示「資料格式錯誤」）。</p>
+          <p>無法讀取商品資料 API（網路或伺服器錯誤）。<br>此為錯誤態：error='fetch'（解析失敗顯示「資料格式錯誤」）。</p>
           <div class="actions">
             <button class="btn btn-primary" id="retryBtn">重新載入</button>
             <a class="ghost-link" href="#/list">← 返回列表</a>
@@ -444,7 +444,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
               <div class="pd-chart-wrap">
                 <div class="pd-chart-head">
                   <div class="pd-chart-title">歷史價格趨勢</div>
-                  <div class="pd-chart-hint">懸停查價（tooltip）・滾輪／按鈕縮放（dataZoom）・ECharts 5 示意（inline SVG）</div>
+                  <div class="pd-chart-hint">懸停查價（tooltip）・滾輪／按鈕縮放／平移・lightweight-charts 示意（inline SVG）</div>
                 </div>
                 <div class="js-chart" id="chartDesk" data-single="">
                   <svg class="chart-svg" viewBox="0 0 560 300" role="img" aria-label="歷史價格趨勢圖（示意）"></svg>
@@ -482,7 +482,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
       </div>
     </div>
 
-    <p class="demo-hint"><b>Demo 操作：</b>① 狀態列切換四態；載入失敗態的「重新載入」會模擬重試（→ 載入中 800ms → 就緒）。② 漲跌列切換 降價▼／漲價▲／持平—／首日。③ 圖表列切換多筆／單筆降級、＋－／重置縮放、勾選下架與過期提示。④ 目標價輸入「9,500」按設定 → 出現琥珀 markLine；輸入 abc／0／-100／空白 → 紅框＋提示；「9,000」→ 超區間提示（仍套用）。</p>
+    <p class="demo-hint"><b>Demo 操作：</b>① 狀態列切換四態；載入失敗態的「重新載入」會模擬重試（→ 載入中 800ms → 就緒）。② 漲跌列切換 降價▼／漲價▲／持平—／首日。③ 圖表列切換多筆／單筆降級、＋－／重置縮放、勾選下架與過期提示。④ 目標價輸入「9,500」按設定 → 出現琥珀目標價線；輸入 abc／0／-100／空白 → 紅框＋提示；「9,000」→ 超區間提示（仍套用）。</p>
 
     <!-- 元件解剖 -->
     <div class="anatomy">
@@ -501,7 +501,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
         <div class="anat-dims">兩欄 <b>140px / 1fr</b>・欄位名 <b>13px</b> 淺底（--surface-2）・值 <b>14px</b> mono・圓角 <b>10px</b>・mobile 欄位名收窄 <b>120px</b></div>
       </div>
       <div class="anat-card">
-        <h4>PriceTrendChart 趨勢圖 <span class="tag">ECharts 5</span></h4>
+        <h4>PriceTrendChart 趨勢圖 <span class="tag">lightweight-charts</span></h4>
         <div class="anat-stage">
           <div style="position:relative;height:220px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
             <svg viewBox="0 0 560 220" style="width:100%;height:100%;display:block;" aria-hidden="true">
@@ -519,7 +519,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
             </svg>
           </div>
         </div>
-        <div class="anat-dims">高度 <b>360px</b>・寬 <b>100%</b>・X 軸 <b>type:'time'</b> 非等間距不補點・tooltip <b>axis + cross</b>・dataZoom <b>inside＋slider（點數 ≥15 才顯示）</b>・markLine <b>dashed #f59e0b 1.5px</b>・歷史最低 <b>綠點＋標籤</b>・單筆 <b>單點＋label 降級</b></div>
+        <div class="anat-dims">高度 <b>360px</b>・寬 <b>100%</b>・X 軸 <b>yyyy-mm-dd</b> 非等間距不補點・tooltip <b>自寫 DOM</b>・縮放／平移 <b>lwc 內建（雙擊重置）</b>・目標價線 <b>dashed #f59e0b</b>・歷史最低 <b>綠點＋標籤</b>・單筆 <b>單點＋marker 降級</b></div>
       </div>
       <div class="anat-card">
         <h4>價格摘要區 <span class="tag">區塊</span></h4>
@@ -558,10 +558,10 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
       <tr><td>規格表・有值／空值</td><td class="demo-cell">兩欄 grid；空值（null/''）欄位整列不渲染</td><td>純展示；維持物件鍵序</td></tr>
       <tr><td>目標價・idle</td><td class="demo-cell"><code>170px</code> 輸入框＋「設定目標價」（--h 36px）</td><td>輸入數字（含小數）</td></tr>
       <tr><td>目標價・focus</td><td class="demo-cell">邊框 <code>--brand</code>＋<code>3px</code> --brand-soft 光圈</td><td>Enter 等同「設定目標價」</td></tr>
-      <tr><td>目標價・error</td><td class="demo-cell"><span class="sw" style="background:var(--danger);"></span>紅框＋紅字提示（4 組訊息），<b>不套用 markLine</b></td><td>空白／abc／0／-100 對應 4 組訊息；修正後重新套用</td></tr>
-      <tr><td>markLine・顯示</td><td class="demo-cell"><span class="sw" style="background:#f59e0b;"></span>琥珀 dashed 橫線＋標籤「目標價 NT$9,500」</td><td>tooltip 懸停一併顯示「目標價 NT$…」；修改輸入→線更新</td></tr>
-      <tr><td>markLine・清除</td><td class="demo-cell">線與標籤消失</td><td>「清除目標價」→ targetPrice=null；session 級不持久化（E12）</td></tr>
-      <tr><td>markLine・超區間</td><td class="demo-cell"><span class="sw" style="background:var(--warning);"></span>線仍顯示＋Y 軸擴展（×0.98/×1.02）＋warn 提示</td><td>9,000 對 9,990–11,500 → 仍套用；可調整或清除（E7）</td></tr>
+      <tr><td>目標價・error</td><td class="demo-cell"><span class="sw" style="background:var(--danger);"></span>紅框＋紅字提示（4 組訊息），<b>不套用目標價線</b></td><td>空白／abc／0／-100 對應 4 組訊息；修正後重新套用</td></tr>
+      <tr><td>目標價線・顯示</td><td class="demo-cell"><span class="sw" style="background:#f59e0b;"></span>琥珀 dashed 橫線＋價格軸 title「目標價」</td><td>tooltip 懸停一併顯示「目標價 NT$…」；修改輸入→線更新</td></tr>
+      <tr><td>目標價線・清除</td><td class="demo-cell">線與價格軸 title 消失</td><td>「清除目標價」→ targetPrice=null；session 級不持久化（E12）</td></tr>
+      <tr><td>目標價線・超區間</td><td class="demo-cell"><span class="sw" style="background:var(--warning);"></span>線仍顯示＋Y 軸擴展（×0.98/×1.02）＋warn 提示</td><td>9,000 對 9,990–11,500 → 仍套用；可調整或清除（E7）</td></tr>
     </table>
 
     <!-- 重點註記 -->
@@ -570,7 +570,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
       <div class="anno"><span class="num">2</span><span><b>標題＋狀態 badge</b>：status=gone →「此商品已下架」（淺紅底）；在庫 badge 用 --brand-soft；ID 以 mono 顯示</span></div>
       <div class="anno"><span class="num">3</span><span><b>價格摘要卡</b>：目前價 28px/800、漲跌四態（降綠▼／漲紅▲／持平灰—／首日無昨日價）、歷史最低＋最早達成日、最後更新（台北時區）</span></div>
       <div class="anno"><span class="num">4</span><span><b>規格表</b>：SPEC_LABELS 中文化、空值欄位整列不渲染、維持物件鍵序</span></div>
-      <div class="anno"><span class="num">5</span><span><b>趨勢圖</b>：time 軸非等間距不補點、tooltip cross 懸停查價、dataZoom（inside 滾輪＋slider ≥15 點）、歷史最低綠點標示、單筆降級「資料不足」</span></div>
+      <div class="anno"><span class="num">5</span><span><b>趨勢圖</b>：time 軸非等間距不補點、tooltip 自寫 DOM 懸停查價、縮放／平移（lwc 內建滾輪＋拖曳、雙擊重置）、歷史最低綠點標示、單筆降級「資料不足」</span></div>
       <div class="anno"><span class="num">6</span><span><b>目標價輸入</b>：4 組驗證訊息（空白／abc／0／-100）、Enter 提交、session 級不持久化；超區間→Y 軸擴展＋warn 提示</span></div>
       <div class="anno"><span class="num">7</span><span><b>WatchActions</b>：005 預留佔位（加入追蹤／加入比價），僅傳 item.id，disabled 呈現</span></div>
       <div class="anno"><span class="num">8</span><span><b>過期提示</b>：crawled_at &gt; 7 天 → warn 底「資料可能已過期」（與 003/007 共用規則）</span></div>
@@ -581,7 +581,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
   <!-- ══════════ 3. Mobile ══════════ -->
   <div class="frame mobile-frame">
     <h2>3️⃣ Mobile（≤767px）</h2>
-    <p class="fsub">控制元件 44px、價格摘要單欄、規格表欄位名 120px；圖表支援觸控拖曳縮放（dataZoom inside）。</p>
+    <p class="fsub">控制元件 44px、價格摘要單欄、規格表欄位名 120px；圖表支援觸控拖曳縮放／平移（lwc 內建）。</p>
     <div class="app-page is-mobile">
       <div class="pd">
         <div class="pd-sec">
@@ -674,7 +674,7 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
   <!-- ══════════ 4. 規格摘要 ══════════ -->
   <div class="frame">
     <h2>4️⃣ 規格摘要 — CSS 變數對應</h2>
-    <p class="fsub">實作時直接套用下列共用變數（scoped SFC 內引用；markLine 樣式於 ECharts option 設定，需覆寫用 <code>:deep(.echarts-mark-line-label)</code>）。</p>
+    <p class="fsub">實作時直接套用下列共用變數（scoped SFC 內引用；目標價線以 <code>series.createPriceLine()</code> 設定（dashed #f59e0b、價格軸 title「目標價」））。</p>
     <table class="states">
       <tr><th style="width:220px;">項目</th><th>值</th><th>對應</th></tr>
       <tr><td>品牌主色</td><td>#1f6feb</td><td><code>--brand</code></td></tr>
@@ -688,11 +688,11 @@ body.view-mobile .badge-gone, body.view-mobile .badge-ok { font-size: 12px; }
       <tr><td>控制字級</td><td>0.875rem</td><td><code>--fs</code></td></tr>
       <tr><td>強調 / 成功 / 危險 / 警告</td><td>#1a73e8 / #188038 / #c5221f / #e37400</td><td><code>--accent</code> / <code>--success</code> / <code>--danger</code> / <code>--warning</code></td></tr>
       <tr><td>轉場 / 淡入</td><td>0.2s ease / 150ms</td><td><code>--transition</code> / fade</td></tr>
-      <tr><td>markLine 目標價線</td><td>dashed #f59e0b 1.5px（option lineStyle）</td><td>ECharts <code>series.markLine</code></td></tr>
+      <tr><td>目標價線</td><td>dashed #f59e0b（createPriceLine）</td><td>lightweight-charts <code>series.createPriceLine()</code></td></tr>
       <tr><td>字體</td><td>-apple-system, … "Noto Sans TC", "PingFang TC", "Microsoft JhengHei"</td><td><code>font-family</code></td></tr>
       <tr><td>數字 mono</td><td>ui-monospace, SFMono-Regular, Menlo, Consolas</td><td><code>--mono</code></td></tr>
     </table>
-    <div class="note"><b>深色主題：</b>各變數於 <code>[data-theme="dark"]</code> 有對應值（背景 #0d1217／表面 #161c23／邊框 #2a3340／文字 #d7dbe1…），兩主題皆可讀；markLine 琥珀色於兩主題維持對比。</div>
+    <div class="note"><b>深色主題：</b>各變數於 <code>[data-theme="dark"]</code> 有對應值（背景 #0d1217／表面 #161c23／邊框 #2a3340／文字 #d7dbe1…），兩主題皆可讀；目標價線琥珀色於兩主題維持對比。</div>
   </div>
 
   <div class="footnote">
@@ -757,7 +757,7 @@ document.getElementById('trendSeg').querySelectorAll('button').forEach(b => b.ad
 document.getElementById('goneToggle').addEventListener('change', e => { document.getElementById('badgeGone').hidden = !e.target.checked; });
 document.getElementById('staleToggle').addEventListener('change', e => { document.getElementById('staleHint').hidden = !e.target.checked; });
 
-// ── 004 Demo：趨勢圖（inline SVG 模擬 ECharts）──
+// ── 004 Demo：趨勢圖（inline SVG 模擬 lightweight-charts）──
 const fmt = n => 'NT$' + n.toLocaleString('zh-TW');
 const HIST = [['2026-07-12', 11500], ['2026-07-18', 11300], ['2026-07-25', 11200], ['2026-08-01', 10900], ['2026-08-05', 10500], ['2026-08-10', 9990]];
 const SINGLE = [['2026-08-15', 5990]];
@@ -888,7 +888,7 @@ document.querySelectorAll('[data-zoomact]').forEach(b => b.addEventListener('cli
   renderChart(h);
 }));
 
-// ── 004 Demo：目標價（驗證 → markLine）──
+// ── 004 Demo：目標價（驗證 → 目標價線）──
 function initTarget(formId, chartId) {
   const form = document.getElementById(formId);
   const input = form.querySelector('.target-input');

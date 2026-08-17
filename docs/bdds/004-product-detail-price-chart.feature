@@ -1,12 +1,12 @@
 @product-detail @004-product-detail-price-chart
 Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
   作為一個 一般訪客
-  我希望 從商品列表進入詳情頁，查看完整規格、目前價格與漲跌、歷史最低價，並在 ECharts 趨勢圖上設定目標價線
+  我希望 從商品列表進入詳情頁，查看完整規格、目前價格與漲跌、歷史最低價，並在歷史價格趨勢圖上設定目標價線
   以便 不須自行記錄比價，一眼判斷目前價格是否值得下手
 
   Background:
-    Given 系統已載入同 origin 的 data/items.json 商品資料
-    And 商品「Intel i5-13600K」存在於 items.json，id 為「3f9a1c2b8e4d5f6a」
+    Given 系統已載入同 origin 的資料 API 商品資料
+    And 商品「Intel i5-13600K」存在於商品資料，id 為「3f9a1c2b8e4d5f6a」
 
   @happy-path @smoke @p0 @e2e
   Scenario: 從列表點入詳情頁並檢視完整資訊
@@ -16,7 +16,7 @@ Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
     And 系統顯示目前價格 NT$9,990
     And 系統顯示與前一筆價格的漲跌（含金額與百分比）
     And 系統顯示歷史最低價與達成日期
-    And 系統以 ECharts 渲染歷史價格趨勢圖
+    And 系統渲染歷史價格趨勢圖
     And 趨勢圖支援縮放與 tooltip 懸停查價
 
   @happy-path @smoke @p1 @e2e
@@ -24,7 +24,7 @@ Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
     Given 我已在商品「Intel i5-13600K」詳情頁
     And 歷史價格趨勢圖已渲染
     When 我輸入目標價「9,500」並按下「設定目標價」
-    Then 趨勢圖上出現標示「目標價 NT$9,500」的 markLine 目標價線
+    Then 趨勢圖上出現標示「目標價 NT$9,500」的目標價線
 
   @happy-path @p1
   Scenario: 修改與清除目標價線
@@ -35,8 +35,8 @@ Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
     Then 目標價線自趨勢圖上消失
 
   @error-handling @p0 @e2e
-  Scenario: items.json 載入失敗時顯示錯誤並可重試
-    Given items.json 無法載入（網路或伺服器錯誤）
+  Scenario: 資料 API 載入失敗時顯示錯誤並可重試
+    Given 資料 API 無法載入（網路或伺服器錯誤）
     When 我點擊商品「Intel i5-13600K」
     Then 系統顯示「資料載入失敗」與「重新載入」按鈕
     When 我點擊「重新載入」且載入成功
@@ -50,7 +50,7 @@ Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
 
   @error-handling @p1
   Scenario: 商品尚無歷史資料
-    Given 商品「新品 X」存在於 items.json
+    Given 商品「新品 X」存在於商品資料
     And 該商品 history 陣列為空
     When 我進入商品「新品 X」詳情頁
     Then 系統顯示規格與目前價格
@@ -116,7 +116,7 @@ Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
 
   @business-rule @p2
   Scenario: 顯示資料最後更新時間
-    Given items.json 的 meta.crawled_at 為「2026-08-15T06:00:00Z」
+    Given 商品資料的 crawled_at 為「2026-08-15T06:00:00Z」
     When 我進入任一商品詳情頁
     Then 系統顯示最後更新時間為「2026-08-15 14:00（台北時間）」
 

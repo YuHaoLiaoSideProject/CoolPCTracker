@@ -1,7 +1,7 @@
 # 商品詳情與歷史趨勢圖（004-product-detail-price-chart）— 開發規格
 
-> **對應計畫**：Tech Decision §4.1 行動計畫 P1「商品詳情 + ECharts 歷史趨勢圖」（1.5d）
-> **技術決策**：`docs/tech-decisions/tech-decision-原價屋商品價格追蹤-2026-08-15.md`（§3.1 ECharts 5 on-demand / §3.4 資料模型 history `[d,p]`）
+> **對應計畫**：Tech Decision §4.1 行動計畫 P1「商品詳情 + 歷史趨勢圖」（1.5d）
+> **技術決策**：`docs/tech-decisions/tech-decision-原價屋商品價格追蹤-2026-08-15.md`（§3.1 圖表庫已由 ECharts 演進為 lightweight-charts / §3.4 資料模型 history `[d,p]`）
 > **操作流程**：`docs/interaction-flows/004-product-detail-price-chart.md`
 > **BDD**：`docs/bdds/004-product-detail-price-chart.feature`
 > **測試計畫**：尚未產出（本規格完成後可經 test-plan-generator 補齊）
@@ -12,12 +12,12 @@
 
 ## 概述
 
-訪客從商品列表點入（或 URL deep link）任一商品詳情頁，檢視完整規格、目前價格、與前一筆的漲跌、歷史最低價，並在 ECharts 歷史趨勢圖上以 markLine 設定本次瀏覽有效的目標價線，一眼判斷目前價格是否值得下手。核心包含：
+訪客從商品列表點入（或 URL deep link）任一商品詳情頁，檢視完整規格、目前價格、與前一筆的漲跌、歷史最低價，並在 lightweight-charts 歷史趨勢圖上以目標價線（price line）設定本次瀏覽有效的目標價線，一眼判斷目前價格是否值得下手。核心包含：
 
 1. **`usePriceHistory` composable**：由商品 `history`（`[d,p]` delta 時間序列）計算目前價、漲跌（金額＋百分比）、歷史最低價（多日同價取最早日期）與圖表資料序列。
-2. **`PriceTrendChart` 元件**：ECharts 5（on-demand import）折線趨勢圖，支援 tooltip 懸停查價、dataZoom 縮放、目標價 markLine、Y 軸擴展，並處理非等間距時間軸與單筆資料降級。
+2. **`PriceTrendChart` 元件**：lightweight-charts 折線趨勢圖，支援自寫 tooltip 懸停查價、滾輪／拖曳縮放、目標價 price line、Y 軸擴展，並處理非等間距時間軸與單筆資料降級。
 3. **`ProductDetailView` 詳情頁**：路由 `/product/:id` 載入、四態狀態機（loading / 載入失敗 / 找不到商品 / 就緒）、規格表（空值欄位隱藏）、價格摘要、目標價輸入驗證與最後更新時間顯示。
-4. **`useItems` 共用資料載入**（003 契約）：`data/items.json` 載入、錯誤提示與重試機制，與 003 列表頁共用（同一份 fetch、同一組型別）。
+4. **`useItems` 共用資料載入**（003 契約）：runtime 兩段式 fetch（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）、錯誤提示與重試機制，與 003 列表頁共用（同一份 fetch、同一組型別）。
 
 > **整合點**：本功能純前端、無後端 API。進入來源為 003 列表頁（點擊商品列跳轉）；出口整合點預留 005 的「加入追蹤／加入比價」動作區。
 
@@ -34,14 +34,14 @@ web/src/
 ├── types/
 │   └── item.ts                      ← 新增：ItemsFile / Item / Spec / PricePoint 型別（003/004/005 共用）
 ├── lib/
-│   └── echarts.ts                   ← 新增：ECharts on-demand 註冊模組（全站共用）
+│   └── lightweight-charts.ts       ← 新增：lightweight-charts re-export 模組（全站共用）
 ├── composables/
 │   ├── useItems.ts                  ← 003 契約：共用 items.json 載入（items/meta/loading/error/retry/isStale）
 │   ├── usePriceHistory.ts           ← 新增：漲跌／歷史最低／格式化計算（004 核心）
 │   └── useCrawledAt.ts              ← 新增：crawled_at → 台北時間顯示＋過期判斷（003/004 共用）
 ├── components/
 │   ├── SpecTable.vue                ← 新增：規格表（欄位名：值，空值欄位不渲染）
-│   ├── PriceTrendChart.vue          ← 新增：ECharts 歷史趨勢圖（tooltip／dataZoom／markLine／單點降級）
+│   ├── PriceTrendChart.vue          ← 新增：lightweight-charts 歷史趨勢圖（tooltip／縮放／目標價線／單點降級）
 │   └── WatchActions.vue             ← 新增（005 預留）：加入追蹤／加入比價按鈕區，004 僅渲染佔位
 └── views/
     └── ProductDetailView.vue        ← 新增：商品詳情頁（本功能主視圖）
@@ -49,9 +49,9 @@ web/src/
 
 > 註：`web/` 為綠地目錄，若 003 已先行建立 `useItems`、`types/item.ts`、`useCrawledAt`，則直接複用並回填本規格；否則 004 在此建立，作為 003 的共用基礎（見 §8 步驟依賴）。共用契約以 003 的 `useItems`（回傳 `items/meta/loading/error/retry/isStale`）為準。
 
-### 2.2 資料來源契約（data/items.json，取代 API 合約）
+### 2.2 資料來源契約（api/index.json → api/items/YYYYMMDD[_n].json，取代 API 合約）
 
-純前端功能，無 HTTP API endpoint；唯一資料來源為同 origin 靜態檔 `data/items.json`（GitHub Pages 部署，crawler 每日 commit 更新）。
+純前端功能，無 HTTP API endpoint；唯一資料來源為同 origin 靜態檔：`api/index.json`（唯一入口，含 `latest_file`）→ `latest_file` 指向的日期制快照 `api/items/YYYYMMDD[_n].json`（GitHub Pages 部署；crawler 每日 commit `data/items.json` 後，由 002 `version_data.py` 產出 `api/` 衍生檔一併部署）。
 
 | 欄位 | 型別 | 約束 | 說明 |
 |------|------|------|------|
@@ -113,7 +113,7 @@ export interface ItemsFile {
 
 ### 2.3 `useItems` — 共用資料載入（003 契約，錯誤／重試）
 
-**職責**：fetch 同 origin `data/items.json`，解析驗證後提供 `items`／`meta`；暴露載入失敗與重試。**本節即 003 §2.4 `useItems` 的契約**（同一 composable、同一 fetch、單例共享 module-level cache），004 詳情頁與 003 列表頁共用同一份資料，避免重複請求。GitHub Pages 快取風險由 002 的 cache-busting 策略（`items.v{n}.json` + `__DATA_VERSION__`）處理，本層以相對路徑 `data/items.json` 為準（002 §1.7 契約就緒後換用版本化檔名）。
+**職責**：runtime 兩段式 fetch 同 origin `api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`，解析驗證後提供 `items`／`meta`；暴露載入失敗與重試。**本節即 003 §2.4 `useItems` 的契約**（同一 composable、同一 fetch、單例共享 module-level cache），004 詳情頁與 003 列表頁共用同一份資料，避免重複請求。GitHub Pages 快取風險由日期制檔名保證失效（新檔名必然 miss 快取），無需 `__DATA_VERSION__` build 注入或 query 快取穿透（002 §1.7 合約）。
 
 ```typescript
 import { ref, computed, type Ref } from 'vue'
@@ -129,7 +129,7 @@ export function useItems() {
   const error = ref<LoadError>(null)
 
   /** 載入（首次自動呼叫；錯誤後由 retry 重叫）。HTTP 失敗→'fetch'；JSON.parse/shape 失敗→'parse' */
-  async function load(): Promise<void> { /* 同 003 §2.4：fetch(data/items.json) → parseItemsFile（含 compact [d,p]→PricePoint 正規化） */ }
+  async function load(): Promise<void> { /* 同 003 §2.4：fetch(api/index.json) → latest_file → fetch(api/items/{file}) → parseItemsFile（含 compact [d,p]→PricePoint 正規化） */ }
 
   /** 錯誤畫面「重新載入」按鈕的處理；載入成功後 error 清空、loading=false */
   function retry(): void { void load() }
@@ -210,60 +210,64 @@ export function formatDiffPercent(diff: number, previous: number): string
 export function formatTrendLabel(diff: number, previous: number): string
 ```
 
-### 2.5 `PriceTrendChart` — ECharts 趨勢圖元件
+### 2.5 `PriceTrendChart` — lightweight-charts 趨勢圖元件
 
-**職責**：將 `history` 渲染為折線圖，負責 ECharts 全部圖表層互動；不持有可能跨元件共享的狀態（純 props → option 渲染）。
+**職責**：將 `history` 渲染為折線圖，負責 lightweight-charts 全部圖表層互動；不持有可能跨元件共享的狀態（純 props → 圖表渲染）。
 
 **Props / Emits**：
 
 ```typescript
 export interface Props {
   history: PricePoint[]      // 依 d 升冪；長度 ≥1（空歷史由 view 降級，不渲染本元件）
-  targetPrice?: number | null  // 目標價；null/undefined = 不顯示 markLine
+  targetPrice?: number | null  // 目標價；null/undefined = 不顯示 price line
   yMin?: number                // Y 軸下限（view 依含目標價的範圍計算後傳入，見 §2.6）
   yMax?: number
 }
 // 無 emits；超出區間提示由 view 計算（見 §2.6）
 ```
 
-**ECharts on-demand 整合**（`lib/echarts.ts`）：
+**lightweight-charts 整合**（`lib/lightweight-charts.ts`）：
 
 ```typescript
-// lib/echarts.ts — 全站共用，避免重複註冊與 bundle 膨脹
-import * as echarts from 'echarts/core'
-import { LineChart } from 'echarts/charts'
-import {
-  GridComponent, TooltipComponent, DataZoomComponent,
-  MarkLineComponent, LegendComponent,
-} from 'echarts/components'
-import { CanvasRenderer } from 'echarts/renderers'
-
-echarts.use([
-  LineChart, GridComponent, TooltipComponent,
-  DataZoomComponent, MarkLineComponent, LegendComponent, CanvasRenderer,
-])
-
-export default echarts
+// lib/lightweight-charts.ts — 全站共用 re-export：集中匯出圖表 API 與型別，
+// 元件只 import 此模組（避免直接依賴套件路徑、集中控制 bundle）。
+export {
+  createChart,
+  createSeriesMarkers,
+  LineSeries,
+  LineType,
+} from 'lightweight-charts'
+export type {
+  IChartApi,
+  ISeriesApi,
+  ISeriesMarkersPluginApi,
+  IPriceLine,
+  LineData,
+  MouseEventParams,
+  Time,
+} from 'lightweight-charts'
 ```
 
 **Option 重點規格**：
 
 | 項目 | 規格 |
 |------|------|
-| **非等間距 X 軸** | `xAxis.type = 'time'`：資料點依實際日期定位，長間隔如實留白、**不補點**（delta 序列僅異動時有值，如實呈現）。`axisLabel.formatter` 顯示 `MM-DD`；`tooltip` 用 formatter 顯示完整 `YYYY-MM-DD` 與價格。⚠️ 實測若資料點極稀疏造成過度留白（如 3 個月僅 2 點），可評估切換 `type:'category'` 以日期為類別，需於 code review 記錄決策 |
-| **Y 軸** | `yAxis.type='value'`；`min/max` 由 view 傳入（含目標價擴展）；`axisLabel.formatter` → `NT$9,990` |
-| **tooltip** | `trigger:'axis'`、`axisPointer:{type:'cross'}`；formatter 顯示「日期／價格」，若設有目標價一併顯示「目標價 NT$…」 |
-| **dataZoom** | `[{type:'inside'}]`（滾輪／觸控拖曳縮放）；`[{type:'slider'}]` 僅在點數 ≥15 時 `show:true`，點數少時隱藏 |
-| **markLine 目標價** | `series.markLine.data=[{yAxis: targetPrice}]`；`silent:true`、`symbol:'none'`、`lineStyle:{type:'dashed', color:'#f59e0b', width:1.5}`；label formatter → `目標價 NT$9,500`（見 §7 配色） |
-| **單筆資料降級** | `history.length === 1`：仍渲染折線圖（單點），`symbolSize` 放大、開啟 `label` 顯示價格；停用 dataZoom；X 軸範圍以該日為中心。Y 軸正常含該價 |
-| **resize** | 容器以 `ResizeObserver` 監聽，`chart.resize()`；`onUnmounted` 時 `chart.dispose()` |
+| **非等間距 X 軸** | time 採 `'yyyy-mm-dd'` 字串（lightweight-charts BusinessDay）：資料點依實際日期定位，長間隔如實留白、**不補點**（delta 序列僅異動時有值，如實呈現）。tooltip 自寫 DOM（`subscribeCrosshairMove`）顯示完整 `YYYY-MM-DD` 與價格 |
+| **Y 軸** | 價格自動縮放（目標價 price line 一併納入可視範圍）；數值以 `formatNumber` 千分位呈現 → `NT$9,990` |
+| **tooltip** | 自寫 DOM tooltip（`subscribeCrosshairMove`：日期＋價格＋目標價，定位／clamp／離開隱藏）；若設有目標價一併顯示「目標價 NT$…」 |
+| **縮放／平移** | lwc 內建滾輪縮放＋拖曳平移；雙擊重置 → `timeScale().fitContent()` |
+| **目標價線** | `series.createPriceLine()`（dashed `#f59e0b`、價格軸 title「目標價」）；切換／清除時 `removePriceLine` 後重建（見 §7 配色） |
+| **單筆資料降級** | `history.length === 1`：circle marker＋價格文字、X 軸居中 `setVisibleLogicalRange({from:-1.5,to:1.5})`；Y 軸正常含該價 |
+| **resize** | 容器以 `ResizeObserver` 監聽，`chart.applyOptions({width,height})`；容器 0 寬時延後 init；`onUnmounted` 時 `chart.remove()` |
 
 ```vue
 <!-- PriceTrendChart.vue — <script setup> 骨架 -->
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
-import type { ECharts } from 'echarts/core'
-import echarts from '@/lib/echarts'
+import {
+  createChart, createSeriesMarkers, LineSeries, LineType,
+} from '@/lib/lightweight-charts'
+import type { IChartApi, ISeriesApi, IPriceLine, Time } from '@/lib/lightweight-charts'
 import type { PricePoint } from '@/types/item'
 
 const props = defineProps<{
@@ -274,31 +278,31 @@ const props = defineProps<{
 }>()
 
 const el = ref<HTMLDivElement | null>(null)
-let chart: ECharts | null = null
+let chart: IChartApi | null = null
+let series: ISeriesApi<'Line', Time> | null = null
+let priceLine: IPriceLine | null = null
 let observer: ResizeObserver | null = null
 
-function buildOption() {
-  // xAxis: type 'time'；series: LineChart data = history.map(h => [h.d, h.p])
-  // dataZoom: inside + (點數≥15 → slider)
-  // markLine: props.targetPrice 存在時加入（label formatter: 目標價 NT${formatPrice(v)}）
-  // yAxis min/max = props.yMin/yMax；tooltip formatter 顯示 YYYY-MM-DD 與價格
-  // history.length===1 → 單點降級（symbolSize、label 顯示價格、無 dataZoom）
-  // TODO: 組裝 EChartsOption
+function render() {
+  // series.setData(history.map(h => ({ time: h.d, value: h.p })))
+  // 目標價：props.targetPrice != null → series.createPriceLine（dashed #f59e0b）
+  // history.length===1 → 單點降級（circle marker＋價格文字、X 軸居中 setVisibleLogicalRange）
 }
 
 onMounted(() => {
-  chart = echarts.init(el.value!)
-  chart.setOption(buildOption())
-  observer = new ResizeObserver(() => chart?.resize())
+  chart = createChart(el.value!, { width: el.value!.clientWidth, height: 360 })
+  series = chart.addSeries(LineSeries, { color: '#2563eb', lineWidth: 2, lineType: LineType.Simple })
+  series.setData(props.history.map(h => ({ time: h.d, value: h.p })))
+  // tooltip：chart.subscribeCrosshairMove（自寫 DOM）；縮放平移為 lwc 內建；雙擊 fitContent
+  observer = new ResizeObserver(() => chart?.applyOptions({ width: el.value!.clientWidth }))
   observer.observe(el.value!)
 })
 
-watch(() => [props.history, props.targetPrice, props.yMin, props.yMax],
-  () => chart?.setOption(buildOption(), { notMerge: true }))
+watch(() => [props.history, props.targetPrice, props.yMin, props.yMax], () => render())
 
 onUnmounted(() => {
   observer?.disconnect()
-  chart?.dispose()
+  chart?.remove()
 })
 </script>
 
@@ -413,13 +417,13 @@ function clearTarget(): void { targetPrice.value = null; targetInput.value = '';
 
 | # | 情境（BDD 來源） | 行為 | 對應規格 |
 |---|------------------|------|----------|
-| E1 | items.json 載入失敗（網路／伺服器）`@error-handling @p0 @e2e` | 全頁顯示「資料載入失敗」＋「重新載入」按鈕；點擊後重新 fetch，成功即恢復詳情頁；失敗停留錯誤畫面並可返回列表 | §2.3 `useItems.retry` |
-| E2 | items.json JSON 解析失敗（截斷）`@error-handling`（與 003 同源） | 顯示「資料格式錯誤」，不白畫面；與 003 列表頁共用同一 error 呈現 | §2.3 `error='parse'` |
+| E1 | 資料 API 載入失敗（網路／伺服器）`@error-handling @p0 @e2e` | 全頁顯示「資料載入失敗」＋「重新載入」按鈕；點擊後重新 fetch，成功即恢復詳情頁；失敗停留錯誤畫面並可返回列表 | §2.3 `useItems.retry` |
+| E2 | 資料 API JSON 解析失敗（截斷）`@error-handling`（與 003 同源） | 顯示「資料格式錯誤」，不白畫面；與 003 列表頁共用同一 error 呈現 | §2.3 `error='parse'` |
 | E3 | 無效商品 id 直接進入（deep link／id 格式錯誤）`@error-handling @p0` | 顯示「找不到此商品」＋「返回列表」連結 | §2.6 `notFound` |
 | E4 | history 為空 `@error-handling @p1` | 顯示規格＋目前價格顯示「—」（目前價取自最後一筆，空則無值可顯示）；不顯示趨勢圖與漲跌；顯示「尚無歷史資料」 | §2.4 `stats.empty`、§2.6 |
 | E5 | history 僅一筆（首日追蹤）`@edge-case @p1` | 顯示「首日追蹤，尚無漲跌比較」；歷史最低＝目前價（日期即該日）；趨勢圖單點顯示 | §2.4 `stats.single`、§2.5 單點降級 |
-| E6 | 目標價輸入驗證（0／-100／abc／空白）`@edge-case @p1` | 不套用 markLine；輸入框紅框＋對應提示：`請輸入大於 0 的有效數字`／`請輸入有效數字`／`請輸入目標價` | §2.6 `applyTarget` |
-| E7 | 目標價超出歷史區間 `@edge-case @p2` | 仍套用 markLine；`yMin/yMax` 擴展納入目標價；顯示提示「目標價超出歷史區間」 | §2.6 `targetOutOfRange`、`yMin/yMax` |
+| E6 | 目標價輸入驗證（0／-100／abc／空白）`@edge-case @p1` | 不套用目標價線；輸入框紅框＋對應提示：`請輸入大於 0 的有效數字`／`請輸入有效數字`／`請輸入目標價` | §2.6 `applyTarget` |
+| E7 | 目標價超出歷史區間 `@edge-case @p2` | 仍套用目標價線；`yMin/yMax` 擴展納入目標價；顯示提示「目標價超出歷史區間」 | §2.6 `targetOutOfRange`、`yMin/yMax` |
 | E8 | 漲跌計算三態 `@edge-case @business-rule @p1` | 降價 綠 ▼ `降價 NT$510（-4.9%）`／漲價 紅 ▲ `漲價 NT$100（+5.3%）`／持平 灰 — `持平`；百分比 1 位小數 | §2.4 |
 | E9 | 歷史最低多日相同 `@edge-case @p2` | 取最早達成日（升冪第一個 min 點） | §2.4 `lowDate` |
 | E10 | 規格空值欄位 `@business-rule @p1` | 空值（null/undefined/''）欄位整列不渲染，其餘正常顯示 | §2.6 SPEC_LABELS filter |
@@ -517,7 +521,7 @@ function clearTarget(): void { targetPrice.value = null; targetInput.value = '';
 .price-trend-chart { width: 100%; height: 360px; }
 ```
 
-**markLine 目標價樣式**：目標價線為 ECharts 圖表內繪製（option `lineStyle`，非 CSS）：`dashed #f59e0b` 琥珀色橫線＋標籤「目標價 NT$9,500」（底色白字琥珀、12px、圓角）；與降價綠／漲價紅區別（目標價是「期望線」，非漲跌語意）。若需覆寫 ECharts 標籤文字外觀，以 `:deep(.echarts-mark-line-label)` 精準覆蓋，不影響其他 series。
+**目標價線樣式**：目標價線為 lightweight-charts 圖表內以 `series.createPriceLine()` 繪製（非 CSS）：`dashed #f59e0b` 琥珀色橫線＋價格軸 title「目標價」；與降價綠／漲價紅區別（目標價是「期望線」，非漲跌語意）。
 
 ---
 
@@ -525,12 +529,12 @@ function clearTarget(): void { targetPrice.value = null; targetInput.value = '';
 
 | 步驟 | 任務 | 依賴 | 產出／驗收 |
 |------|------|------|-----------|
-| 1 | 前端骨架：Vite 6 + Vue 3.5 + TS + vue-router（hash history）+ 安裝 `echarts`；`data/items.json` fixture 放置於 `web/public/data/` | - | `npm run dev` 可跑、路由可切換 |
-| 2 | `types/item.ts` 型別 + `lib/echarts.ts` on-demand 註冊 + `useItems` 載入（network/parse 錯誤、retry；003 契約） | #1 | fixture 載入；斷網情境顯示錯誤可重試 |
+| 1 | 前端骨架：Vite 6 + Vue 3.5 + TS + vue-router（hash history）+ 安裝 `lightweight-charts`；資料由 `api/` 提供（dev 由 vite middleware 服務 `../api`、build 自動 copy 進 `dist/api/`） | - | `npm run dev` 可跑、路由可切換 |
+| 2 | `types/item.ts` 型別 + `lib/lightweight-charts.ts` re-export + `useItems` 載入（network/parse 錯誤、retry；003 契約） | #1 | fixture 載入；斷網情境顯示錯誤可重試 |
 | 3 | `usePriceHistory` composable（漲跌三態／歷史最低取最早／格式化）+ Vitest 單元測試（BDD E8、E9、E5 範例資料） | #2 | 測試全綠 |
-| 4 | `PriceTrendChart` 元件：time 軸、tooltip、dataZoom、markLine、單點降級、resize | #2, #3 | 手動驗證縮放／懸停／單點 |
+| 4 | `PriceTrendChart` 元件：time 軸、tooltip、縮放／平移、目標價線、單點降級、resize | #2, #3 | 手動驗證縮放／懸停／單點 |
 | 5 | `ProductDetailView`：路由 `/product/:id`、四態狀態機、`SpecTable`（空值隱藏）、價格摘要、`useCrawledAt` 更新時間 | #2, #3 | BDD happy path 主流程可用 |
-| 6 | 目標價互動：`applyTarget` 驗證（4 組訊息）、markLine 套用／修改／清除、Y 軸擴展、超出區間提示 | #4, #5 | BDD 目標價三場景＋驗證範例 |
+| 6 | 目標價互動：`applyTarget` 驗證（4 組訊息）、目標價線套用／修改／清除、Y 軸擴展、超出區間提示 | #4, #5 | BDD 目標價三場景＋驗證範例 |
 | 7 | 降級與錯誤畫面收尾：history 空／單筆、下架 badge、找不到商品、載入失敗畫面 | #5 | BDD E1–E5、E13 |
 | 8 | 003 整合：列表卡片點擊 → `router.push`（encode id）、返回列表帶回分類 context、過期提示共用 | #5（含 003 列表） | 列表⇄詳情來回正確 |
 | 9 | 005 整合點預留：`WatchActions` 佔位、傳遞 `item.id`（不實作追蹤功能） | #5 | 佔位渲染不報錯 |
@@ -545,9 +549,9 @@ function clearTarget(): void { targetPrice.value = null; targetInput.value = '';
 | BDD Scenario（tags） | 規格對應 |
 |----------------------|----------|
 | 從列表點入詳情頁並檢視完整資訊 `@happy-path @smoke @p0 @e2e` | §2.6 整合、§2.4 漲跌/最低、§2.5 圖表 |
-| 設定目標價格線 `@happy-path @smoke @p1 @e2e` | §2.6 applyTarget、§2.5 markLine |
-| 修改與清除目標價線 `@happy-path @p1` | §2.6（watch targetPrice → setOption notMerge）、clearTarget |
-| items.json 載入失敗時顯示錯誤並可重試 `@error-handling @p0 @e2e` | §6 E1、§2.3 |
+| 設定目標價格線 `@happy-path @smoke @p1 @e2e` | §2.6 applyTarget、§2.5 目標價線 |
+| 修改與清除目標價線 `@happy-path @p1` | §2.6（watch targetPrice → render）、clearTarget |
+| 資料 API 載入失敗時顯示錯誤並可重試 `@error-handling @p0 @e2e` | §6 E1、§2.3 |
 | 以無效商品 id 直接進入詳情頁 `@error-handling @p0` | §6 E3 |
 | 商品尚無歷史資料 `@error-handling @p1` | §6 E4 |
 | 目標價輸入驗證（4 組 Examples）`@edge-case @p1` | §6 E6、§2.6 applyTarget |

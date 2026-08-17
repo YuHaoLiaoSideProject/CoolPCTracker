@@ -5,7 +5,7 @@ Feature: 前端列表與搜尋篩選（frontend-listing-search）
   以便快速找到目標商品並掌握目前價格與昨日漲跌
 
   Background:
-    Given 網站已部署於 GitHub Pages，且同 origin 的 data/items.json 包含約 1,449 筆追蹤商品
+    Given 網站已部署於 GitHub Pages，且同 origin 的資料 API 包含約 1,449 筆追蹤商品
     And 我以一般訪客身分開啟網站首頁（無需登入）
     And 首頁已完成資料載入
 
@@ -79,15 +79,15 @@ Feature: 前端列表與搜尋篩選（frontend-listing-search）
     And 分類側欄高亮對應分類
 
   @error-handling @smoke @p0
-  Scenario: data/items.json 載入失敗
-    Given 網路連線中斷或 items.json 回應 404
+  Scenario: 資料 API 載入失敗
+    Given 網路連線中斷或資料 API 回應 404
     When 我開啟網站首頁
     Then 列表區域顯示「資料載入失敗」與「重試」按鈕
     And 頁面其餘 UI（側欄、搜尋框）仍正常顯示，不產生白畫面
 
   @error-handling @p1
-  Scenario: items.json 格式錯誤
-    Given items.json 內容被截斷而無法解析
+  Scenario: 資料格式錯誤
+    Given 資料 API 內容被截斷而無法解析
     When 我開啟網站首頁
     Then 列表區域顯示「資料格式錯誤」提示
     And 頁面不產生白畫面
@@ -109,7 +109,7 @@ Feature: 前端列表與搜尋篩選（frontend-listing-search）
 
   @error-handling @p2
   Scenario: 資料過期提示
-    Given items.json 的 meta.crawled_at 距今已超過 7 天（>7 天，與 007 新鮮度規則共用）
+    Given 商品資料的 crawled_at 距今已超過 7 天（>7 天，與 007 新鮮度規則共用）
     When 我開啟網站首頁
     Then 頁面頂部顯示「資料可能已過期（最後更新：X）」提示橫幅
     And 商品資料仍正常顯示

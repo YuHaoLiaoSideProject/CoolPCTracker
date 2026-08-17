@@ -26,9 +26,9 @@
 
 ## 1. 資料依賴與整合點
 
-### 1.1 資料來源契約（items.json，與 001/003 共用）
+### 1.1 資料來源契約（資料 API，與 001/003 共用）
 
-本功能不新增任何後端 API，僅**讀取**同 origin 的 `data/items.json`（由 001 爬蟲產生、003 前端基礎負責載入）。本規格用到以下欄位（與技術決策 §3.4 一致）：
+本功能不新增任何後端 API，僅**讀取** 003 共用載入的資料（由 001 爬蟲產出 `data/items.json`、002 衍生 `api/` 日期制快照，003 `useItems` runtime 兩段式 fetch `api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）。本規格用到以下欄位（與技術決策 §3.4 一致）：
 
 ```jsonc
 // data/items.json（本功能讀取契約，欄位以 001 產出為準）
@@ -339,7 +339,7 @@ export function findCheapestIds(items: CompareItem[]): string[]
 
 ### 2.8 views/WatchlistView.vue — 我的追蹤頁
 
-資料流：`useWatchlist().items`（localStorage）＋ `useItems()`（items.json）→ 合併為列資料（名稱／現價／價差／迷你趨勢／下架狀態）。
+資料流：`useWatchlist().items`（localStorage）＋ `useItems()`（資料 API）→ 合併為列資料（名稱／現價／價差／迷你趨勢／下架狀態）。
 
 ```vue
 <script setup lang="ts">
@@ -442,7 +442,7 @@ function onClearCompare(): void {
 |--------|-----|------|----------|------|
 | localStorage | `coolpc.watchlist.v1` | `{ version: 1, items: WatchlistItem[] }` | 永久（單瀏覽器、本機專屬，不跨裝置/不雲端同步；清除瀏覽器資料即遺失） | 追蹤清單 |
 | sessionStorage | `coolpc.compare.v1` | `{ version: 1, items: CompareSelectionItem[] }` | 同分頁跨路由保留；關閉分頁即清空 | 比價選取 |
-| fetch（同 origin） | `data/items.json` | 見 §1.1 讀取契約 | 每日爬蟲更新 | 商品資料（003 共用載入） |
+| fetch（同 origin） | `api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json` | 見 §1.1 讀取契約 | 每日爬蟲更新（002 衍生） | 商品資料（003 共用載入） |
 
 - **版本化規則**：key 內含 `.v{n}` 前綴 + payload 內含 `version` 欄位；讀取時版本不符 → 走 migrate 掛鉤（目前無舊版）。**v0 相容**：若偵測到無版本包裹的舊格式（純 id 陣列，即 IF §1 所述 key `coolpc.watchlist`），自動遷移為 v1（`addedAt=now`、快照補 `null` → 首次開頁補快照）。實際 storage key 由 `writeVersioned` 以 `${key}.v${version}` 組合（`coolpc.watchlist.v1` / `coolpc.compare.v1`，與上表一致）。
 - **損毀自癒**：JSON 解析失敗 → 原值備份至 `coolpc.watchlist.corrupt-{ts}` 後重置為空，頁面不當機。
@@ -452,7 +452,7 @@ function onClearCompare(): void {
 ## 4. 資料流
 
 ```
-data/items.json ──fetch──▶ useItems()（003）──▶ WatchlistView / CompareView
+api/index.json → latest_file → api/items/YYYYMMDD[_n].json ──fetch──▶ useItems()（003）──▶ WatchlistView / CompareView
                                                     ▲
 localStorage   ◀──read/write── useWatchlist ──▶ 列表/詳情按鈕（WatchlistButton）
 (coolpc.watchlist.v1)                              │

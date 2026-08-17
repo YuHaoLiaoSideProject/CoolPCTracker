@@ -18,7 +18,7 @@
 | 1 | 無任何 Vue 元件、無 CSS 樣式檔、無 router | P1（設計依據） | `web/src/` | 僅 `src/main.ts`（002 最小消費實作：`innerHTML` 渲染標題＋`meta-status`）。003 起全數元件化 |
 | 2 | 002 最小消費實作將被 003 取代（`innerHTML` → Vue 元件） | P3 | `web/src/main.ts` | 003 改為 `createApp` + `createWebHashHistory` router + 元件掛載 |
 | 3 | 無設計 token、無 RWD 斷點樣式 | P1 | `web/`（全） | 本文件 §4 以開發規格 §7.1 token 為唯一來源落地 |
-| 4 | 資料合約已具備：`vite.config.ts` 已複製 `items.v{n}.json`／`meta.json` 至 `dist/data/` 並注入 `__DATA_VERSION__` | P2（沿用） | `web/vite.config.ts` | 003 載入層（`useItems`）直接消費，無需改動 build 合約 |
+| 4 | 資料合約已具備：`vite.config.ts` 單一 plugin 於 dev 將 `../api/**` 服務為 `/api/*`、build 自動 copy 進 `dist/api/`；前端 runtime 讀 `api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json` | P2（沿用） | `web/vite.config.ts` | 003 載入層（`useItems`）直接消費，無需改動 build 合約 |
 | 5 | 無任何狀態處理（loading／error／empty）之既有實作 | P1 | `web/src/` | 本文件 §5 定義八態狀態矩陣，實作需全數覆蓋（BDD @error-handling @edge-case） |
 | 6 | 無無障礙基礎（focus ring／aria／對比） | P2 | `web/`（全） | 本文件 §7 定義 WCAG 規格供實作遵循 |
 
@@ -138,7 +138,7 @@
 ## 7. 實作建議
 
 1. **Token 先落地**：依 §7.1 建立 CSS 變數（建議 `src/styles/tokens.css` 或 `App.vue :root` 區塊），雙主題以 `data-theme` 切換；元件只引用變數、不硬編碼色值。
-2. **資料層**：`useItems` 依 §2.4 實作錯誤分類（fetch／parse）與 `isStale`（>7 天，與 007 共用）；P1 以 `?t=${Date.now()}` cache-busting，002 產出 `items.v{n}.json` 後改檔名策略。
+2. **資料層**：`useItems` 依 §2.4 實作錯誤分類（fetch／parse）與 `isStale`（>7 天，與 007 共用）；runtime 兩段式 fetch（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`），日期制檔名自帶快取失效，無需 query cache-busting。
 3. **純函數優先**：`matchesKeyword`／`matchesCondition`／`parseCondition`／`usePriceDelta` 皆純函數，Vitest 直接測（邊界值 12G 命中、缺欄位靜默排除、僅 1 筆 history → delta null）。
 4. **搜尋 300ms debounce**：`SearchBar` watch + `setTimeout`；外部清空（clearAll）需同步 input 值。
 5. **篩選語意**：僅 `≥`；同欄位重複套用 → 取代（`addCondition` 過濾同 field）；多條件 `every` AND；數值輸入 `inputmode="decimal"`。
