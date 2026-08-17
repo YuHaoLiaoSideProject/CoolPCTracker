@@ -111,7 +111,7 @@ def test_crawl_job_steps(workflow: dict) -> None:
     commit = commit_steps[0]
     assert "steps.version.outputs.changed == 'true'" in commit["if"]
     run = commit["run"]
-    assert "git add data/ api/" in run
+    assert "git add data/" in run
     assert "coolpc-tracker[bot]" in run  # bot 身分 name/email（§9.3）
     assert "git pull --rebase" in run
     assert "git push" in run

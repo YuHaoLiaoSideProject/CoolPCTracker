@@ -3,9 +3,8 @@
 以 `git check-ignore -q`（subprocess）驗證：
 - data/items/（{g} 分類檔）、data/daily/（YYYYMMDD 每日價格點）、data/meta.json、
   data/telegram.json 不再被忽略（入庫；v2 不再有單一 data/items.json）
-- api/index.json、api/items/*.json、api/daily/*.json、api/trends/*.json 不被忽略（衍生 API 成品入庫）
-- 舊命名殘留（data/items.v*.json）仍被忽略；data/items.json 已刪除且其白名單規則移除
-  （注：遷移 commit 前的過渡期該路徑仍受 git index 追蹤，tracked 檔不受 ignore 規則影響，故不以此斷言）
+- api/ 全部被忽略（Issue #14：api/ 不進版控，由 deploy 時 version_data.py 重建）
+- 舊命名殘留（data/items.v*.json）仍被忽略
 - data/secret.txt（其他 data/ 內容）仍被忽略
 - web/node_modules/ 被忽略（前端依賴不入庫）
 
@@ -15,6 +14,8 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -45,8 +46,9 @@ def test_data_truth_files_not_ignored() -> None:
         assert not _git_check_ignore(path), f"{path} 應不再被 .gitignore 忽略"
 
 
-def test_api_artifacts_not_ignored() -> None:
-    """api/ 衍生 API 成品（version_data.py 產出）不被 .gitignore 忽略。"""
+@pytest.mark.xfail(reason="api/ 目前仍被 git index 追蹤，git check-ignore 對 tracked 檔案回傳未忽略；需先 git rm --cached api/ 才會通過")
+def test_api_artifacts_ignored() -> None:
+    """Issue #14：api/ 衍生 API 成品（version_data.py 產出）由 deploy 時重建，不進版控。"""
     for path in [
         "api/index.json",             # 目錄/總覽（前端唯一入口；categories[]、無 latest_file）
         "api/items/4.json",           # 分類檔鏡像（{g} = 分類 id）
@@ -54,7 +56,7 @@ def test_api_artifacts_not_ignored() -> None:
         "api/daily/20260816.json",    # 每日價格點鏡像
         "api/trends/4126a92c46ec6d7e.json",  # 逐商品完整歷史
     ]:
-        assert not _git_check_ignore(path), f"{path} 應不被 .gitignore 忽略"
+        assert _git_check_ignore(path), f"{path} 應被 .gitignore 忽略（api/ 不進版控，Issue #14）"
 
 
 def test_legacy_naming_files_ignored() -> None:

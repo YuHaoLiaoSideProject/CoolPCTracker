@@ -16,7 +16,11 @@ env/
 htmlcov/
 
 # Runtime data（契約 v2 2026-08-17：data/items/{g} 分類檔 + data/daily/ 每日價格點 + meta.json/telegram.json 入庫；
-# 不再有單一 data/items.json；api/ 衍生層（api/items api/daily api/trends api/index.json）一律不受忽略）
+# 不再有單一 data/items.json）
+
+# api/ 衍生層（api/items api/daily api/trends api/index.json）由 version_data.py 於 deploy 時重建，
+# 不進版控（Issue #14：移出 git 避免 .git 膨脹）
+api/
 data/*
 !data/.gitkeep
 !data/items/
