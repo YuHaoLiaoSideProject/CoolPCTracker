@@ -14,10 +14,10 @@
 
 訪客從商品列表點入（或 URL deep link）任一商品詳情頁，檢視完整規格、目前價格、與前一筆的漲跌、歷史最低價，並在 lightweight-charts 歷史趨勢圖上以目標價線（price line）設定本次瀏覽有效的目標價線，一眼判斷目前價格是否值得下手。核心包含：
 
-1. **`usePriceHistory` composable**：由商品 `history`（`[d,p]` delta 時間序列）計算目前價、漲跌（金額＋百分比）、歷史最低價（多日同價取最早日期）與圖表資料序列。
+1. **`useTrend`（004 趨勢資料載入）＋ `usePriceHistory` composable**：詳情頁依商品 id fetch `api/trends/{id}.json` 取得**完整歷史**（`[d,p]` delta 時間序列），由 `usePriceHistory` 計算目前價、漲跌（金額＋百分比）、歷史最低價（多日同價取最早日期）與圖表資料序列；趨勢載入失敗只影響趨勢區塊，其餘頁面照常渲染。
 2. **`PriceTrendChart` 元件**：lightweight-charts 折線趨勢圖，支援自寫 tooltip 懸停查價、滾輪／拖曳縮放、目標價 price line、Y 軸擴展，並處理非等間距時間軸與單筆資料降級。
 3. **`ProductDetailView` 詳情頁**：路由 `/product/:id` 載入、四態狀態機（loading / 載入失敗 / 找不到商品 / 就緒）、規格表（空值欄位隱藏）、價格摘要、目標價輸入驗證與最後更新時間顯示。
-4. **`useItems` 共用資料載入**（003 契約）：runtime 兩段式 fetch（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）、錯誤提示與重試機制，與 003 列表頁共用（同一份 fetch、同一組型別）。
+4. **`useItems` 共用資料載入**（003 契約 v2）：runtime 讀 `api/index.json`（categories[]＋crawled_at）→ `loadAll` 聚合全部分類檔 `api/items/{g}.json?v={crawled_at}`（列表/詳情定位共用），每筆 history ≤2 點；錯誤提示與重試機制，與 003 列表頁共用（同一份 fetch、同一組型別）；**完整歷史不再由分類檔提供**，由 `useTrend` 依 id 單獨載入。
 
 > **整合點**：本功能純前端、無後端 API。進入來源為 003 列表頁（點擊商品列跳轉）；出口整合點預留 005 的「加入追蹤／加入比價」動作區。
 
@@ -36,8 +36,8 @@ web/src/
 ├── lib/
 │   └── lightweight-charts.ts       ← 新增：lightweight-charts re-export 模組（全站共用）
 ├── composables/
-│   ├── useItems.ts                  ← 003 契約：共用 items.json 載入（items/meta/loading/error/retry/isStale）
-│   ├── usePriceHistory.ts           ← 新增：漲跌／歷史最低／格式化計算（004 核心）
+│   ├── useItems.ts                  ← 003 契約（v2）：共用分類檔載入與 loadAll 聚合（index/items/meta/loading/error/retry/isStale）＋ useTrend（004：依 id fetch api/trends/{id}.json 完整歷史，失敗不 throw）
+│   ├── usePriceHistory.ts           ← 新增：漲跌／歷史最低／格式化計算（004 核心；輸入為 trends 完整歷史或列表 ≤2 點短歷史皆可）
 │   └── useCrawledAt.ts              ← 新增：crawled_at → 台北時間顯示＋過期判斷（003/004 共用）
 ├── components/
 │   ├── SpecTable.vue                ← 新增：規格表（欄位名：值，空值欄位不渲染）
@@ -49,9 +49,9 @@ web/src/
 
 > 註：`web/` 為綠地目錄，若 003 已先行建立 `useItems`、`types/item.ts`、`useCrawledAt`，則直接複用並回填本規格；否則 004 在此建立，作為 003 的共用基礎（見 §8 步驟依賴）。共用契約以 003 的 `useItems`（回傳 `items/meta/loading/error/retry/isStale`）為準。
 
-### 2.2 資料來源契約（api/index.json → api/items/YYYYMMDD[_n].json，取代 API 合約）
+### 2.2 資料來源契約（契約 v2 分類拆檔：api/index.json（categories[]）＋ api/items/{g}.json ＋ api/trends/{id}.json，取代 API 合約）
 
-純前端功能，無 HTTP API endpoint；唯一資料來源為同 origin 靜態檔：`api/index.json`（唯一入口，含 `latest_file`）→ `latest_file` 指向的日期制快照 `api/items/YYYYMMDD[_n].json`（GitHub Pages 部署；crawler 每日 commit `data/items.json` 後，由 002 `version_data.py` 產出 `api/` 衍生檔一併部署）。
+純前端功能，無 HTTP API endpoint；資料來源為同 origin 靜態檔：`api/index.json`（唯一入口，`categories[]`（id/name/file/count）＋ `crawled_at`，**無 latest_file**）→ 依商品定位需求 `loadAll` 聚合 `api/items/{g}.json?v={crawled_at}`（每分類一檔、純 items 陣列、每筆 ≤2 點 history 與規格/狀態）；**完整歷史**由 `api/trends/{item_id}.json`（逐商品全歷史，詳情趨勢圖 1 request）提供（002 `version_data.py` 組裝；crawler 每日 commit `data/` 後一併部署）。
 
 | 欄位 | 型別 | 約束 | 說明 |
 |------|------|------|------|
@@ -59,14 +59,14 @@ web/src/
 | `items[].id` | string | 唯一、跨日穩定 | `sha256(主分類 + 正規化名稱)` 取前 16 位 hex（001 產生，如 `3f9a1c2b8e4d5f6a`）；URL 直接帶入（hex 無特殊字元，仍以 encodeURIComponent 防呆） |
 | `items[].spec` | object | 欄位可缺省 | 結構化規格；空值欄位詳情頁不顯示 |
 | `items[].status` | `'in_stock' \| 'gone'` | - | gone＝已下架（不再出現於當日清單） |
-| `items[].history` | `PricePoint[]` | 依 `d` 升冪、每日一點（含平價日，跨日連續） | 每日累積時間序列；原始 JSON 為 compact `[d, p]` 陣列（001 格式決策），由 `useItems` 載入層正規化為 `{d, p}`；`history[last]` 即目前價格 |
+| `items[].history` | `PricePoint[]` | 依 `d` 升冪、每日一點（含平價日） | **契約 v2：分類檔每筆僅最近 ≤2 點**（compact `[d, p]`，由 `useItems` 載入層正規化）；`history[last]` 即目前價格；**完整跨日歷史由 `api/trends/{id}.json`（`TrendFile`）提供**，詳情趨勢圖/歷史最低價以此為準 |
 
 型別定義（`types/item.ts`）：
 
 ```typescript
 /** 歷史價格點：d=日期(YYYY-MM-DD)，p=價格(NT$)。每日一點累積（含平價日；失敗分類不累積 → 可能有跨日缺口）。
- *  ⚠️ items.json 原始格式為 compact 陣列 ["2026-08-15", 9990]（001 格式決策），
- *  由 useItems 載入層正規化為本物件型別。 */
+ *  ⚠️ 列表快照中每筆僅最近 ≤2 點（O4）；完整歷史一律自 api/trends/{id}.json 取得。
+ *  原始 JSON 為 compact 陣列 ["2026-08-15", 9990]（001 格式決策），由載入層正規化為本物件型別。 */
 export interface PricePoint {
   d: string
   p: number
@@ -109,11 +109,18 @@ export interface ItemsFile {
   meta: ItemsMeta
   items: Item[]
 }
+
+/** api/trends/{item_id}.json 契約（O4）：單一商品完整歷史（依 d 升冪、全歷史）。
+ *  原始 history 為 compact [d, p] 陣列，由 useTrend.parseTrendFile 正規化為 PricePoint[]。 */
+export interface TrendFile {
+  id: string
+  history: PricePoint[]  // 依 d 升冪；可能為空陣列（該商品尚無價格紀錄）
+}
 ```
 
 ### 2.3 `useItems` — 共用資料載入（003 契約，錯誤／重試）
 
-**職責**：runtime 兩段式 fetch 同 origin `api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`，解析驗證後提供 `items`／`meta`；暴露載入失敗與重試。**本節即 003 §2.4 `useItems` 的契約**（同一 composable、同一 fetch、單例共享 module-level cache），004 詳情頁與 003 列表頁共用同一份資料，避免重複請求。GitHub Pages 快取風險由日期制檔名保證失效（新檔名必然 miss 快取），無需 `__DATA_VERSION__` build 注入或 query 快取穿透（002 §1.7 合約）。
+**職責（契約 v2）**：runtime 讀同 origin `api/index.json`（categories[]＋crawled_at）→ `loadAll` 聚合 `api/items/{g}.json?v={crawled_at}`（各分類檔；詳情定位需要全站 items），解析驗證後提供 `items`／`meta`（crawled_at）；暴露載入失敗與重試。**本節即 003 §2.4 `useItems` 的契約**（同一 composable、同一 fetch、單例共享 module-level cache），004 詳情頁與 003 列表頁共用同一份資料，避免重複請求。分類檔以 `?v={crawled_at}` 做 cache-busting（002 §1.7 合約）。
 
 ```typescript
 import { ref, computed, type Ref } from 'vue'
@@ -121,7 +128,7 @@ import type { ItemsFile, Item } from '@/types/item'
 
 export type LoadError = 'fetch' | 'parse' | null   // 與 003 同一錯誤分類（fetch=載入失敗 / parse=格式錯誤）
 
-/** 共享 items.json 載入狀態；單例建立，003/004 共用（003 §2.4 同一實作） */
+/** 共享分類檔載入狀態（契約 v2：loadAll 聚合 api/items/{g}.json）；單例建立，003/004 共用（003 §2.4 同一實作） */
 export function useItems() {
   const items = ref<Item[]>([]) as Ref<Item[]>
   const meta = ref<ItemsFile['meta'] | null>(null)
@@ -129,7 +136,11 @@ export function useItems() {
   const error = ref<LoadError>(null)
 
   /** 載入（首次自動呼叫；錯誤後由 retry 重叫）。HTTP 失敗→'fetch'；JSON.parse/shape 失敗→'parse' */
-  async function load(): Promise<void> { /* 同 003 §2.4：fetch(api/index.json) → latest_file → fetch(api/items/{file}) → parseItemsFile（含 compact [d,p]→PricePoint 正規化） */ }
+  async function load(): Promise<void> { /* 同 003 §2.4（契約 v2）：fetch(api/index.json) → categories[] → loadAll 併發載入 api/items/{g}.json?v={crawled_at} → parseCategoryFile（含 compact [d,p]→PricePoint 正規化） */ }
+
+  /** 依商品 id 載入完整歷史（O4）：fetch(api/trends/{id}.json) → parseTrendFile → normalized PricePoint[]；
+   *  載入失敗不 throw（error 分類與列表共用 fetch/parse 語意），僅影響趨勢區塊渲染 */
+  // useTrend(id) 實作見 §2.4（與 useItems 同檔的獨立 composable，回傳 { history, loading, error, retry }）
 
   /** 錯誤畫面「重新載入」按鈕的處理；載入成功後 error 清空、loading=false */
   function retry(): void { void load() }
@@ -142,7 +153,7 @@ export function useItems() {
 
 ### 2.4 `usePriceHistory` — 漲跌／歷史最低計算
 
-**職責**：輸入 `history`（依日期升冪），輸出價格摘要（current／previous／diff／diffPercent／trend／low／lowDate）與圖表資料序列。漲跌計算委派 `@/lib/priceChange`（與 003 卡片 badge 共用同一事實來源，DRY）；本 composable 僅補歷史最低價與 empty/single 旗標。純函數計算邏輯為可單元測試（Vitest 覆蓋 BDD 三組漲跌範例與多日最低範例）。
+**職責**：輸入 `history`（依日期升冪；詳情頁傳入 trends 完整歷史，並以列表 ≤2 點短歷史補位），輸出價格摘要（current／previous／diff／diffPercent／trend／low／lowDate）與圖表資料序列。漲跌計算委派 `@/lib/priceChange`（與 003 卡片 badge 共用同一事實來源，DRY）；本 composable 僅補歷史最低價與 empty/single 旗標。純函數計算邏輯為可單元測試（Vitest 覆蓋 BDD 三組漲跌範例與多日最低範例）。
 
 **漲跌計算規則**（BDD `@edge-case @business-rule` 三組範例；語意 = 與「上一筆有紀錄的日期」比較，非連續日仍取最後兩點、不補中間日）：
 - `previous = history[len-2]`（上一筆有紀錄的日期）、`current = history[len-1]`；`diff = current - previous`。
@@ -206,7 +217,7 @@ export { formatDiffAmount, formatDiffPercent, formatTrendLabel } from '@/lib/pri
 
 ```typescript
 export interface Props {
-  history: PricePoint[]      // 依 d 升冪；長度 ≥1（空歷史由 view 降級，不渲染本元件）
+  history: PricePoint[]      // 依 d 升冪；O4：由 useTrend 載入的 api/trends 完整歷史（空歷史由 view 降級，不渲染本元件）
   targetPrice?: number | null  // 目標價；null/undefined = 不顯示 price line
   yMin?: number                // Y 軸下限（view 依含目標價的範圍計算後傳入，見 §2.6）
   yMax?: number
@@ -310,9 +321,12 @@ status(idle/loading) ──load──▶ error(network/parse) ──retry──�
         │                                    ▲
         └──────────── ready ─────────────────┘
                         ├─ items 找不到該 id → not-found（「找不到此商品」＋返回列表）
-                        ├─ item.history 空     → 降級（規格＋目前價「—」＋「尚無歷史資料」）
-                        ├─ item.history 1 筆   → 降級（首日追蹤＋單點圖）
+                        ├─ 完整歷史（trend.history）空 → 降級（規格＋目前價「—」＋「尚無歷史資料」）
+                        ├─ 完整歷史僅 1 筆        → 降級（首日追蹤＋單點圖）
                         └─ 正常                → 完整資訊＋趨勢圖＋目標價輸入
+
+> **O4 資料分工**：目前價／漲跌徽章以列表快照 `item.history`（≤2 點）計算；趨勢圖／歷史最低價以
+> `useTrend` 載入 `api/trends/{id}.json` 的**完整歷史**為準（載入中/失敗時退回 ≤2 點短歷史，不空白、不影響其餘頁面）。
 ```
 
 **頁面區塊**（由頂至底）：麵包屑／返回（保留 003 分類 context）→ 標題＋狀態 badge（gone 顯示「此商品已下架」）→ 價格摘要卡（目前價、漲跌、歷史最低＋日期、最後更新時間）→ 規格表 → 趨勢圖＋目標價輸入區 → 005 預留動作區（`WatchActions` 佔位）。
@@ -350,9 +364,15 @@ const itemId = computed(() => decodeURIComponent(String(route.params.id)))
 const item = computed(() => items.value.find((i) => i.id === itemId.value))
 const notFound = computed(() => !loading.value && !error.value && !item.value)
 
-// ---- 價格摘要（§2.4） ----
-const history = computed(() => item.value?.history ?? [])
-const { stats } = usePriceHistory(history)
+// ---- 完整歷史（O4：api/trends/{id}.json，useTrend）----
+const trend = useTrend(itemId)                                // id 為 computed → 路由參數變化自動重載
+const trendHistory = computed(() => trend.history.value)      // 載入失敗 → 空/上次成功資料，不 throw
+
+// ---- 價格摘要（§2.4）----
+const listHistory = computed(() => item.value?.history ?? []) // 列表快照 ≤2 點（目前價/漲跌基準）
+const { stats } = usePriceHistory(listHistory)
+const { stats: trendStats } = usePriceHistory(trendHistory)   // 完整歷史（歷史最低/趨勢）
+// 歷史最低（低價/日期）：優先 trendStats；trend 未就緒時退回 stats（短歷史），不空白
 
 // ---- 最後更新時間（台北時區）與過期判斷（與 003 共用 useCrawledAt） ----
 const { updatedLabel, isStale } = useCrawledAt(() => data.value?.meta.crawled_at)
@@ -421,6 +441,7 @@ function clearTarget(): void { targetPrice.value = null; targetInput.value = '';
 | E14 | 非等間距歷史（delta 長間隔） | time 軸如實呈現不補點；tooltip 顯示實際日期；極稀疏時依 §2.5 評估 category 軸 | §2.5 |
 | E15 | id 含特殊字元（`\|`）deep link | 跳轉 encode、讀取 decode；找不到走 E3 | §2.6 |
 | E16 | 圖表容器 0 寬（頁面未渲染完成／窄螢幕） | `init` 前確認容器尺寸；ResizeObserver 觸發 resize；避免 init 時 0 尺寸 | §2.5 |
+| E17 | 趨勢檔載入失敗（`api/trends/{id}` 404／網路／格式） | 僅趨勢區塊顯示錯誤或退回列表 ≤2 點短歷史；規格／目前價／漲跌／目標價照常運作，不影響其餘頁面（O4） | §2.4 `useTrend` |
 
 ---
 
@@ -528,7 +549,7 @@ function clearTarget(): void { targetPrice.value = null; targetInput.value = '';
 | 9 | 005 整合點預留：`WatchActions` 佔位、傳遞 `item.id`（不實作追蹤功能） | #5 | 佔位渲染不報錯 |
 | 10 | E2E（Playwright）覆蓋 `@e2e` 場景（列表點入檢視、目標價線、載入失敗重試）＋ RWD／樣式收尾 | #6–#9 | E2E 全綠 |
 
-> DAG 驗證：依賴方向全部向前（2→3→4→5→6→7→8→9→10 主鏈），無後向依賴、無環。後端資料（001 crawler 產出 items.json）為部署期依賴，非本功能程式依賴。
+> DAG 驗證：依賴方向全部向前（2→3→4→5→6→7→8→9→10 主鏈），無後向依賴、無環。後端資料（001 crawler 產出 data/items/{g}.json 各分類檔）為部署期依賴，非本功能程式依賴。
 
 ---
 
@@ -541,7 +562,7 @@ function clearTarget(): void { targetPrice.value = null; targetInput.value = '';
 | 修改與清除目標價線 `@happy-path @p1` | §2.6（watch targetPrice → render）、clearTarget |
 | 資料 API 載入失敗時顯示錯誤並可重試 `@error-handling @p0 @e2e` | §6 E1、§2.3 |
 | 以無效商品 id 直接進入詳情頁 `@error-handling @p0` | §6 E3 |
-| 商品尚無歷史資料 `@error-handling @p1` | §6 E4 |
+| 商品尚無歷史資料 `@error-handling @p1` | §6 E4（完整歷史 = useTrend 載入的 api/trends） |
 | 目標價輸入驗證（4 組 Examples）`@edge-case @p1` | §6 E6、§2.6 applyTarget |
 | 目標價超出歷史價格區間 `@edge-case @p2` | §6 E7 |
 | 漲跌計算與呈現（3 組 Examples）`@edge-case @business-rule @p1` | §6 E8、§2.4 |

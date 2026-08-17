@@ -10,6 +10,7 @@ import { formatPrice } from "@/utils/format"
 
 const props = defineProps<{
   item: Item
+  categoryName?: string // 分類中文標籤（v2：Item 無 category，由外部 itemToCategory + categories 對照）
   watched?: boolean // 005：已追蹤狀態（005 實作前預設 false）
   compareSelected?: boolean // 005：比價已勾選
 }>()
@@ -22,7 +23,7 @@ const emit = defineEmits<{
 
 const { currentPrice, deltaClass, deltaText } = usePriceDelta(props.item)
 const sparkPoints = computed(() => props.item.history.slice(-30)) // 卡片取最近 30 點
-const specChips = computed(() => specChipTexts(props.item.spec, props.item.category))
+const specChips = computed(() => specChipTexts(props.item.spec, props.categoryName ?? ""))
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Enter" || e.key === " ") {

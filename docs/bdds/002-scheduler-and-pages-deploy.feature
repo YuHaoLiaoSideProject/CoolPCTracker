@@ -6,8 +6,10 @@ Feature: 每日排程與 GitHub Pages 部署
 
   Background:
     Given 工作流 .github/workflows/crawl.yml 已存在並推送至 GitHub 主分支
-    And 爬蟲（功能 001）已可執行並產出 items.json 與 meta.json
+    And 爬蟲（功能 001）已可執行並產出 data/items/{g}.json（每分類一檔、無 meta/category 欄位）、data/meta.json 與 data/daily/ 每日價格點檔
     And GitHub Pages 已設定為部署目標
+    # 契約 v2（分類拆檔）：crawler 依分類 G 寫入 data/items/{g}.json（1=套裝/準系統、3=劈發價、4=CPU、5=主機板、6=記憶體、7=SSD、8=HDD、9=記憶卡、12=顯示卡）；
+    # version_data 鏡像為 api/items/{g}.json；api/index.json 以 categories[] 收錄分類索引，**無 api/latest.json、無 latest_file**
 
   @happy-path @smoke @daily
   Scenario: 每日排程觸發且資料有異動時完成爬蟲與部署
@@ -15,7 +17,7 @@ Feature: 每日排程與 GitHub Pages 部署
     When GitHub Actions 依 cron 排程自動觸發 crawl.yml
     And 爬蟲執行成功且本次資料有異動
     Then 工作流依序完成 checkout、setup-python 3.12、pip install 與爬蟲
-    And commit data/ api/ 的異動並寫入日期制快照
+    And commit data/ api/ 的異動並組裝 api/ 衍生層（latest / daily / trends / index）
     And 前端 build 成功並部署至 GitHub Pages
     And 工作流以成功狀態結束
 
@@ -24,26 +26,27 @@ Feature: 每日排程與 GitHub Pages 部署
     Given 維護者開啟 GitHub Actions 頁面並選擇 crawl.yml
     When 維護者點擊「Run workflow」以 workflow_dispatch 手動觸發
     Then 工作流執行與每日排程相同的完整管線
-    And 資料有異動時 commit data/ api/
+    And 資料有異動時 commit data/ api/（含組裝後的 api/items/{g}.json、api/daily/、api/trends/ 與 api/index.json）
     And 前端 build 成功並部署至 GitHub Pages
     And 工作流以成功狀態結束
 
   @business-rule @cache-busting @regression
-  Scenario Outline: 資料異動時以單檔覆寫寫入日期制資料檔
-    Given 上次部署後 api/items/ 已有的同日檔案為 <同日既存>
+  Scenario Outline: 資料異動時重建 api/ 衍生層（latest/daily/trends/index）
+    Given 上次部署後 api/daily/ 已有的同日價格點檔為 <同日既存>
     When 本次爬蟲產出與上次有異動的資料
-    Then 工作流寫入 api/items/20260816.json（<行為>）並更新 api/index.json
+    Then 工作流寫入/更新 api/daily/20260816.json（<行為>）、api/items/{g}.json（分類鏡像）與 api/index.json
+    And 工作流重建 api/trends/{item_id}.json（逐商品完整歷史）並更新 api/index.json（categories[]（id/name/file/count）、daily_files[]、trends_prefix；**無 latest_file**）
     And 資料檔內含本次爬取時間 crawled_at
     Examples:
-      | 同日既存       | 行為                            |
-      | 無              | 新建                            |
-      | 20260816.json   | 覆寫（不再產生 20260816_1）    |
+      | 同日既存      | 行為                       |
+      | 無           | 新建                       |
+      | 20260816.json | 覆寫（不再產生 20260816_1） |
 
   @business-rule @health-guard @regression
   Scenario Outline: 健康檢查擋下時不寫入 api/ 衍生層
     Given 爬蟲產出 meta.status 為 <status> 且商品總數 total 為 <total>
     When scripts/version_data.py 執行異動判定
-    Then 判定 changed=false 且不寫入任何 api/items/*.json 與 api/latest.json
+    Then 判定 changed=false 且不寫入任何 api/ 衍生檔（api/items/{g}.json、api/daily/、api/trends/）
     And api/index.json 維持不變（保留上次成功快照）
     Examples:
       | status  | total |
@@ -110,7 +113,7 @@ Feature: 每日排程與 GitHub Pages 部署
 
   @edge-case @initial-setup
   Scenario: 首次執行建立初始資料檔
-    Given repo 內尚無 api/items/*.json 快照
+    Given repo 內尚無 api/items/{g}.json 與 api/daily/ 衍生檔
     When 工作流首次執行爬蟲成功並產出資料
-    Then 工作流建立 api/items/{date}.json 與 api/index.json
-    And 資料檔含 crawled_at 與完整商品清單
+    Then 工作流建立 api/items/{g}.json（每分類一檔，純 items 陣列）、api/daily/{date}.json、api/trends/ 與 api/index.json（categories[] 收錄全部分類）
+    And api/index.json 含 crawled_at 與各分類計數

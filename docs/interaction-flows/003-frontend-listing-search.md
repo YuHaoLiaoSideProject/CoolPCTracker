@@ -20,7 +20,7 @@
 |------|------|
 | **使用者角色** | 一般訪客（公開網站，無需註冊／登入） |
 | **觸發入口** | 直接開啟 GitHub Pages 網址（首頁）；或透過分享連結直達分類頁（deep link） |
-| **前置條件** | 網站已部署且同 origin 的資料 API（`api/index.json` → `api/items/YYYYMMDD[_n].json`）存在（約 1,449 筆）；瀏覽器支援現代 JavaScript（Vue 3 相容） |
+| **前置條件** | 網站已部署且同 origin 的資料 API（契約 v2：`api/index.json`（categories[]＋crawled_at）＋ `api/items/{g}.json` 每分類一檔、每筆 history ≤2 點）存在（約 1,449 筆）；瀏覽器支援現代 JavaScript（Vue 3 相容） |
 | **使用情境** | ① 隨手逛逛想買電腦零件，瀏覽分類 ② 知道目標型號（如 RTX 4070）直接搜尋 ③ 對規格有硬性需求（VRAM≥12G、瓦數≥750W、CPU 核數≥8）用結構化篩選 ④ 每日查看昨日漲跌決定出手時機 |
 | **非目標** | 本功能**不含**：商品詳情頁與歷史趨勢圖（004）、追蹤清單（005）、同類比價（006）。商品卡片保留這些功能的入口位置，但不屬本功能驗收範圍 |
 
@@ -85,7 +85,7 @@ flowchart TD
 |---|------|
 | **觸發** | 訪客於瀏覽器開啟網站網址（GitHub Pages 首頁） |
 | **操作前** | 訪客尚未載入任何頁面；瀏覽器可連上 GitHub Pages |
-| **系統回應** | 顯示全頁載入狀態（skeleton 骨架），同時下載並解析同 origin 的資料 API（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`） |
+| **系統回應** | 顯示全頁載入狀態（skeleton 骨架），同時下載並解析同 origin 的資料 API（`api/index.json`（categories[]）→ 依側欄 lazy 載入 `api/items/{g}.json?v={crawled_at}`，全站列表用 loadAll 聚合） |
 | **操作後** | 首頁顯示完成：左側 9 大分類側欄 + 全部商品列表（約 1,449 筆） |
 | **下一步** | 步驟 2：選擇分類；或步驟 3：搜尋；或步驟 4：篩選 |
 
@@ -145,7 +145,7 @@ flowchart TD
 |---|------|
 | **觸發** | 訪客透過分享連結直接開啟分類頁 URL（含 `?category=<key>`） |
 | **操作前** | 瀏覽器尚無任何頁面狀態 |
-| **系統回應** | 載入資料 API 後依 URL 分類參數直接呈現對應分類頁 |
+| **系統回應** | 載入 `api/index.json` 後依 URL 分類參數 lazy 載入對應分類檔 `api/items/{g}.json?v={crawled_at}`，直接呈現該分類頁 |
 | **操作後** | 側欄反白對應分類；列表顯示該分類商品 |
 | **下一步** | 步驟 3／4：搜尋或篩選 |
 
@@ -171,7 +171,7 @@ flowchart TD
 | 面向 | 限制 | 說明 |
 |------|------|------|
 | **權限** | 無帳號、無登入 | 所有人同權限；不做個人化 |
-| **資料規模** | 全量載入資料 API 日期制快照（約 1,449 筆） | 單次請求；compact arrays 控制體積；不實作伺服器端分頁 |
+| **資料規模** | 依側欄 lazy 載入分類檔（每檔數十至數百筆，如 CPU 48、主機板 373）；全站列表/搜尋用 loadAll 聚合（約 1,449 筆） | 每分類一次請求；compact arrays 控制體積；不實作伺服器端分頁 |
 | **搜尋範圍** | 商品名稱 + 結構化規格欄位（brand/model/cores/vram/wattage 等） | 不含 flags、status、歷史價格 |
 | **搜尋比對** | 不區分大小寫的子字串比對 | 不做模糊／斷詞（可列 P2） |
 | **篩選語意** | 數值門檻一律「≥（大於等於）」 | 例：VRAM≥12G 包含 12G 與 16G；不支援反向或範圍不等式 |
@@ -179,7 +179,7 @@ flowchart TD
 | **篩選組合** | 多條件一律 AND | 不支援 OR 群組（可列 P2） |
 | **分類** | 固定 9 大類（CPU／主機板／記憶體／顯示卡／SSD／HDD／套裝/準系統／劈發價組合區／記憶卡） | 與爬蟲 categories.py 同步；分類頁 URL 帶 `?category=<key>` |
 | **URL** | 首頁 `/`、分類頁 `?category=<key>` | 支援 deep link；搜尋與篩選狀態不寫入 URL（可列 P2） |
-| **快取** | GitHub Pages 可能快取 index.json | 日期制檔名 `api/items/YYYYMMDD[_n].json` 自帶快取失效（runtime 讀 `api/index.json` 的 `latest_file`） |
+| **快取** | GitHub Pages 可能快取 index.json / api/items/{g}.json | 分類檔以 `?v={crawled_at}` 做 cache-busting（runtime 讀 `api/index.json` 的 `crawled_at`，更新後強制取新）；Pages 預設 `max-age=600` 誤差可接受 |
 | **效能** | 首次下載資料後於 client 端即時過濾 | 1,449 筆全量渲染可接受；超過 2,000 筆考慮虛擬列表 |
 | **時區** | 資料日期為 UTC，顯示轉台北時間 | 漲跌以「昨日」為基準 |
 | **瀏覽器** | 現代瀏覽器（Vue 3 相容） | 不支援 IE |

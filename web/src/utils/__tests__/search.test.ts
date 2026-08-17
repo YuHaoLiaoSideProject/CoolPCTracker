@@ -12,7 +12,7 @@ describe("matchesKeyword", () => {
   })
 
   it("spec 欄位值命中（如 LGA1700 socket）", () => {
-    const it = makeItem({ name: "技嘉 B760M", category: "主機板", spec: { socket: "LGA1700" } })
+    const it = makeItem({ name: "技嘉 B760M", spec: { socket: "LGA1700" } })
     expect(matchesKeyword(it, "lga1700")).toBe(true)
   })
 

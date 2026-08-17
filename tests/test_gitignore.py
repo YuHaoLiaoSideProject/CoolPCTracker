@@ -1,9 +1,11 @@
-"""repo 基建測試：.gitignore 版控範圍（功能 002 §1.1 資料檔入庫 + AirTicketsPrice 模式 api/ 面）。
+"""repo 基建測試：.gitignore 版控範圍（契約 v2 §1.1 資料檔入庫 + AirTicketsPrice 模式 api/ 面）。
 
 以 `git check-ignore -q`（subprocess）驗證：
-- data/items.json、data/meta.json、data/telegram.json 不再被忽略（入庫）
-- api/index.json、api/latest.json、api/items/*.json 不被忽略（衍生 API 成品入庫）
-- data/items.v*.json 重新被忽略（版本化快照已移入 api/items/）
+- data/items/（{g} 分類檔）、data/daily/（YYYYMMDD 每日價格點）、data/meta.json、
+  data/telegram.json 不再被忽略（入庫；v2 不再有單一 data/items.json）
+- api/index.json、api/items/*.json、api/daily/*.json、api/trends/*.json 不被忽略（衍生 API 成品入庫）
+- 舊命名殘留（data/items.v*.json）仍被忽略；data/items.json 已刪除且其白名單規則移除
+  （注：遷移 commit 前的過渡期該路徑仍受 git index 追蹤，tracked 檔不受 ignore 規則影響，故不以此斷言）
 - data/secret.txt（其他 data/ 內容）仍被忽略
 - web/node_modules/ 被忽略（前端依賴不入庫）
 
@@ -32,11 +34,13 @@ def _git_check_ignore(path: str) -> bool:
 
 
 def test_data_truth_files_not_ignored() -> None:
-    """002 要版控的資料真相檔不再被 .gitignore 忽略（§1.1 data/ 入庫）。"""
+    """v2 要版控的資料真相檔不再被 .gitignore 忽略（data/ 入庫）。"""
     for path in [
-        "data/items.json",          # 001 來源真相
-        "data/meta.json",           # crawled_at/計數
-        "data/telegram.json",       # 006 通知狀態（與 items.json 一併 commit）
+        "data/items/4.json",          # v2 分類檔（{g} = 分類 id，本例 CPU）
+        "data/items/12.json",         # v2 分類檔（顯示卡）
+        "data/daily/20260816.json",   # 每日價格點（歷史真相序列）
+        "data/meta.json",             # crawled_at/計數
+        "data/telegram.json",         # 006 通知狀態（與資料一併 commit）
     ]:
         assert not _git_check_ignore(path), f"{path} 應不再被 .gitignore 忽略"
 
@@ -44,21 +48,26 @@ def test_data_truth_files_not_ignored() -> None:
 def test_api_artifacts_not_ignored() -> None:
     """api/ 衍生 API 成品（version_data.py 產出）不被 .gitignore 忽略。"""
     for path in [
-        "api/index.json",           # 目錄/總覽（前端唯一入口）
-        "api/latest.json",          # 穩定端點
-        "api/items/20260815.json",  # 日期制快照
-        "api/items/20260816.json",  # 跨日第二檔（單檔覆寫制，無後綴）
+        "api/index.json",             # 目錄/總覽（前端唯一入口；categories[]、無 latest_file）
+        "api/items/4.json",           # 分類檔鏡像（{g} = 分類 id）
+        "api/items/12.json",
+        "api/daily/20260816.json",    # 每日價格點鏡像
+        "api/trends/4126a92c46ec6d7e.json",  # 逐商品完整歷史
     ]:
         assert not _git_check_ignore(path), f"{path} 應不被 .gitignore 忽略"
 
 
-def test_versioned_snapshots_moved_out_of_data() -> None:
-    """版本化快照已移入 api/items/，data/items.v*.json 應重新被忽略。"""
+def test_legacy_naming_files_ignored() -> None:
+    """002 版本化快照命名（data/items.v*.json）已在 v2 淘汰，殘留檔應被忽略。
+
+    註：data/items.json（v1 單一檔名）雖不再白名單放行，但遷移 commit 前該路徑
+    仍受 git index 追蹤（git status 顯示 D）；tracked 檔不受 ignore 規則影響，
+    git check-ignore 會回未忽略，故不在此斷言。"""
     for path in [
-        "data/items.v1.json",
+        "data/items.v1.json",         # 002 版本化快照命名（已淘汰）
         "data/items.v10.json",
     ]:
-        assert _git_check_ignore(path), f"{path} 應被忽略（快照已移入 api/items/）"
+        assert _git_check_ignore(path), f"{path} 應被忽略（v2 已無此檔名）"
 
 
 def test_other_data_files_still_ignored() -> None:

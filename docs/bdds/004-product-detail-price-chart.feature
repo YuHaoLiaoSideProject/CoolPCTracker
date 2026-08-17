@@ -7,6 +7,9 @@ Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
   Background:
     Given 系統已載入同 origin 的資料 API 商品資料
     And 商品「Intel i5-13600K」存在於商品資料，id 為「3f9a1c2b8e4d5f6a」
+    # 契約 v2：列表分類檔（api/items/{g}.json）每筆 history 僅最近 ≤2 點；趨勢圖與歷史最低價的完整歷史
+    # 由 useTrend 依 id 載入 api/trends/{id}.json（單一商品全歷史，1 request）；載入失敗不影響其餘頁面；
+    # 商品定位依 loadAll 聚合後的全站 items 執行（無 latest_file 端點）
 
   @happy-path @smoke @p0 @e2e
   Scenario: 從列表點入詳情頁並檢視完整資訊
@@ -18,6 +21,7 @@ Feature: 商品詳情與歷史趨勢圖（004-product-detail-price-chart）
     And 系統顯示歷史最低價與達成日期
     And 系統渲染歷史價格趨勢圖
     And 趨勢圖支援縮放與 tooltip 懸停查價
+    # 註：趨勢圖與歷史最低價資料源為 api/trends/{id}.json（useTrend），非列表快照的 ≤2 點 history
 
   @happy-path @smoke @p1 @e2e
   Scenario: 設定目標價格線

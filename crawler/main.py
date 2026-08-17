@@ -3,7 +3,7 @@
 功能 001 的管道編排（開發規格 §1.8），同時是 007 健康檢查與 002 排程的整合點：
 
 - **驟降保護**（#14/#15）：total==0 或降幅 > DROP_THRESHOLD → 判定 failed →
-  不覆寫 items.json、以 notify hook 發中文警報（007 telegram_bot 注入）、
+  不覆寫 items 分類檔（data/items/）、以 notify hook 發中文警報（007 telegram_bot 注入）、
   meta.status="failed"、return 1
 - **部分分類失敗**（#12/#16）：成功分類更新、失敗分類既有資料保留
   （diff 時視為未變動、不誤判 gone）、meta.status="partial"、return 0
@@ -19,11 +19,13 @@
 
 **counts/total 語意**（去重計數）：counts/total = 「本次解析（去重後）商品數」，
 以 unique id 計（store.diff 的 by_id dict 覆蓋同名同 ID，BDD #18）；失敗分類維持 0，
-無 failed/gone carryover 時與 data/items.json 實際筆數一致。
+無 failed/gone carryover 時與 data/items/ 各分類檔合併筆數一致。
 
-**寫檔分工**：ok/partial → store.save(items, meta)（原子寫 items.json + meta.json，
-meta 含完整欄位）；failed → store.write_meta(...)（僅寫 meta.json 標記失敗，
-items.json 保持原狀）。
+**寫檔分工**：ok/partial → store.save(items, meta)（依分類分組原子寫
+ data/items/{g}.json 分類檔 + meta.json，meta 含完整欄位）＋
+store.write_daily(day, 當日價格點)（O4：data/daily/{YYYYMMDD}.json，
+只含當日成功爬取且價格存在的商品）；failed → store.write_meta(...)（僅寫 meta.json
+標記失敗，items 分類檔與 daily 檔均保持原狀）。
 """
 from __future__ import annotations
 
@@ -54,12 +56,12 @@ def run_crawler(data_dir: Path, today: date | None = None,
                 notify: NotifyFn | None = None) -> int:
     """執行完整管道（規格 §1.8 步驟 1-7），回傳 exit code。
 
-    0 = 成功（含 partial）；1 = 健康檢查擋下（failed，不覆寫 items.json）；
+    0 = 成功（含 partial）；1 = 健康檢查擋下（failed，不覆寫 items 檔）；
     2 = 其他執行失敗（由 main() 捕捉意外例外後回傳）。
 
     counts/total = 「本次解析（去重後）商品數」：以 unique id 計（同名同 ID 重複只算
     一筆，與 store.diff 的 by_id 覆蓋一致）；無 failed/gone carryover 時
-    與 data/items.json 實際筆數相同。失敗分類 counts=0、previous_total 語意不變。
+    與 data/items/ 各分類檔合併筆數相同。失敗分類 counts=0、previous_total 語意不變。
     """
     day = today if today is not None else date.today()
     store = Store(data_dir)
@@ -92,12 +94,14 @@ def run_crawler(data_dir: Path, today: date | None = None,
     # 去重計數：store.diff 以 by_id dict 覆蓋同名同 ID（BDD #18，最後解析者勝出），
     # 因此 counts/total 依「去重後的今日商品 unique id」計數，與實際儲存筆數一致；
     # 失敗分類不在今日清單 → counts 維持 0（「本次解析數」語意不變）。
-    counts: dict[str, int] = {c.name: 0 for c in CATEGORIES}
-    unique_ids: set[str] = set()
+    # unique_today 即「今日商品」（去重後），供 write_daily 產出當日價格點檔。
+    by_id: dict[str, Item] = {}
     for item in today_items:
-        if item.id not in unique_ids:
-            unique_ids.add(item.id)
-            counts[item.category] += 1
+        by_id[item.id] = item  # 同名同 ID → 最後解析者覆蓋（與 store.diff 一致）
+    unique_today: list[Item] = list(by_id.values())
+    counts: dict[str, int] = {c.name: 0 for c in CATEGORIES}
+    for item in unique_today:
+        counts[item.category] += 1
 
     # BDD #16 / 007 rule 4：解析出 0 商品但上次有商品的分類 → 視為失敗分類（沿用舊資料）
     for category in CATEGORIES:
@@ -105,7 +109,7 @@ def run_crawler(data_dir: Path, today: date | None = None,
                 and any(i.category == category.name for i in previous_items.values())):
             failed_categories.append(category.name)
 
-    total = sum(counts.values())  # == len(unique_ids)（各分類 unique id 數加總）
+    total = len(unique_today)  # == sum(counts.values())（各分類 unique id 數加總）
     previous_total = old_meta.get("previous_total")
     if previous_total is None:
         previous_total = old_meta.get("total")  # 首次/舊版 meta 無基準 → 沿用上次 run 總數
@@ -117,7 +121,7 @@ def run_crawler(data_dir: Path, today: date | None = None,
             notify(_build_alert(day, total, previous_total, failed_categories, reason))
         store.write_meta(crawled_at=_utc_now(), counts=counts, total=total, changed=0,
                          failed_categories=failed_categories, status=STATUS_FAILED)
-        logger.error("crawler %s: %s（不覆寫 items.json）", day.isoformat(), reason)
+        logger.error("crawler %s: %s（不覆寫 items 分類檔）", day.isoformat(), reason)
         return 1
 
     # 5. diff → apply（partial：失敗分類既有商品視為「今日未成功爬取」→ carryover，
@@ -141,6 +145,12 @@ def run_crawler(data_dir: Path, today: date | None = None,
         "status": status,
     })
     store.save(items, meta)
+
+    # 6b. O4 每日價格點檔：data/daily/{YYYYMMDD}.json = {id: price}
+    # 只含當日成功爬取且價格存在的商品（今日商品 = 去重後 unique_today，與 counts 一致）；
+    # 失敗分類（carryover）不在今日清單 → 不寫入當日檔。
+    store.write_daily(day, {item.id: item.price for item in unique_today
+                            if item.price is not None})
 
     # 7. 執行摘要 log（各分類商品數、異動數、失敗分類）
     logger.info(
@@ -213,7 +223,7 @@ def _build_alert(day: date, total: int, previous_total: int | None,
     return (
         f"⚠️ [CoolPC 爬蟲異常] {day.isoformat()} 執行失敗：{reason}。"
         f"本次解析 {total} 商品（前次基準 {prev}），失敗分類：{failed}。"
-        "已取消覆寫 data/items.json，既有資料保持原狀。"
+        "已取消覆寫 data/items/ 分類檔，既有資料保持原狀。"
     )
 
 

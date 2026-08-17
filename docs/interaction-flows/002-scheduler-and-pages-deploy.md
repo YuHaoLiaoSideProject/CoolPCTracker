@@ -37,7 +37,7 @@ flowchart TD
     Pip --> Crawl[4. 執行爬蟲（功能 001）]
     Crawl --> Diff{5. 資料有異動?}
     Diff --> TG[[6. Telegram 通知整合點（功能 006 預留，commit 前）]]
-    TG -->|有異動| Commit[7a. commit data/ api/：YYYYMMDD[_n].json + index.json + meta.json + telegram.json]
+    TG -->|有異動| Commit[7a. commit data/ api/：items/{g}.json + daily/ + trends/ + index.json + meta.json + telegram.json]
     TG -->|無異動| Skip[7b. 跳過 commit，保留上次資料]
     Commit --> Build[8. 前端 Vite build]
     Skip --> Build
@@ -102,7 +102,7 @@ flowchart TD
 |---|------|
 | **觸發** | run 自動執行爬蟲主程式 |
 | **操作前** | 相依套件已安裝（步驟 4） |
-| **系統回應** | 抓取 9 個分類頁 → 解析 1,449 商品 → 與既有資料 diff → 更新 items.json 與 meta.json（含 crawled_at） |
+| **系統回應** | 抓取 9 個分類頁 → 解析 1,449 商品 → 與既有資料 diff → 更新 data/items/{g}.json 各分類檔與 meta.json（含 crawled_at） |
 | **操作後** | 爬取完成；若成功，資料檔反映本次爬取結果 |
 | **下一步** | 步驟 6：資料異動判斷與 commit |
 
@@ -110,10 +110,10 @@ flowchart TD
 
 | | 描述 |
 |---|------|
-| **觸發** | version_data 比對本次爬取結果與上次最新快照（掃 `api/items/*.json` 取 (日期, 後綴) 最大） |
+| **觸發** | version_data 比對本次爬取結果與上次各分類檔（讀 `api/items/{g}.json` 各分類檔與 `api/daily/` 差集判定異動；契約 v2：無 api/latest.json） |
 | **操作前** | 爬蟲已完成（步驟 5） |
-| **系統回應** | 輸出異動判定（changed）與新檔名（filename = {YYYYMMDD[_n]}.json）；**此步不 commit** |
-| **操作後** | 工作目錄含本次資料與日期制快照，待 telegram 階段與 commit |
+| **系統回應** | 輸出異動判定（changed）與新檔名（filename = {YYYYMMDD}.json，取自台北日期）；**此步不 commit**（0 衍生層檔不在此確認） |
+| **操作後** | 工作目錄含本次資料與組裝後之 api/ 衍生層（items/{g}.json + daily/ + trends/ + index.json），待 telegram 階段與 commit |
 | **下一步** | 步驟 7：Telegram 通知整合點（commit 前） |
 
 ### 步驟 7：Telegram 通知整合點（功能 006 預留）
@@ -132,7 +132,7 @@ flowchart TD
 |---|------|
 | **觸發** | telegram 階段完成後依異動判定分支 |
 | **操作前** | 爬蟲與 telegram 已完成（步驟 5-7） |
-| **系統回應** | **有異動（7a）**：commit data/ api/（YYYYMMDD[_n].json + index.json + meta.json + telegram.json）；**無異動（7b）**：跳過 commit，保留上次資料（不產生空 commit） |
+| **系統回應** | **有異動（7a）**：commit data/ api/（items/{g}.json + daily/ + trends/ + index.json + meta.json + telegram.json）；**無異動（7b）**：跳過 commit，保留上次資料（不產生空 commit） | |
 | **操作後** | 有異動 → 資料檔已推回主分支；無異動 → 工作目錄無變化 |
 | **下一步** | 步驟 8：前端 Vite build |
 
@@ -189,10 +189,10 @@ flowchart TD
 | **更新頻率** | 每日一次（06:00 UTC = 台北 14:00）；手動觸發可隨時補爬，不受每日一次限制 |
 | **cron 精準度** | GitHub Actions 排程不保證分秒不差，可能延遲數分鐘或偶發跳過（官方不提供 SLA） |
 | **並發寫入** | 排程與手動同時觸發時，需以 concurrency 控制避免 commit 衝突；同一時間僅允許一個 run 進入寫入階段 |
-| **資料檔命名** | 考量 GitHub Pages JSON 快取，資料檔採日期制 cache-busting 檔名 api/items/YYYYMMDD[_n].json；檔名取自 crawled_at 轉台北日期（同日多份依序加後綴） |
+| **資料檔命名** | 契約 v2（分類拆檔）：`api/items/{g}.json` 各分類鏡像（純 items 陣列、鏡像 data/items/{g}.json；**無 api/latest.json、無 latest_file**）；每日價格點鏡像 `api/daily/YYYYMMDD.json`；逐商品全歷史 `api/trends/{item_id}.json`；索引 `api/index.json`（categories[]（id/name/file/count）、daily_files[]、trends_prefix） |
 | **資料新鮮度** | 資料檔含 crawled_at；爬蟲失敗當日不更新，網站顯示上次成功爬取時間 |
 | **失敗保護** | 任一關鍵步驟失敗即停止後續步驟：爬蟲失敗不覆寫舊資料、build 失敗不部署、部署失敗保留上次版本 |
-| **版本控制** | 資料檔納入 git 版控（每日一點累積歷史，含平價日）；每日成功爬取即會異動 items.json → 每日 commit 一次資料更新 |
+| **版本控制** | 資料檔納入 git 版控（每日一點累積歷史，含平價日）；每日成功爬取即新增 `data/daily/{date}.json` 並異動 items.json/api 衍生層 → 每日 commit 一次資料更新 |
 | **頻寬額度** | GitHub Pages 免費額度 100GB/月，超出僅暫停服務，成本可控 |
 | **Telegram 通知** | 本功能僅預留整合點；實際通知邏輯於功能 006 實作（爬蟲完成後觸發） |
 
@@ -204,13 +204,13 @@ flowchart TD
 - [ ] 維護者可透過 workflow_dispatch 手動觸發（Actions 頁面有「Run workflow」按鈕）
 - [ ] 工作流依序執行：checkout → setup-python 3.12 → pip install → 爬蟲 → build → 部署
 - [ ] 資料有異動時才 commit data/，無異動時跳過 commit（不產生空 commit）
-- [ ] 資料檔使用日期制 cache-busting 檔名 api/items/YYYYMMDD[_n].json（同日多份依序加後綴）
-- [ ] api/index.json 記錄 files[] 完整日期檔清單與 latest_file；meta.json 記錄最後爬取時間
+- [ ] 資料有異動時組裝並 commit api/ 衍生層：`api/items/{g}.json`（各分類鏡像）+ `api/daily/YYYYMMDD.json` + `api/trends/` + `api/index.json`
+- [ ] api/index.json 記錄 categories[]（id/name/file/count）、daily_files[] 完整日期檔清單與 trends_prefix；無 latest_file；meta.json 記錄最後爬取時間
 - [ ] 資料含 crawled_at，前端可顯示資料新鮮度
 - [ ] 爬蟲完成後觸發 Telegram 通知整合點（功能 006 預留，未實作不中斷 run）
 - [ ] 爬蟲失敗 → run 標記失敗、舊資料不覆寫、不部署
 - [ ] build 失敗 → run 標記失敗、不部署
 - [ ] 部署失敗 → run 標記失敗、線上維持上次成功版本
 - [ ] 並發 run 有 concurrency 控制，不產生 commit 衝突或檔名重複
-- [ ] 首次執行（repo 尚無快照）建立 api/items/{date}.json 與 api/index.json
+- [ ] 首次執行（repo 尚無衍生層）建立 api/items/{g}.json（全部分類）、api/daily/{date}.json、api/trends/ 與 api/index.json（含 categories[]）
 - [ ] 部署完成後 GitHub Pages 網站可存取，且資料為最新版本（crawled_at 為本次爬取時間）

@@ -11,9 +11,9 @@
 
 ## 概述
 
-提供公開訪客以「9 大分類瀏覽、全文搜尋、結構化規格篩選」三種方式收斂 1,449 筆追蹤商品，並以商品卡片一眼掌握目前價格、昨日漲跌與迷你趨勢。**本功能為純前端**（無後端 API、無 WebSocket），唯一外部依賴為同 origin 的資料 API（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json` 靜態檔案，crawler 產出 `data/items.json` 後由 002 衍生）。核心包含：
+提供公開訪客以「9 大分類瀏覽、全文搜尋、結構化規格篩選」三種方式收斂 1,449 筆追蹤商品，並以商品卡片一眼掌握目前價格、昨日漲跌與迷你趨勢。**本功能為純前端**（無後端 API、無 WebSocket），唯一外部依賴為同 origin 的資料 API（契約 v2 分類拆檔：`api/index.json`（categories[]）＋ `api/items/{g}.json` 每分類一檔靜態檔案，crawler 產出 `data/items/{g}.json` 後由 002 鏡像組裝；分類檔每筆 history 僅 ≤2 點）。核心包含：
 
-1. **`useItems`（資料載入 composable）**：runtime 兩段式 fetch（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）、解析驗證、錯誤分類（載入失敗／格式錯誤）、重試、資料過期判定。
+1. **`useItems`（資料載入 composable）**：runtime 讀 `api/index.json`（categories[]＋crawled_at）→依側欄 lazy 載入對應分類檔 `api/items/{g}.json?v={crawled_at}`；`loadAll` 聚合全部分類供全站搜尋／詳情 deep link／追蹤；解析驗證、錯誤分類（載入失敗／格式錯誤）、重試、資料過期判定。
 2. **`useFilters`（篩選狀態 composable）**：搜尋關鍵字、規格條件（AND 組合）、目前分類三態狀態機與過濾運算（純函數、可測試）。
 3. **`CategorySidebar`**：固定 9 大分類側欄（含深層連結 `?category=<key>` 雙向同步）。
 4. **`ProductList` / `ProductCard`**：商品卡片（名稱、規格 chips、目前價、昨日漲跌、sparkline），並預留 004 詳情頁／005 追蹤／005 比價之 props 與事件入口。
@@ -38,7 +38,7 @@ web/
 │   ├── App.vue                          ← 新增：全站外框（頂部 header + <router-view>）
 │   ├── router/index.ts                  ← 新增：`/` → ListingView；建議 createWebHashHistory
 │   ├── types/
-│   │   ├── item.ts                      ← 新增：Item / ItemSpec / PricePoint / ItemsFile 型別
+│   │   ├── item.ts                      ← 新增：Item / ItemSpec / PricePoint / CategoryFile / IndexFile 型別（契約 v2）
 │   │   └── filters.ts                   ← 新增：SpecField / SpecCondition / FilterState
 │   ├── data/
 │   │   └── categories.ts                ← 新增：9 大分類定義（key、label、gIndex）
@@ -65,13 +65,13 @@ web/
 
 ### 2.2 型別定義（`types/item.ts`）
 
-`data/items.json` 為爬蟲 001 產出、`data/` 目錄由 002 部署提交；此處型別即該檔案的**前端契約**（與 tech decision §3.4 資料模型草稿對齊，欄位以 `optional` 容忍爬蟲尚未解析的欄位）：
+`data/items/{g}.json` 為爬蟲 001 產出、`data/` 目錄由 002 部署提交；此處型別即該檔案（**契約 v2 分類拆檔：每分類一檔、純 items 陣列、無 meta、無 category 欄位**）的**前端契約**（欄位以 `optional` 容忍爬蟲尚未解析的欄位）：
 
 ```typescript
 // web/src/types/item.ts
 /** 歷史價格點：d = 日期（UTC），p = 台幣整數。
- *  ⚠️ items.json 原始格式為 compact 陣列 ["2026-08-15", 9990]（001 格式決策），
- *  由 useItems.parseItemsFile 於載入層正規化為本物件型別；元件一律使用正規化後型別。 */
+ *  ⚠️ 分類檔原始格式為 compact 陣列 ["2026-08-15", 9990]（001 格式決策），
+ *  由 useItems.parseCategoryFile 於載入層正規化為本物件型別；元件一律使用正規化後型別。 */
 export interface PricePoint {
   d: string  // "2026-08-15"
   p: number  // 9990
@@ -98,7 +98,7 @@ export type ItemStatus = 'in_stock' | 'gone'
 
 export interface Item {
   id: string            // hash(主分類 + 正規化名稱)，跨日穩定（001 為 sha256 hex[:16]）
-  category: string      // 分類**中文標籤**（與 categories.ts label 對齊）：CPU/主機板/…
+  // ⚠️ 契約 v2：Item **無 category 欄位**（分類為外部狀態——item 屬哪一檔即屬哪一分類）
   subcategory?: string  // 子分類標題（如「Intel 第14代」；G=9 過濾後收錄）
   name: string
   spec: ItemSpec        // 可能為空物件 {}（無結構化規格）
@@ -107,17 +107,20 @@ export interface Item {
   status: ItemStatus
   first_seen: string
   last_seen: string
-  history: PricePoint[] // 每日一點累積（含平價日）；可能為空陣列或僅 1 筆（首次出現）
+  history: PricePoint[] // 契約 v2：分類檔每筆僅最近 ≤2 點（完整歷史由 api/trends/{id}.json 提供）；可能為空陣列或僅 1 筆（首次出現）
 }
 
-/** data/items.json 頂層契約 */
-export interface ItemsFile {
-  meta: {
-    crawled_at: string  // UTC ISO 字串，供過期判定（>7 天，與 007 新鮮度規則共用）
-    source: string
-    [key: string]: unknown
-  }
-  items: Item[]
+/** api/items/{g}.json 分類檔契約（契約 v2）：頂層即 Item 陣列 */
+export type CategoryFile = Item[]
+
+/** api/index.json 契約（契約 v2）：categories[] 為分類索引（前端 lazy 載入入口），取代 v1 的 latest_file */
+export interface IndexFile {
+  crawled_at: string    // UTC ISO 字串，供過期判定（>7 天，與 007 新鮮度規則共用）與 cache-busting（?v=）
+  categories: { id: string; name: string; file: string; count: number }[]
+  daily_files: { file: string; url: string; records: number }[]
+  trends_prefix: string
+  total?: number
+  status?: string
 }
 ```
 
@@ -133,8 +136,8 @@ export type CategoryKey =
 
 export interface CategoryDef {
   key: CategoryKey   // URL 參數值，如 ?category=GPU
-  label: string      // 顯示名 + items.json 的 category 欄位值
-  gIndex: number     // 爬蟲手機版頁 G 索引（僅供對照，前端不使用）
+  label: string      // 顯示名（契約 v2：分類為外部狀態，item 無 category 欄位；label 僅用於顯示/過濾比對）
+  gIndex: number     // 爬蟲手機版頁 G 索引（契約 v2：同時是分類檔名 data/items/{g}.json / api/items/{g}.json 的 {g}）
 }
 
 export const CATEGORIES: CategoryDef[] = [
@@ -158,14 +161,14 @@ export function labelOf(key: CategoryKey): string {
 }
 ```
 
-### 2.4 `useItems` — 資料載入 composable
+### 2.4 `useItems` — 資料載入 composable（契約 v2：lazy 分類載入 + loadAll 聚合）
 
-職責：runtime 兩段式 fetch（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`，日期制檔名自帶快取失效）、解析與 shape 驗證、錯誤分類、重試、過期判定。**錯誤分類決定 ErrorState 顯示文案**；任何失敗都不能影響側欄／搜尋框渲染（錯誤只在列表區域呈現）。
+職責：runtime 讀 `api/index.json`（categories[]＋crawled_at）→ 依側欄「當前分類」**lazy 載入** `api/items/{g}.json?v={crawled_at}`（每分類一檔、純 items 陣列）；`loadAll()` 以 Promise.all 聚合全部分類檔供全站搜尋／詳情 deep link／追蹤使用。解析與 shape 驗證、錯誤分類、重試、過期判定。**錯誤分類決定 ErrorState 顯示文案**；任何失敗都不能影響側欄／搜尋框渲染（錯誤只在列表區域呈現）。
 
 ```typescript
 // web/src/composables/useItems.ts
 import { ref, computed, type Ref } from 'vue'
-import type { ItemsFile, Item } from '@/types/item'
+import type { IndexFile, CategoryFile, Item } from '@/types/item'
 
 export type LoadError = 'fetch' | 'parse' | null
 // 'fetch'：HTTP 失敗 / 網路中斷 → 「資料載入失敗」
@@ -174,32 +177,59 @@ export type LoadError = 'fetch' | 'parse' | null
 export class ParseError extends TypeError {}  // 供 error 分類判別
 
 const INDEX_URL = `${import.meta.env.BASE_URL}api/index.json`
-// runtime 發現（002 §1.7 合約）：index.json 是唯一入口（latest_file），
-// 日期制快照 api/items/YYYYMMDD[_n].json 檔名含日期 → 新檔必然 miss 快取，無需 query 穿透。
+// runtime 發現（002 §1.7 合約，契約 v2）：index.json 是唯一入口（categories[]＋crawled_at，無 latest_file），
+// 分類檔以 `?v={crawled_at}` 做 cache-busting（crawled_at 更新 → 強制取新，取代 v1 latest.json 的無 busting 語意），
+// 卡片漲跌/目前價讀分類檔 items[].history（每筆 ≤2 點）；完整歷史由 api/trends/{id}.json 提供（004 useTrend）。
 
 export function useItems() {
-  const items = ref<Item[]>([]) as Ref<Item[]>
-  const meta = ref<ItemsFile['meta'] | null>(null)
+  const items = ref<Item[]>([]) as Ref<Item[]>          // 目前分類已載入的 items（lazy）
+  const allItems = ref<Item[]>([]) as Ref<Item[]>       // loadAll 聚合的全站 items（搜尋/deep link/追蹤用）
+  const meta = ref<IndexFile['crawled_at'] | null>(null) // crawled_at（過期判定與 ?v=）
+  const index = ref<IndexFile | null>(null)             // categories[] 索引
   const loading = ref(true)
   const error = ref<LoadError>(null)
 
-  async function load(): Promise<void> {
+  async function loadIndex(): Promise<IndexFile> {
+    const indexRes = await fetch(INDEX_URL)              // 1. 取入口（categories[]）
+    if (!indexRes.ok) throw new Error(`HTTP ${indexRes.status}`)
+    const idx: unknown = await indexRes.json()
+    return parseIndex(idx)                               // shape 驗證 categories[]/crawled_at（無 latest_file）
+  }
+
+  /** lazy：依分類 G（gIndex → file）載入單一分類檔；可用於側欄切換 */
+  async function loadCategory(g: number): Promise<void> {
+    try {
+      const idx = index.value ?? (index.value = await loadIndex())
+      const cat = idx.categories.find(c => Number(c.id) === g)
+      if (!cat) throw new ParseError('categories[] 缺該分類')
+      const res = await fetch(`${import.meta.env.BASE_URL}${cat.file}?v=${encodeURIComponent(idx.crawled_at)}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const raw: unknown = await res.json()              // 壞 JSON → SyntaxError
+      items.value = parseCategoryFile(raw)               // 頂層即 Item[]；shape 驗證失敗 → ParseError
+      meta.value = idx.crawled_at
+    } catch (e) {
+      error.value = e instanceof ParseError || e instanceof SyntaxError ? 'parse' : 'fetch'
+    } finally { loading.value = false }
+  }
+
+  /** loadAll：併發載入全部分類檔聚合為全站 items（全站搜尋/詳情 deep link/追蹤頁使用） */
+  async function loadAll(): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      const indexRes = await fetch(INDEX_URL)               // 1. 取入口（latest_file）
-      if (!indexRes.ok) throw new Error(`HTTP ${indexRes.status}`)
-      const index: unknown = await indexRes.json()
-      const { latest_file } = parseIndex(index)             // shape 驗證 latest_file
-      const itemsRes = await fetch(`${import.meta.env.BASE_URL}${latest_file}`)  // 2. 取日期制快照
-      if (!itemsRes.ok) throw new Error(`HTTP ${itemsRes.status}`)
-      const raw: unknown = await itemsRes.json()            // 壞 JSON → SyntaxError
-      const parsed = parseItemsFile(raw)                    // shape 驗證失敗 → ParseError
-      items.value = parsed.items
-      meta.value = parsed.meta
+      const idx = index.value ?? (index.value = await loadIndex())
+      const files = idx.categories.map(c => c.file)
+      const results = await Promise.all(
+        files.map(f => fetch(`${import.meta.env.BASE_URL}${f}?v=${encodeURIComponent(idx.crawled_at)}`)),
+      )
+      if (results.some(r => !r.ok)) throw new Error('HTTP 部分分類載入失敗')
+      const raws = await Promise.all(results.map(r => r.json()))
+      allItems.value = raws.flatMap(r => parseCategoryFile(r))
+      items.value = allItems.value                      // 預設以全站列表呈現（「全部」）
+      meta.value = idx.crawled_at
     } catch (e) {
       error.value = e instanceof ParseError || e instanceof SyntaxError ? 'parse' : 'fetch'
-      // items 保持上次成功資料（若有）或空陣列；絕不 throw 至元件層
+      // items/allItems 保持上次成功資料（若有）或空陣列；絕不 throw 至元件層
     } finally {
       loading.value = false
     }
@@ -213,26 +243,35 @@ export function useItems() {
     return days > 7
   })
 
-  load()
-  return { items, meta, loading, error, retry: load, isStale }
+  // 初始進入首頁：直接 loadAll 聚合（全站列表；側欄切分類後可改走 loadCategory lazy 路徑）
+  loadAll()
+  return { items, allItems, index, meta, loading, error, retry: loadAll, loadCategory, isStale }
 }
 
-/** shape 驗證：items 為陣列且每筆具 id/name/category/history；不符即拋 ParseError。
+/** shape 驗證（契約 v2）：頂層即 Item 陣列且每筆具 id/name/subcategory/history；不符即拋 ParseError。
  *  正規化：原始 history 為 compact [d,p] 陣列（001 格式），此處 map 為 { d, p }（PricePoint）。 */
-function parseItemsFile(raw: unknown): ItemsFile {
-  // TODO: 最小驗證（typeof、Array.isArray、欄位存在性）
+function parseCategoryFile(raw: unknown): CategoryFile {
+  // TODO: 最小驗證（Array.isArray、欄位存在性）
   // 缺 history 的舊資料 → 補 []，避免下游 undefined 崩潰
   // history: rawItems[i].history.map(([d, p]) => ({ d, p })) ← compact → PricePoint 正規化
-  // 驗證失敗 → throw new ParseError('items.json shape 不符')
-  return raw as ItemsFile
+  // 驗證失敗 → throw new ParseError('分類檔 shape 不符')
+  return raw as CategoryFile
+}
+
+/** shape 驗證（契約 v2）：categories[]（id/name/file/count）＋ crawled_at；無 latest_file 欄位。 */
+function parseIndex(raw: unknown): IndexFile {
+  // TODO: 最小驗證（crawled_at 為 ISO 字串、categories 為非空陣列、每項具 file/count）
+  // v1 的 latest_file 已移除：前端一律經 categories[].file 動態發現分類檔
+  // 驗證失敗 → throw new ParseError('index.json shape 不符')
+  return raw as IndexFile
 }
 ```
 
-**單元測試方向（Vitest，mock global.fetch）**：成功載入（1,449 筆）／HTTP 404→`error='fetch'`／壞 JSON→`error='parse'`／shape 缺欄位→`error='parse'`／compact history 正規化為 PricePoint／`crawled_at` 8 天前→`isStale=true`（7 天內 false）／retry 成功後 error 清空。
+**單元測試方向（Vitest，mock global.fetch）**：成功載入（loadAll 1,449 筆）／lazy 單一分類載入（loadCategory）／HTTP 404→`error='fetch'`／壞 JSON→`error='parse'`／index categories[] 缺欄位→`error='parse'`／compact history 正規化為 PricePoint／`crawled_at` 8 天前→`isStale=true`（7 天內 false）／retry 成功後 error 清空／`?v={crawled_at}` 帶入 fetch URL。
 
 ### 2.5 `useFilters` — 搜尋＋篩選＋分類狀態
 
-職責：管理三種收斂維度（分類／關鍵字／規格條件）並計算 `filteredItems`。**過濾運算全為純函數**（`matchesKeyword`／`matchesCondition`），composable 只做狀態組合，單元測試可直接測純函數。
+職責：管理三種收斂維度（分類／關鍵字／規格條件）並計算 `filteredItems`。**過濾運算全為純函數**（`matchesKeyword`／`matchesCondition`），composable 只做狀態組合，單元測試可直接測純函數。**契約 v2：分類為外部狀態**——傳入的 `items` 已是「目前分類」的載入結果（lazy 載入分類檔）或「全部」的 loadAll 聚合，故過濾管線**不再依 `item.category` 欄位做分類比對**（Item 無 category 欄位）。
 
 ```typescript
 // web/src/composables/useFilters.ts
@@ -241,18 +280,16 @@ import type { Item } from '@/types/item'
 import type { SpecCondition } from '@/types/filters'
 import { matchesKeyword } from '@/utils/search'
 import { matchesCondition } from '@/utils/specFilter'
-import { labelOf } from '@/data/categories'
 
 export function useFilters(items: Ref<Item[]>) {
   const keyword = ref('')                       // 原始輸入；比對前 trim + lowercase
   const conditions = ref<SpecCondition[]>([])   // 多條件一律 AND
-  const categoryKey = ref<string | null>(null)  // null = 全部
+  const categoryKey = ref<string | null>(null)  // null = 全部（分類切換由 useItems loadCategory 載入對應檔）
 
-  /** 過濾管線：分類 → 搜尋 → 規格條件（AND 依序收斂） */
+  /** 過濾管線：搜尋 → 規格條件（AND 依序收斂）；分類由外部載入層決定（v2） */
   const filteredItems = computed<Item[]>(() => {
     const q = keyword.value.trim().toLowerCase()
     return items.value.filter(it => {
-      if (categoryKey.value && it.category !== labelOf(categoryKey.value as never)) return false
       if (q && !matchesKeyword(it, q)) return false
       return conditions.value.every(c => matchesCondition(it, c))
     })
@@ -491,7 +528,7 @@ const emit = defineEmits<{
 }>()
 
 const { currentPrice, deltaClass, deltaText } = usePriceDelta(props.item)
-const sparkPoints = computed(() => props.item.history.slice(-30))  // 卡片取最近 30 點
+const sparkPoints = computed(() => props.item.history.slice(-30))  // 卡片取最近 N 點；O4：列表快照 history 僅 ≤2 點，sparkline 以可取得之短歷史繪製（<2 點不畫線）
 const specChips = computed(() => chipTexts(props.item.spec))       // 如 ['14核','20緒','125W']
 // template: 見 §7 對應 class：pc-name / pc-specs / pc-price / pc-delta / pc-compare
 </script>
@@ -580,26 +617,35 @@ import ErrorState from '@/components/ErrorState.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { items, meta, loading, error, retry, isStale } = useItems()
+const { items, allItems, index, meta, loading, error, retry, loadCategory, isStale } = useItems()
 const filters = useFilters(items)
 
 // —— deep link：初次進入即依 ?category=<key> 呈現（BDD：直接以分類頁網址進入）——
+//    分類為外部狀態（v2）：切分類 = 載入對應分類檔 api/items/{g}.json（lazy），列表 items 即該分類
 const initial = route.query.category
-if (isCategoryKey(initial)) filters.setCategory(initial as CategoryKey)
+if (isCategoryKey(initial)) {
+  filters.setCategory(initial as CategoryKey)
+  void loadCategory(gIndexOf(initial as CategoryKey))   // lazy 載入該分類檔（?v={crawled_at}）
+}
 
 // —— URL 與狀態雙向同步：點側欄 → router.replace 更新 URL；URL 變（含前進/後退）→ 更新狀態 ——
 function selectCategory(key: CategoryKey | null) {
   router.replace(key ? { query: { category: key } } : { query: {} })
 }
 watch(() => route.query.category, v => {
-  if (isCategoryKey(v)) filters.setCategory(v as CategoryKey)
-  else filters.setCategory(null)
+  if (isCategoryKey(v)) {
+    filters.setCategory(v as CategoryKey)
+    void loadCategory(gIndexOf(v as CategoryKey))        // v2：切分類 lazy 載入
+  } else {
+    filters.setCategory(null)
+    void loadAll()                                        // 「全部」→ 聚合全部分類
+  }
 })
 
-// 各分類商品數（側欄顯示）
+// 各分類商品數（側欄顯示）：v2 直接取 api/index.json 的 categories[].count（item 無 category 欄位）
 const counts = computed(() => {
   const map: Record<string, number> = {}
-  for (const it of items.value) map[it.category] = (map[it.category] ?? 0) + 1
+  for (const c of index.value?.categories ?? []) map[c.name] = c.count
   return map
 })
 
@@ -654,7 +700,7 @@ function onToggleCompare(item: Item) { /* TODO(005): store.toggle(item.id) */ }
 
 | # | 情境 | 觸發 | 處理 |
 |---|------|------|------|
-| E1 | **載入失敗**（BDD @error-handling @smoke @p0） | 網路中斷／`api/index.json` 或日期制快照回應 404 | `error='fetch'` → 列表區域 `ErrorState` 顯示「資料載入失敗」＋「重試」；側欄、搜尋框、篩選面板**照常渲染**，不白屏 |
+| E1 | **載入失敗**（BDD @error-handling @smoke @p0） | 網路中斷／`api/index.json` 或任一 `api/items/{g}.json`（categories[].file 指向）回應 404 | `error='fetch'` → 列表區域 `ErrorState` 顯示「資料載入失敗」＋「重試」；側欄、搜尋框、篩選面板**照常渲染**，不白屏 |
 | E2 | **JSON 格式錯誤**（@error-handling @p1） | 檔案被截斷、`res.json()` 拋 SyntaxError 或 shape 驗證失敗 | `error='parse'` → 「資料格式錯誤」＋「重試」；若先前載入過成功資料，保留舊資料可顯示（以 `items` 非空為準），否則空列表＋錯誤狀態 |
 | E3 | **資料過期**（@error-handling @p2） | `meta.crawled_at` 距今 > 7 天（超過 7 天，與 007 §6.4 共用） | 頂部黃色橫幅「資料可能已過期（最後更新：X，台北時間）」；**資料仍正常顯示** |
 
@@ -841,7 +887,7 @@ DAG（無循環）：資料層 → 列表 → 搜尋 → 篩選 → RWD／整合
 | 步驟 | 內容 | 依賴 |
 |------|------|------|
 | 1 | **專案初始化**：Vite + Vue 3.5 + TS + Vitest 設定；`vite.config.ts` base（repo name）；router（hash history）；`types/item.ts`、`types/filters.ts`、`data/categories.ts`、`utils/format.ts` | - |
-| 2 | **資料載入層**：`useItems`（fetch／parse 驗證／錯誤分類／retry／isStale）＋ Vitest（mock fetch：成功、404、壞 JSON、過期） | #1 |
+| 2 | **資料載入層**：`useItems`（index categories[] 發現／lazy loadCategory／loadAll 聚合／parse 驗證／錯誤分類／retry／isStale）＋ Vitest（mock fetch：成功、404、壞 JSON、過期） | #1 |
 | 3 | **App shell 與佈局**：`App.vue`、`ListingView.vue` 兩欄框架（側欄＋主區）、skeleton 載入態 | #1 |
 | 4 | **分類側欄＋deep link**：`CategorySidebar`（9 分類、高亮、counts）＋ URL `?category=<key>` 雙向同步（初始讀取＋select 更新＋watch 回寫） | #2, #3 |
 | 5 | **商品列表與卡片**：`ProductList`、`ProductCard`（名稱／價格／規格 chips／漲跌／sparkline）、`Sparkline`、`EmptyState`、`ErrorState` | #2, #3 |

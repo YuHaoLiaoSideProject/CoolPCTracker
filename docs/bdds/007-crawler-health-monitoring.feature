@@ -16,7 +16,7 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
     When 每日 06:00 UTC cron 自動觸發爬蟲
     And 9 個分類頁全部抓取並解析成功
     And 本次解析商品總數為 1452 筆（較上次增加 0.2%）
-    Then data/items.json 被覆寫為本次最新資料
+    Then data/items/{g}.json 被覆寫為本次最新資料
     And data/meta.json 記錄 crawled_at 為本次執行時間（ISO 8601）
     And data/meta.json 記錄 9 個分類各自的商品數
     And data/meta.json 記錄解析狀態為 ok
@@ -28,7 +28,7 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
     Given 維護者位於 GitHub Actions workflow 頁面
     When 維護者點擊「Run workflow」觸發 workflow_dispatch 手動補爬
     And 爬蟲執行完成且商品數正常
-    Then data/items.json 被覆寫為本次最新資料
+    Then data/items/{g}.json 被覆寫為本次最新資料
     And data/meta.json 解析狀態為 ok
     And 系統不發送 Telegram 警報
 
@@ -36,7 +36,7 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
   Scenario: 商品數驟降超過 20% 時判定為解析異常，保留既有資料並發出警報
     Given 上次爬取商品總數為 1449 筆
     When 本次爬取完成且解析商品總數為 1100 筆（較上次減少 24%）
-    Then data/items.json 不被覆寫，維持上次資料
+    Then data/items/{g}.json 不被覆寫，維持上次資料
     And data/meta.json 解析狀態記錄為 failed
     And data/meta.json 記錄異常原因「商品數驟降」及本次與上次計數
     And 系統發送 Telegram 警報給管理員，內容含異常分類與商品數對比
@@ -45,7 +45,7 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
   Scenario: parser 解析過程拋出例外時保留舊資料並發出警報
     Given 原價屋改版導致 HTML 結構變更
     When parser 解析某分類頁時拋出例外
-    Then data/items.json 不被覆寫，維持既有資料
+    Then data/items/{g}.json 不被覆寫，維持既有資料
     And data/meta.json 解析狀態記錄為 failed
     And data/meta.json 記錄失敗分類與例外訊息
     And 系統發送 Telegram 警報給管理員
@@ -54,7 +54,7 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
   Scenario: 全部分類頁抓取失敗時不覆寫資料並發出警報
     Given 原價屋網站暫時無法連線
     When 爬蟲抓取 9 個分類頁經重試後仍全部失敗
-    Then data/items.json 不被覆寫，維持既有資料
+    Then data/items/{g}.json 不被覆寫，維持既有資料
     And data/meta.json 解析狀態記錄為 failed
     And 系統發送 Telegram 警報給管理員
 
@@ -64,7 +64,7 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
     When 本次爬取完成且解析商品總數為 <currentCount> 筆（較上次減少 <dropPercent>）
     Then data/meta.json 解析狀態為 <expectedStatus>
     And 系統<alertBehavior> Telegram 警報
-    And data/items.json <writeBehavior>
+    And data/items/{g}.json <writeBehavior>
 
     Examples:
       | lastCount | currentCount | dropPercent | expectedStatus | alertBehavior | writeBehavior     |
@@ -77,7 +77,7 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
   Scenario: 首次執行且無 meta.json 基準資料時，直接寫入不觸發驟降偵測
     Given data/meta.json 不存在（系統首次執行）
     When 爬蟲完成第一次爬取且解析商品總數為 1449 筆
-    Then data/items.json 寫入首次資料
+    Then data/items/{g}.json 寫入首次資料
     And data/meta.json 解析狀態記錄為 ok
     And 系統不發送 Telegram 警報
 
@@ -123,6 +123,6 @@ Feature: 爬蟲健康監控（Crawler Health Monitoring）
   Scenario: 手動補爬同樣受商品數驟降偵測保護，無法繞過健康檢查
     Given 維護者手動觸發 workflow_dispatch 補爬
     When 本次解析商品數較上次低於 20%
-    Then data/items.json 不被覆寫，維持既有資料
+    Then data/items/{g}.json 不被覆寫，維持既有資料
     And data/meta.json 解析狀態記錄為 failed
     And 系統發送 Telegram 警報給管理員

@@ -62,11 +62,11 @@ describe("matchesCondition", () => {
     expect(matchesCondition(gpu12, cond12)).toBe(true)
 
     const cond8 = parseCondition("CPU核數≥8")!
-    const cpu8 = makeItem({ name: "某 8 核 CPU", category: "CPU", spec: { cores: 8 } })
+    const cpu8 = makeItem({ name: "某 8 核 CPU", spec: { cores: 8 } })
     expect(matchesCondition(cpu8, cond8)).toBe(true)
 
     const cond750 = parseCondition("瓦數≥750W")!
-    const psu750 = makeItem({ name: "某 750W 套裝主機", category: "套裝/準系統", spec: { wattage_w: 750 } })
+    const psu750 = makeItem({ name: "某 750W 套裝主機", spec: { wattage_w: 750 } })
     expect(matchesCondition(psu750, cond750)).toBe(true)
   })
 

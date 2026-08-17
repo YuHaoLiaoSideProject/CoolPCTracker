@@ -11,13 +11,13 @@
 
 ## 概述
 
-每日自動抓取原價屋手機版 9 個分類頁、解析約 1,449 個商品、產生跨日穩定 ID，與既有資料 diff 後每次成功爬取都累積當日價格點（含價格未變的平價日），並以原子方式輸出 `data/items.json` 與 `data/meta.json`，供前端展示與後續追蹤功能使用。核心包含：
+每日自動抓取原價屋手機版 9 個分類頁、解析約 1,449 個商品、產生跨日穩定 ID，與既有資料 diff 後每次成功爬取都累積當日價格點（含價格未變的平價日），並以原子方式輸出 `data/items/{g}.json`（**每分類一檔**的最新狀態，每筆 history 僅 ≤2 點、無 meta/category 欄位）、`data/meta.json` 與 `data/daily/YYYYMMDD.json`（每日價格點，完整歷史序列），供前端展示與後續追蹤功能使用。核心包含：
 
 1. **categories.py**：9 個分類頁白名單（G 索引、主分類名、G=9 子分類過濾關鍵字）＋ 名稱正規化 ＋ 商品 ID 產生規則
 2. **fetcher.py**：依序抓取 `m-list.php?G=1,3,4,5,6,7,8,9,12`（手機版 UA、CP950 解碼、單頁重試 ≤ 3 次指數退避）
 3. **parser.py**：HTML table → RawItem（`<th>` 子分類、`<td>` 商品列、disabled 加購/贈品列過濾、G=9 記憶卡子分類過濾、Hot！/任搭↓N/↘/尾盤標記解析）
 4. **spec_parser.py**：商品名 → 結構化規格（深度：CPU/GPU/RAM/SSD/HDD/主機板；輕量：記憶卡/套裝/劈發價組合區）
-5. **store.py**：與 `data/items.json` diff（新/價格異動/狀態異動/未變動/gone）、每日累積當日價格點 `[d,p]`（含平價日，冪等防護同日重跑不重複）、原子寫檔、`meta.json` 健康指標
+5. **store.py**：與 `data/items/{g}.json`（各分類檔）diff（新/價格異動/狀態異動/未變動/gone）、每日累積當日價格點並寫入 `data/daily/YYYYMMDD.json`（含平價日，冪等防護同日重跑不重複）、依分類寫出 `data/items/{g}.json`、原子寫檔、`meta.json` 健康指標
 6. **main.py**：管道編排（fetch → parse → spec → ID → diff → 健康檢查 → apply → save）+ 驟降保護整合點（007 功能警報 hook）
 
 > 本功能為**純後端資料管道**，無前端、無 HTTP API、無 WebSocket、無 UI。因此 SKILL 章節模板中 §2（前端實作）、§3（API 合約）、§5（生命週期）、§7（CSS）、§9（基礎架構）於本規格標記 N/A。排程 `crawl.yml` 屬功能 002，本規格僅保留其整合點（CLI 冪等、`--date` 手動補爬）。
@@ -70,8 +70,10 @@ coolpc-tracker/
 │       ├── test_spec_parser.py       ← 新增：深度 / 輕量解析
 │       └── test_store.py             ← 新增：diff / append / gone / 原子寫入 / meta
 ├── data/                             ← 新增（git 版控的資料來源真相）
-│   ├── items.json                    ← 首次執行由 store 建立
-│   └── meta.json                     ← 首次執行由 store 建立
+│   ├── items/                        ← 新增（契約 v2：每分類一檔，g=分類 G 索引 1/3/4/5/6/7/8/9/12）
+│   │   └── {g}.json                  ← 純 items 陣列（無 meta、無 category 欄位；每筆 history 僅保留最近 ≤2 點），首次執行由 store 建立
+│   ├── meta.json                     ← 首次執行由 store 建立（meta 集中於此，items 檔不再內嵌 meta）
+│   └── daily/YYYYMMDD.json           ← 每日價格點 {"<item_id>": price}（完整歷史序列，O4 新增）
 └── docs/
     └── development/
         └── 001-crawler-data-collection.md  ← 本文件
@@ -301,7 +303,7 @@ def parse_spec(category: str, name: str) -> Spec:
 
 ### 1.7 store.py — diff、歷史 append 與原子寫檔
 
-職責：資料真相的唯一寫入者。與 `data/items.json` 比對、每日累積當日價格點（含平價日）、原子寫出 `items.json` + `meta.json`。規則（BDD 全集）：
+職責：資料真相的唯一寫入者。與 `data/items/{g}.json`（各分類檔）比對、每日累積當日價格點（含平價日）、依分類原子寫出 `data/items/{g}.json` + `meta.json` + `daily/YYYYMMDD.json`。規則（BDD 全集）：
 
 - 新商品：`first_seen = last_seen = 今日`、`status = in_stock`、history 含一筆 `[今日, 價格]`
 - 價格異動：history 尾端 append `[今日, 新價格]`、`last_seen = 今日`
@@ -311,9 +313,10 @@ def parse_spec(category: str, name: str) -> Spec:
 - 價格缺失：不記錄該日價格歷史，狀態仍依出現與否判定（BDD 價格缺失）
 - 重複名稱：同 ID 視為同一商品，以最後解析到的價格為準（BDD 重複名稱）
 - 原子寫入：tempfile + `os.replace`；寫檔失敗不影響既有資料（IF §5）
+- **O4 寫檔分工**：完整每日歷史寫入 `data/daily/YYYYMMDD.json`（`{"<item_id>": price}`，成功爬取的商品每日一點、含平價日）；**契約 v2 分類拆檔**：最新狀態依分類寫入 `data/items/{g}.json`（g=分類 G 索引；純 items 陣列、無 meta/category 欄位），序列化時每筆 `history` 僅保留最近 ≤2 點（compact `[d,p]`，load/diff 仍以完整 history 運作，序列化層截斷），單檔大小固定不再隨時間成長
 
 ```python
-"""diff → 歷史 append → 原子寫檔。資料真相：data/items.json + data/meta.json。"""
+"""diff → 歷史 append → 原子寫檔。資料真相：data/items/{g}.json + data/meta.json + data/daily/。"""
 from __future__ import annotations
 
 import json
@@ -331,7 +334,7 @@ STATUS_GONE = "gone"
 @dataclass
 class Item:
     id: str
-    category: str
+    category: str                        # 僅內部用於分檔與 ID 產生（sha256 主分類）；序列化寫入 data/items/{g}.json 時省略（分類由檔名 g 決定，契約 v2）
     subcategory: str
     name: str
     spec: dict[str, Any]
@@ -339,7 +342,7 @@ class Item:
     status: str = STATUS_IN_STOCK
     first_seen: str = ""
     last_seen: str = ""
-    history: list[list] = field(default_factory=list)  # compact [[d, p], ...]；每日一點累積（含平價日）
+    history: list[list] = field(default_factory=list)  # compact [[d, p], ...]；每日一點累積（含平價日）；save 序列化層截為最近 ≤2 點
 
 
 @dataclass
@@ -351,14 +354,15 @@ class DiffResult:
 
 
 class Store:
-    """載入既有資料 → diff → apply → 原子寫出。"""
+    """載入既有分類檔 → diff → apply → 原子寫出。"""
 
     def __init__(self, data_dir: Path):
-        self._items_path = data_dir / "items.json"
+        self._items_dir = data_dir / "items"   # v2：每分類一檔 data/items/{g}.json（g=分類 G 索引）
         self._meta_path = data_dir / "meta.json"
+        self._daily_dir = data_dir / "daily"    # O4：每日價格點檔目錄
 
     def load(self) -> tuple[dict[str, Item], dict[str, Any]]:
-        """讀取 items.json（items 依 id 建索引）與 meta.json。
+        """讀取 data/items/{g}.json（各分類檔合併為 items 依 id 建索引）與 meta.json。
         首次執行（檔案不存在）回傳空 dict；檔案損壞 → 拋例外，由 main 判定不覆寫。"""
 
     def diff(self, today_items: list[Item], previous: dict[str, Item]) -> DiffResult:
@@ -379,7 +383,13 @@ class Store:
         冪等防護：所有 append 路徑末筆歷史已是今日且價格相同 → 不重複 append（同日重跑）"""
 
     def save(self, items: list[Item], meta: dict[str, Any]) -> None:
-        """原子寫入：tempfile + os.replace（兩檔皆原子）；失敗拋例外且不影響既有檔案。"""
+        """依分類原子寫入 data/items/{g}.json（tempfile + os.replace）；失敗拋例外且不影響既有檔案。
+        v2：分類檔為純 items 陣列（無 meta/category 欄位）；序列化層將每筆 item 的 history 截到最近 ≤2 點
+        （items 只留最新狀態；完整歷史由 daily 檔序列承載），meta 集中寫入 meta.json。"""
+
+    def write_daily(self, date_str: str, prices: dict[str, int]) -> None:
+        """O4：寫入 data/daily/{YYYYMMDD}.json（{"<item_id>": price}，今日成功爬取且有價格的商品，
+        含平價日）；同日重跑以同一檔名覆寫（冪等，不產生 _N 後綴）。"""
 
     def write_meta(self, *, crawled_at: str, counts: dict[str, int], total: int,
                    changed: int, failed_categories: list[str], status: str) -> None:
@@ -473,7 +483,7 @@ flowchart TD
     C --> D[G=9 子分類過濾<br/>子分類名含「記憶卡」]
     D --> E[spec_parser<br/>深度/輕量規格解析]
     E --> F[make_item_id<br/>sha256 主分類+正規化名稱]
-    F --> G{diff 與 items.json 比對}
+    F --> G{diff 與 data/items/{g}.json 各分類檔比對}
     G --> H1[新商品]
     G --> H2[價格/狀態異動]
     G --> H3[今日消失]
@@ -483,7 +493,7 @@ flowchart TD
     H3 --> I3[status=gone<br/>last_seen 保持<br/>不新增歷史]
     H4 --> I4[append [今日,平價]<br/>平價日仍累積<br/>last_seen=今日]
     I & I2 & I3 & I4 --> J{健康檢查<br/>total=0 或驟降>20%?}
-    J -- 否 --> K[原子寫入 items.json + meta.json]
+    J -- 否 --> K[原子寫入 data/items/{g}.json<br/>每分類一檔、純 items 陣列<br/>+ meta.json + data/daily/今日價格點檔]
     J -- 是 --> L[不覆寫 + 007 警報 hook<br/>meta.status=failed]
     K --> M[結束<br/>meta 記錄 crawled_at/計數/失敗分類]
 ```
@@ -500,41 +510,55 @@ flowchart TD
 | 6 diff | DiffResult | store | 新/異動/gone/未變動；同 ID 重複名稱取最後價格 |
 | 7 append | 新 items 清單 | store | 每日累積當日點 `[d,p]`（含平價日，冪等防護同日重跑不重複）；gone 不新增；失敗分類原樣保留 |
 | 8 健康檢查 | 通過/擋下 | main | 規則依 007 health 正式化：total=0 / 降幅 >20% / parser 例外 / 全部失敗 → failed 不覆寫 + 警報；部分失敗 → partial 合併 |
-| 9 寫檔 | items.json + meta.json | store | 原子寫入；meta 含 crawled_at/計數/失敗分類/健康指標 |
+| 9 寫檔 | data/items/{g}.json + meta.json + daily/YYYYMMDD.json | store | 原子寫入；分類檔為純 items 陣列（無 meta/category 欄位），每筆 history 僅保留 ≤2 點（契約 v2）；daily 檔記錄今日價格點 {id: price}；meta 含 crawled_at/計數/失敗分類/健康指標 |
 
-### 4.3 data/items.json 結構
+### 4.3 data/items/{g}.json 結構（契約 v2：每分類一檔）
 
 ```jsonc
+// data/items/4.json —— 頂層即 items 陣列（無 meta、無 category 欄位）；g=分類 G 索引
+[
+  {
+    "id": "3f9a1c2b8e4d5f6a",
+    "subcategory": "Intel 第14代",
+    "name": "Intel i5-13600K【14核/20緒】3.5GHz(↑5.1G)/20M/UHD770/125W【代理盒裝】",
+    "spec": {
+      "brand": "Intel", "model": "i5-13600K",
+      "cores": 14, "threads": 20,
+      "base_ghz": 3.5, "turbo_ghz": 5.1, "tdp_w": 125, "socket": "LGA1700"
+    },
+    "flags": { "hot": false, "promo": "任搭190", "price_drop": true, "clearance": false },
+    "status": "in_stock",              // in_stock / gone
+    "first_seen": "2026-08-15",
+    "last_seen": "2026-08-16",
+    "history": [                       // compact [d, p]；每筆僅保留最近 ≤2 點（完整歷史由 data/daily/ 承載）
+      ["2026-08-15", 9990],
+      ["2026-08-16", 9990]
+    ]
+  }
+]
+```
+
+- **檔名 g = 分類 G 索引**：1=套裝/準系統、3=劈發價組合區、4=CPU、5=主機板、6=記憶體、7=SSD、8=HDD、9=記憶卡、12=顯示卡（與 `categories.py` 白名單一致）
+- **分類為外部狀態**：item 內不再重複 `category` 欄位；分類/計數索引由 `api/index.json` 的 `categories[]`（及 `data/meta.json` 的 counts）提供
+- **meta 集中於 `data/meta.json`**：items 檔不再內嵌 meta
+
+> **格式決策**：history 採用 compact `[d, p]` 陣列（即 Tech Decision §4.1 P2「minify（compact arrays）」自第一天落實），控制 repo 體積。若日後需可讀性可切回 `{"d": ..., "p": ...}` object，diff/apply 介面不變。
+> **契約 v2（2026-08-17 分類拆檔）**：`data/items.json` 單檔已被取代為 `data/items/{g}.json` 每分類一檔（純 items 陣列、固定大小不再成長）；完整跨日歷史由每日價格點檔序列承載：
+
+### 4.3.1 data/daily/YYYYMMDD.json 結構（O4：每日價格點檔）
+
+```jsonc
+// data/daily/20260816.json —— crawler 每次成功爬取時寫入（台北日期；含平價日）
 {
-  "meta": {
-    "crawled_at": "2026-08-16T06:00:00Z",
-    "source": "https://www.coolpc.com.tw/m/m-list.php"
-  },
-  "items": [
-    {
-      "id": "3f9a1c2b8e4d5f6a",
-      "category": "CPU",
-      "subcategory": "Intel 第14代",
-      "name": "Intel i5-13600K【14核/20緒】3.5GHz(↑5.1G)/20M/UHD770/125W【代理盒裝】",
-      "spec": {
-        "brand": "Intel", "model": "i5-13600K",
-        "cores": 14, "threads": 20,
-        "base_ghz": 3.5, "turbo_ghz": 5.1, "tdp_w": 125, "socket": "LGA1700"
-      },
-      "flags": { "hot": false, "promo": "任搭190", "price_drop": true, "clearance": false },
-      "status": "in_stock",              // in_stock / gone
-      "first_seen": "2026-08-15",
-      "last_seen": "2026-08-16",
-      "history": [                       // compact [d, p]；每次成功爬取累積當日點（含平價日）
-        ["2026-08-15", 9990],
-        ["2026-08-16", 9990]
-      ]
-    }
-  ]
+  "3f9a1c2b8e4d5f6a": 9990,   // {item_id: price}，成功爬取且有價格的商品逐筆記錄
+  "63898a369bd3247a": 3990
 }
 ```
 
-> **格式決策**：history 採用 compact `[d, p]` 陣列（即 Tech Decision §4.1 P2「minify（compact arrays）」自第一天落實），控制 repo 體積。若日後需可讀性可切回 `{"d": ..., "p": ...}` object，diff/apply 介面不變。
+- 檔名 = crawled_at 轉 **Asia/Taipei（UTC+8）** 日期 `YYYYMMDD`；同日重跑以同檔名覆寫（冪等）
+- 每日約 35–40 KB（1,449 商品 × 每點 ~24.6 B），365 檔/年 ≈ 12.5 MB raw（git delta 後更小）
+- 消費端：002 `version_data.py` 鏡像為 `api/daily/` 並聚合出 `api/trends/{item_id}.json`（004 詳情趨勢圖資料源）；007 健康檢查/006 追蹤可比對歷史
+- 失敗分類/價格缺失的商品**不寫入**當日點
 
 ### 4.4 data/meta.json 結構
 
@@ -553,7 +577,7 @@ flowchart TD
   }
 }
 
-> **meta.json 完整模型**：`checked_at` / `anomaly` / `previous_total` / `sources` 等欄位由功能 007（§1.3 / §6.6）擴充並維護；本節為 001 產出的基礎欄位，status 語意與三態枚舉以 007 為準。meta.json **不再含 `version`**（版本發現改由前端 runtime 讀 `api/index.json` 的 `latest_file`／`files[]`，由 002 `version_data.py` 維護）。
+> **meta.json 完整模型**：`checked_at` / `anomaly` / `previous_total` / `sources` 等欄位由功能 007（§1.3 / §6.6）擴充並維護；本節為 001 產出的基礎欄位，status 語意與三態枚舉以 007 為準。meta.json **不再含 `version`**（版本發現改由前端 runtime 讀 `api/index.json` 的 `categories[]`／`daily_files[]`，由 002 `version_data.py` 維護）。
 ```
 
 ---
@@ -570,9 +594,9 @@ N/A — 無連線管理/狀態機（爬蟲為一次性的排程批次；「同�
 |---|-------------|---------|---------|
 | 1 | 每日排程完整執行爬蟲管道（smoke） | §1.8 管道編排、§4 資料流 | main.py |
 | 2 | 新商品首次出現 | first_seen/last_seen=今日、in_stock、history 一筆 | store.apply |
-| 3 | 商品價格異動時追加歷史（Outline） | append `[今日, 新價格]`、last_seen=今日 | store.apply |
+| 3 | 商品價格異動時追加歷史（Outline） | append `[今日, 新價格]`、last_seen=今日；分類檔序列化僅保留最近 ≤2 點，完整歷史寫入 data/daily/ | store.apply / save |
 | 4 | 商品從分類頁消失時標記為 gone | status=gone、last_seen 保持、不新增歷史 | store.apply |
-| 5 | 價格與狀態皆無異動時仍累積當日平價點（每日一點） | diff 未變動 → 仍 append 當日平價點（冪等防護同日不重複） | store.diff/apply |
+| 5 | 價格與狀態皆無異動時仍累積當日平價點（每日一點） | diff 未變動 → 仍 append 當日平價點（冪等防護同日不重複）＋寫入 data/daily/ 今日點 | store.diff/apply、write_daily |
 | 6 | 商品 ID 由主分類與正規化名稱 hash 產生且跨日穩定 | §1.3 normalize_name + make_item_id | categories |
 | 7 | 爬蟲僅追蹤 9 個指定分類 | CATEGORIES 白名單，其餘 G 不抓取 | categories/fetcher |
 | 8 | G=9 僅收錄子分類名稱含「記憶卡」 | subcategory_keyword 過濾（4 收錄/2 排除） | categories/parser |
@@ -588,7 +612,7 @@ N/A — 無連線管理/狀態機（爬蟲為一次性的排程批次；「同�
 | 18 | 同分類重複名稱商品 | 同 ID 視同一商品，最後解析價為準 | store.diff |
 | 19 | 商品價格資訊缺失 | 不記錄該日價格歷史、狀態照判 | parser/store |
 | 20 | 排程延遲後手動補爬 | CLI `--date` / workflow_dispatch（002） | main |
-| 21 | 同日重複執行不重複追加歷史（含平價日） | 末筆歷史已是今日 → 不重複 append（所有 append 路徑） | store.apply |
+| 21 | 同日重複執行不重複追加歷史（含平價日） | 末筆歷史已是今日 → 不重複 append（所有 append 路徑）；data/daily/ 同檔名覆寫亦不新增 | store.apply / write_daily |
 
 ### 6.2 邊界情境細節
 
@@ -597,9 +621,9 @@ N/A — 無連線管理/狀態機（爬蟲為一次性的排程批次；「同�
 | **G=9 混合頁過濾**（BDD #8） | 子分類標題（`<th>`）含「記憶卡」才收錄（Micro SD / SD / CFexpress / MicroSDXC Express 4 個子分類）；隨身碟、外接硬碟、其他子分類整段排除 |
 | **disabled 加購列 / 贈品列**（BDD #9） | disabled 列以 HTML 特徵（disabled input/checkbox、class 含 disabled）判斷；贈品列以名稱含「贈品」判斷；兩者皆不進入 RawItem |
 | **標記組合**（BDD #10） | 四種標記可同時存在（如「Hot！＋任搭↓190」→ flags 同時含 hot 與 promo）；標記文字須自商品名剝離，不污染名稱正規化 |
-| **每日一點累積**（BDD #5、#21） | 每次成功爬取（商品出現在今日清單且價格存在）都 append 當日點，含平價日；同日重跑時末筆歷史日期 == 今日且價格相同 → 不重複 append；失敗分類商品（今日未成功爬取）原樣保留不 append |
+| **每日一點累積**（BDD #5、#21） | 每次成功爬取（商品出現在今日清單且價格存在）都 append 當日點，含平價日；同日重跑時末筆歷史日期 == 今日且價格相同 → 不重複 append；失敗分類商品（今日未成功爬取）原樣保留不 append。**O4**：完整歷史逐日寫入 `data/daily/YYYYMMDD.json`（{id: price}，含平價日）；`data/items/{g}.json` 序列化層截到最近 ≤2 點 |
 | **ID 穩定**（BDD #6） | NFKC + casefold + 空白收縮後 hash；商品名稱細節改動（全形/半形、空格）不影響 ID；實質改名則視為「消失 + 新增」（IF §5 列為已知限制，merge 策略屬後續強化） |
-| **驟降保護**（BDD #14、#15） | total==0 或降幅 > DROP_THRESHOLD（0.20）→ 不覆寫 items.json、notify 警報（007 hook）、meta.status="failed"（007 三態之一）、return 1；邊界：恰等於 80% 不判異常（007 §6.1） |
+| **驟降保護**（BDD #14、#15） | total==0 或降幅 > DROP_THRESHOLD（0.20）→ 不覆寫 data/items/{g}.json、notify 警報（007 hook）、meta.status="failed"（007 三態之一）、return 1；邊界：恰等於 80% 不判異常（007 §6.1） |
 | **分類頁失敗沿用舊資料**（BDD #12、#16） | 該分類本次無新資料 → diff 時該分類既有商品視為「未變動」保留原樣（不誤判 gone）；meta.failed_categories 記錄之 |
 | **價格缺失**（BDD #19） | `price=None` → 該日不 append 歷史；商品若在清單中 status 仍 in_stock |
 | **重複名稱**（BDD #18） | 同分類同名 → 同 ID → dict 合併以最後解析價格為準，不產生第二筆 |
@@ -621,13 +645,13 @@ N/A — 無 UI 元件。
 | 3 | `fetcher.py` + test_fetcher（mock httpx：重試/退避/CP950/失敗頁） | #1, #2 |
 | 4 | `parser.py` + fixture HTML + test_parser（disabled/贈品/G=9 子分類/標記/空表格/重複名稱/價格缺失） | #2 |
 | 5 | `spec_parser.py` + test_spec_parser（9 分類深度/輕量、解析失敗不丟商品） | #2 |
-| 6 | `store.py` + test_store（diff 分類、append 條件、gone、原子寫入、meta、同日冪等） | #2 |
-| 7 | `main.py` 整合 + 端到端冒煙測試（fixture 資料連跑兩日：ID 穩定、每日一點累積（含平價日）、meta 輸出） | #3, #4, #5, #6 |
+| 6 | `store.py` + test_store（diff 分類、append 條件、gone、原子寫入、meta、同日冪等、daily 檔寫入、history ≤2 截斷） | #2 |
+| 7 | `main.py` 整合 + 端到端冒煙測試（fixture 資料連跑兩日：ID 穩定、每日一點累積（含平價日）、data/daily/ 產出、history ≤2 截斷、meta 輸出） | #3, #4, #5, #6 |
 | 8 | A/B 來源驗證 spike：手機版 vs 桌面版商品集合比對，確認無漏品（Tech Decision §4.2） | #4 |
 | 9 | 健康檢查整合點驗收：降幅 >20% / 0 商品 / parser 例外 → 不覆寫 + notify hook + meta.status="failed"（007 正式化） | #7 |
 | 10 | 002 整合點預留：CLI `--date`、冪等重跑（供 workflow_dispatch 手動補爬與 cron 串接） | #7 |
 
-**驗收檢查清單**（對應 IF §7）：每日 06:00 UTC cron 觸發（002 驗證）、9 頁依序抓取成功、CP950 正確解碼、解析約 1,449 商品且主/子分類正確、disabled 加購與贈品列排除、G=9 僅 4 個記憶卡子分類、四種標記正確、深度/輕量規格正確、ID 跨日/同日重跑一致、每日累積當日價格點 `[d,p]`（含平價日）、同日重跑冪等不重複、新商品 first_seen=今日、消失標記 gone 且 last_seen 保持、單頁失敗重試 ≤3 次且沿用舊資料（不 append 當日點）並標記 meta、驟降 >20% 或 0 商品不覆寫並警報、items.json/meta.json 正確輸出（meta 含 crawled_at/計數/健康指標）、寫檔失敗不影響既有資料。
+**驗收檢查清單**（對應 IF §7）：每日 06:00 UTC cron 觸發（002 驗證）、9 頁依序抓取成功、CP950 正確解碼、解析約 1,449 商品且主/子分類正確、disabled 加購與贈品列排除、G=9 僅 4 個記憶卡子分類、四種標記正確、深度/輕量規格正確、ID 跨日/同日重跑一致、每日累積當日價格點 `[d,p]`（含平價日）且寫入 `data/daily/YYYYMMDD.json`（{id: price}）、分類檔 data/items/{g}.json 每筆 history 最多保留最近 ≤2 點、同日重跑冪等不重複、新商品 first_seen=今日、消失標記 gone 且 last_seen 保持、單頁失敗重試 ≤3 次且沿用舊資料（不 append 當日點）並標記 meta、驟降 >20% 或 0 商品不覆寫並警報、data/items/{g}.json/meta.json/daily 檔正確輸出（meta 含 crawled_at/計數/健康指標）、寫檔失敗不影響既有資料。
 
 ## 9. 基礎架構設定
 
@@ -635,5 +659,5 @@ N/A（本功能）— GitHub Actions 排程與 Pages 部署屬功能 002（`craw
 
 - **觸發**：`cron: 0 6 * * *`（每日 06:00 UTC）+ `workflow_dispatch`（手動補爬）
 - **執行**：`pip install -e crawler/ && python -m crawler.main --data-dir data`（冪等，可安全重跑）
-- **資料提交**：run 成功後 git commit `data/items.json` + `data/meta.json`（每日成功爬取即產生新點 → 每日 commit；同日重跑無變化時跳過 commit）
+- **資料提交**：run 成功後 git commit `data/`（items/{g}.json 各分類檔 + meta.json + daily/YYYYMMDD.json 每日價格點檔；每日成功爬取即有新 daily 檔 → 每日 commit；同日重跑無變化時跳過 commit）
 - **警報**：007 功能將 `telegram_bot.py` 包裝為 `notify` hook 注入 `run_crawler()`，本功能僅定義簽名 `Callable[[str], None]`

@@ -1,6 +1,6 @@
 # AirTicketsPrice 資料/API 組織模式研究 → CoolPCTracker 設計提案
 
-> ⚠️ 歷史紀錄：本文為 api/ + 日期制命名改造前的設計提案；文中草擬的 latest_version／versions[]／v{n}.json 於實作時改為 latest_file／files[]／YYYYMMDD[_n].json，現行架構見 README「資料/API 組織」。
+> ⚠️ 歷史紀錄：本文為 api/ + 日期制命名改造前的設計提案；文中草擬的 latest_version／versions[]／v{n}.json 於實作時改為 latest_file／files[]／YYYYMMDD[_n].json；2026-08-17 O4 拆檔、再於同日演進為**契約 v2 分類拆檔**（`data/items.json`/`api/latest.json`/`latest_file` 移除，改為 `data/items/{g}.json`/`api/items/{g}.json` 每分類一檔＋`api/index.json` 的 `categories[]`，見 `docs/tech-decisions/tech-decision-資料拆檔方案-2026-08-17.md`）。現行架構見 README「資料/API 組織」，本文僅留作歷程參考。
 
 - 日期：2026-08-16
 - 性質：spike（唯讀研究，未改任何程式/資料檔）

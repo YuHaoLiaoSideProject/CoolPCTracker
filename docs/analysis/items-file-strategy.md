@@ -1,5 +1,10 @@
 # api/items/ 日期制快照分析：後綴規則驗證 + 單檔策略評估
 
+> ⚠️ **已取代**：本分析已被 `docs/tech-decisions/tech-decision-資料拆檔方案-2026-08-17.md`（方案 O4）取代，
+> **`api/items/` 日期快照已移除**（O4 定稿：D1 = 最小嵌入（data/items.json 每筆 history 僅 ≤2 點）、D2 = 詳情趨勢圖走 api/trends/{id}.json；
+> 對外改為 `api/latest.json` + `api/daily/YYYYMMDD.json` + `api/trends/{item_id}.json` + `api/index.json`（latest_file/daily_files/trends_prefix），repo 年度成長約 ~45MB；**2026-08-17 契約 v2 再演進**：`data/items.json`/`api/latest.json`/`latest_file` 移除，改為 `data/items/{g}.json`/`api/items/{g}.json` 每分類一檔＋`api/index.json` 的 `categories[]`）。
+> 本文保留作為決策歷程參考，契約以資料拆檔決策文件（含 v2 演進註記）與現行 development/BDD 規格、README「資料/API 組織」為準。
+
 > 日期：2026-08-17 ・ 性質：只讀分析（未修改任何程式碼/測試/設定檔）
 > 範圍：`scripts/version_data.py`、`crawler/main.py`、`crawler/store.py`、
 > `.github/workflows/crawl.yml`、`web/src/composables/useItems.ts`、

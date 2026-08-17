@@ -1,11 +1,22 @@
-"""diff → 每日一點累積 → 原子寫檔。資料真相：data/items.json + data/meta.json
-（crawler 唯一寫入者）；對外 API 成品（api/index.json + api/items/）由
-scripts/version_data.py 依本目錄資料重建，本模組不寫 api/。
+"""diff → 每日一點累積 → 原子寫檔。資料真相：data/items/{g}.json（分類分檔）＋
+data/meta.json ＋ data/daily/（crawler 唯一寫入者）；對外 API 成品
+（api/index.json + api/items/）由 scripts/version_data.py 依本目錄資料重建，
+本模組不寫 api/。
 
 本模組是資料的唯一寫入者（IF §5）：載入既有資料、與今日商品比對、
 每次成功爬取（商品出現在今日清單且價格存在）都累積當日價格點 [d, p]
 （含價格未變的平價日），以 tempfile + os.replace 原子寫出。
 今日未成功爬取的商品（失敗分類）原樣保留，不累積當日點。
+
+V2 拆檔（2026-08-17）：items 依分類分檔 data/items/{g}.json——g = 分類 G 頁索引，
+檔名 g{index}（g9=記憶卡，其餘 g_index 見 categories.py）。單檔頂層即 array：
+無 meta 包裝、無 category 欄位；category 是記憶體內的內部欄位，load 由檔名
+回填（檔名 g{i} → categories.get_category(i).name）、save 不序列化。
+meta 唯一檔 data/meta.json（不再有內嵌 meta；meta.json 缺失 → 視為首次執行，
+items 空）。history 在 save 序列化層截到最近 2 點（漲跌徽章只需前後兩點）；
+完整歷史由每日價格點檔 data/daily/{YYYYMMDD}.json（{item_id: price}）承載。
+所有 JSON 一律以 compact（separators=(",",":")）寫出；load/diff/apply 邏輯不動
+（diff 讀 history[-1] 語意不變）。data/items.json 已不存在。
 
 冪等防護（BDD #21）：同日重跑時末筆歷史已是今日且價格相同 → 不重複 append。
 
@@ -22,11 +33,16 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from .categories import CATEGORIES, get_category
+
 STATUS_IN_STOCK = "in_stock"
 STATUS_GONE = "gone"
 
 META_STATUSES = frozenset({"ok", "partial", "failed"})  # 007 三態（不再有 aborted）
 SOURCE_URL = "https://www.coolpc.com.tw/m/m-list.php"
+
+# 分類 name → 檔名用的 G 索引（save 分組寫檔；與 categories.py 白名單一致）
+_CATEGORY_G_BY_NAME: dict[str, int] = {c.name: c.g_index for c in CATEGORIES}
 
 
 @dataclass
@@ -66,46 +82,58 @@ class DiffResult:
 
 
 class Store:
-    """載入既有資料 → diff → apply → 原子寫出。"""
+    """載入既有資料 → diff → apply → 原子寫出（items 依分類分檔）。"""
 
     def __init__(self, data_dir: Path):
-        self._items_path = data_dir / "items.json"
+        self._items_dir = data_dir / "items"
         self._meta_path = data_dir / "meta.json"
+        self._daily_dir = data_dir / "daily"
 
     # ── load ────────────────────────────────────────────────────────────────
 
     def load(self) -> tuple[dict[str, Item], dict[str, Any]]:
-        """讀取 items.json（依 id 建索引）與 meta.json。
-        首次執行（檔案不存在）回傳空 dict；檔案損壞 → 拋例外，由 main 判定不覆寫。"""
+        """讀取 meta.json 與 data/items/{g}.json 全部分類檔，合併為 {id: Item}。
+
+        - meta.json 缺失 → 視為首次執行：回傳 (空 dict, 空 dict)，不讀 items 檔
+          （items.json 已不存在；首次執行不可能有分類檔；不一致的殘檔不採信）
+        - meta.json 存在：逐檔（檔名 g{index}）解析頂層 array，Item.category 由
+          「檔名 G 索引 → categories.py name」回填（內部欄位，序列化不含）。
+        - 檔案損壞/檔名不符 g{index}.json、G 超出白名單 → 拋 ValueError，
+          由 main 判定不覆寫（exit 2）。
+        """
+        if not self._meta_path.exists():
+            return {}, {}
+        with self._meta_path.open(encoding="utf-8") as f:
+            meta = json.load(f)
+        if not isinstance(meta, dict):
+            raise ValueError(f"meta.json 格式錯誤：預期 object（{self._meta_path}）")
+
         items: dict[str, Item] = {}
-        embedded_meta: dict[str, Any] = {}
-        if self._items_path.exists():
-            doc = json.loads(self._items_path.read_text(encoding="utf-8"))
-            if not isinstance(doc, dict) or not isinstance(doc.get("items"), list):
-                raise ValueError(f"items.json 格式錯誤：缺少 items 陣列（{self._items_path}）")
-            if isinstance(doc.get("meta"), dict):
-                embedded_meta = doc["meta"]
-            for entry in doc["items"]:
-                item = Item(
-                    id=entry["id"],
-                    category=entry.get("category", ""),
-                    subcategory=entry.get("subcategory", ""),
-                    name=entry.get("name", ""),
-                    spec=entry.get("spec") or {},
-                    flags=entry.get("flags") or {},
-                    status=entry.get("status", STATUS_IN_STOCK),
-                    first_seen=entry.get("first_seen", ""),
-                    last_seen=entry.get("last_seen", ""),
-                    history=entry.get("history") or [],
-                )
-                items[item.id] = item
-        meta: dict[str, Any] = {}
-        if self._meta_path.exists():
-            meta = json.loads(self._meta_path.read_text(encoding="utf-8"))
-            if not isinstance(meta, dict):
-                raise ValueError(f"meta.json 格式錯誤：預期 object（{self._meta_path}）")
-        elif embedded_meta:
-            meta = embedded_meta
+        if self._items_dir.is_dir():
+            for path in sorted(self._items_dir.glob("g*.json")):
+                category = _category_name_from_filename(path)
+                with path.open(encoding="utf-8") as f:
+                    doc = json.load(f)
+                if not isinstance(doc, list):
+                    raise ValueError(
+                        f"items/{path.name} 格式錯誤：預期頂層 array（{path}）"
+                    )
+                for entry in doc:
+                    if not isinstance(entry, dict) or "id" not in entry:
+                        raise ValueError(f"items/{path.name} 格式錯誤：缺少 id（{path}）")
+                    item = Item(
+                        id=entry["id"],
+                        category=category,  # 檔名回填；序列化檔內無 category 欄位
+                        subcategory=entry.get("subcategory", ""),
+                        name=entry.get("name", ""),
+                        spec=entry.get("spec") or {},
+                        flags=entry.get("flags") or {},
+                        status=entry.get("status", STATUS_IN_STOCK),
+                        first_seen=entry.get("first_seen", ""),
+                        last_seen=entry.get("last_seen", ""),
+                        history=entry.get("history") or [],
+                    )
+                    items[item.id] = item
         return items, meta
 
     # ── diff ────────────────────────────────────────────────────────────────
@@ -207,13 +235,42 @@ class Store:
     # ── save ────────────────────────────────────────────────────────────────
 
     def save(self, items: list[Item], meta: dict[str, Any]) -> None:
-        """原子寫入 items.json（{"meta": ..., "items": [...]}）與 meta.json。
-        兩檔皆 tempfile + os.replace；失敗拋例外且不影響既有檔案。
-        日期制快照改造後，meta 不再含整數 version 欄位。"""
+        """依分類分組，逐分類原子寫 data/items/{g}.json（頂層 array），並寫 meta.json。
+
+        V2 拆檔契約：
+        - 每分類一檔：檔名 g{index} = categories.py 的 G 頁索引（未知分類 → ValueError）；
+          檔內純 items array——無 meta 包裝、無 category 欄位（內部欄位不序列化）。
+        - 每個 item 的 history 在序列化層截到最近 2 點（不足 2 點原樣）；
+          load/diff/apply 仍以完整 history 運作（截斷不影響 diff 讀 history[-1]）。
+        - 不再寫任何內嵌 meta；meta 一律唯一檔 data/meta.json。
+        - 全部 tempfile + os.replace 原子寫入、compact JSON（separators=(",",":")）；
+          任一步失敗拋例外且不影響既有檔案。
+        - meta 不再含整數 version 欄位。"""
         meta = {k: v for k, v in meta.items() if k != "version"}
-        doc = {"meta": meta, "items": [asdict(item) for item in items]}
-        self._write_json_atomic(self._items_path, doc)
+        grouped: dict[int, list[Item]] = {}
+        for item in items:
+            g = _CATEGORY_G_BY_NAME.get(item.category)
+            if g is None:
+                raise ValueError(
+                    f"未知分類，無法決定 items 檔名（data/items/g{{index}}.json）："
+                    f"{item.category!r}"
+                )
+            grouped.setdefault(g, []).append(item)
+        for g in sorted(grouped):
+            payload = [dict(asdict(it), history=it.history[-2:]) for it in grouped[g]]
+            for entry in payload:
+                entry.pop("category", None)  # 序列化不含 category（內部欄位）
+            self._write_json_atomic(self._items_dir / f"g{g}.json", payload)
         self._write_json_atomic(self._meta_path, meta)
+
+    def write_daily(self, day: date, price_map: dict[str, int]) -> None:
+        """原子寫入 data/daily/{YYYYMMDD}.json = {item_id: price}（O4 每日價格點檔）。
+
+        day 為執行日（date 物件，檔名以 YYYYMMDD 格式化）；price_map 只含當日
+        成功爬取且價格存在的商品。全檔 compact JSON（separators=(",",":")），
+        tempfile + os.replace 原子寫入；失敗拋例外且不影響既有檔案。"""
+        path = self._daily_dir / f"{day.strftime('%Y%m%d')}.json"
+        self._write_json_atomic(path, price_map)
 
     def write_meta(self, *, crawled_at: str, counts: dict[str, int], total: int,
                    changed: int, failed_categories: list[str], status: str) -> None:
@@ -252,7 +309,7 @@ class Store:
         fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
+                json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
                 f.write("\n")
                 f.flush()
                 os.fsync(f.fileno())
@@ -263,6 +320,29 @@ class Store:
             except OSError:
                 pass
             raise
+
+
+def _category_name_from_filename(path: Path) -> str:
+    """由 items 檔名 g{index}.json 推回分類 name（get_category 白名單查詢）。
+
+    檔名不符 g{index}.json 或 G 超出白名單（非追蹤分類）→ ValueError。"""
+    name = path.name
+    if not name.startswith("g") or not name.endswith(".json"):
+        raise ValueError(
+            f"items 檔名格式錯誤（預期 g{{g_index}}.json）：{name}（{path}）"
+        )
+    stem = name[1:-5]  # 去掉 "g" 前綴與 ".json" 後綴 → 純 G 索引字串
+    if not stem.isdigit():
+        raise ValueError(
+            f"items 檔名格式錯誤（預期 g{{g_index}}.json）：{name}（{path}）"
+        )
+    g_index = int(stem)
+    try:
+        return get_category(g_index).name
+    except KeyError:
+        raise ValueError(
+            f"items 檔名對應到未追蹤分類（G={g_index}，白名單外）：{name}（{path}）"
+        ) from None
 
 
 def _append_daily_point(history: list[list], day: str, price: int | None) -> None:

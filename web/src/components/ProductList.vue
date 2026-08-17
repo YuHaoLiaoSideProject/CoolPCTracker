@@ -13,6 +13,7 @@ const props = defineProps<{
   total: number // 未過濾前總筆數（標題顯示「x / total」）
   keyword: string
   conditions: SpecCondition[]
+  categoryNames?: Record<string, string> // itemId → 分類名（v2：卡片 chips 需分類名，由外部對照）
 }>()
 
 const emit = defineEmits<{
@@ -58,6 +59,7 @@ const conditionLabels = computed(() => props.conditions.map(c => c.label))
         v-for="it in items"
         :key="it.id"
         :item="it"
+        :category-name="categoryNames?.[it.id] ?? ''"
         @open="emit('open', $event)"
         @toggle-watch="emit('toggle-watch', $event)"
         @toggle-compare="emit('toggle-compare', $event)"

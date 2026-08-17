@@ -15,10 +15,14 @@ env/
 .coverage
 htmlcov/
 
-# Runtime data（002 起版控：items.json/meta.json/telegram.json 入庫；版本化快照已移入 api/items/）
+# Runtime data（契約 v2 2026-08-17：data/items/{g} 分類檔 + data/daily/ 每日價格點 + meta.json/telegram.json 入庫；
+# 不再有單一 data/items.json；api/ 衍生層（api/items api/daily api/trends api/index.json）一律不受忽略）
 data/*
 !data/.gitkeep
-!data/items.json
+!data/items/
+!data/items/**
+!data/daily/
+!data/daily/**
 !data/meta.json
 !data/telegram.json
 

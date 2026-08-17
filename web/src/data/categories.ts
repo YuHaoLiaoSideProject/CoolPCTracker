@@ -1,6 +1,6 @@
-// web/src/data/categories.ts — 9 大分類固定常數（開發規格 003 §2.3）
-// 與爬蟲 crawler/categories.py 同步（單一事實來源）；側欄只渲染此表 →
-// 天然滿足 BDD「側欄不顯示追蹤範圍外的分類」。
+// web/src/data/categories.ts — 9 大分類靜態對照（契約 v2：分類目錄改由 api/index.json 的 categories[] 提供，
+// 本表保留作為：① 舊版 key 深層連結（?category=GPU）→ 分類名 的相容對照；② 追蹤範圍的開發期參照。
+// 與爬蟲 crawler/categories.py 同步（單一事實來源）。
 
 export type CategoryKey =
   | "CPU" | "MB" | "RAM" | "GPU" | "SSD"

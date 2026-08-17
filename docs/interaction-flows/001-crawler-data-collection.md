@@ -2,7 +2,7 @@
 
 ## 1. 功能概述
 
-**一句話描述**：每日自動抓取原價屋手機版 9 個分類頁，解析出約 1,449 個商品並與既有資料比對，每次成功爬取都累積當日價格點（含價格未變的平價日），輸出供前端展示的最新商品資料。
+**一句話描述**：每日自動抓取原價屋手機版 9 個分類頁，解析出約 1,449 個商品並與既有資料比對，每次成功爬取都累積當日價格點（含價格未變的平價日）並產出每日價格點檔 `data/daily/YYYYMMDD.json`（各分類檔 data/items/{g}.json 僅保留最近 ≤2 點），輸出供前端展示的最新商品資料。
 
 **核心價值**：以低成本、低風險、可恢復的方式持續累積跨日商品價格歷史，讓後續價格趨勢圖、降價通知、搜尋比價等功能有乾淨且穩定的資料來源。
 
@@ -12,7 +12,7 @@
 |------|------|
 | **角色** | 系統自動觸發（GitHub Actions 每日排程）；管理者（手動補爬 / 接收異常警報） |
 | **觸發入口** | ① 每日 06:00 UTC（台北 14:00）cron 自動觸發 ② 管理者以 workflow_dispatch 手動補爬 |
-| **前置條件** | 分類清單（9 個 G 索引）可讀；既有資料檔 `data/items.json` 存在（首次執行則建立）；原價屋手機版可連線 |
+| **前置條件** | 分類清單（9 個 G 索引）可讀；既有資料檔 `data/items/{g}.json` 各分類檔存在（首次執行則建立）；原價屋手機版可連線 |
 | **使用情境** | 每日一次自動執行完整管道：抓頁 → 解碼 → 解析 → 規格解析 → 比對 → 健康檢查 → 存檔；異常時自動重試、跳過失敗分類、必要時發管理員警報且不覆寫既有資料 |
 
 **追蹤範圍（9 分類，約 1,449 商品）**：
@@ -43,7 +43,7 @@ flowchart TD
     Health{商品數驟降 &gt;20%<br/>或解析 0 商品?}
     Health -- 否 --> Append[每日一點：成功爬取商品
 append [d,p]（含平價日）<br/>更新 status / first_seen / last_seen] --> Save
-    Save[寫入 items.json + meta.json] --> End([結束，等待明日排程])
+    Save[寫入 items.json + meta.json<br/>+ data/daily/今日價格點檔] --> End([結束，等待明日排程])
 
     subgraph 異常與恢復
         Retry[單頁重試 ≤ 3 次]
@@ -62,7 +62,7 @@ append [d,p]（含平價日）<br/>更新 status / first_seen / last_seen] --> S
 | | 描述 |
 |---|------|
 | **觸發** | GitHub Actions cron 於每日 06:00 UTC（台北 14:00）自動觸發；管理者亦可手動 workflow_dispatch |
-| **操作前** | 系統閒置；`data/items.json` 存在上一次爬取資料 |
+| **操作前** | 系統閒置；`data/items/{g}.json` 各分類檔存在上一次爬取資料 |
 | **系統回應** | 啟動爬蟲 run，讀取分類清單與 UA 設定，記錄開始時間 |
 | **操作後** | 爬蟲 run 已開始，進入抓頁階段 |
 | **下一步** | 步驟 2：抓取 9 個分類頁 |
@@ -111,8 +111,8 @@ append [d,p]（含平價日）<br/>更新 status / first_seen / last_seen] --> S
 
 | | 描述 |
 |---|------|
-| **觸發** | 以 hash(主分類 + 正規化名稱) 產生跨日穩定 ID；與 `data/items.json` 逐商品比對 |
-| **操作前** | 解析後商品清單 + 既有 items.json 皆就緒 |
+| **觸發** | 以 hash(主分類 + 正規化名稱) 產生跨日穩定 ID；與 `data/items/{g}.json` 各分類檔逐商品比對 |
+| **操作前** | 解析後商品清單 + 既有分類檔（data/items/{g}.json）皆就緒 |
 | **系統回應** | 將每商品分類為：新商品 / 價格異動 / 狀態異動 / 未變動 / 今日消失 |
 | **操作後** | 產生 diff 結果（待新增、待 append 歷史、待標記 gone、維持原樣） |
 | **下一步** | 步驟 7：健康檢查 |
@@ -132,8 +132,8 @@ append [d,p]（含平價日）<br/>更新 status / first_seen / last_seen] --> S
 | | 描述 |
 |---|------|
 | **觸發** | store 依 diff 結果更新資料 |
-| **操作前** | diff 結果 + 既有 items.json |
-| **系統回應** | 每次成功爬取的商品於 history 尾端 append 當日價格點 `[d,p]`（含價格未變的平價日）；更新 status / first_seen / last_seen；失敗分類商品（今日未成功爬取）原樣保留；以原子方式寫出 `data/items.json` 與 `data/meta.json` |
+| **操作前** | diff 結果 + 既有分類檔（data/items/{g}.json） |
+| **系統回應** | 每次成功爬取的商品於 history 尾端 append 當日價格點 `[d,p]`（含價格未變的平價日）；更新 status / first_seen / last_seen；失敗分類商品（今日未成功爬取）原樣保留；以原子方式寫出 `data/items/{g}.json`（各分類檔，純 items 陣列、無 meta/category 欄位）、`data/meta.json` 與 `data/daily/YYYYMMDD.json`（每日價格點 `{id: price}`，完整歷史序列；分類檔每筆 history 僅保留最近 ≤2 點） |
 | **操作後** | 兩個資料檔更新完成（git commit 由 CI 後續處理） |
 | **下一步** | 步驟 9：回報結果 |
 
@@ -169,7 +169,7 @@ append [d,p]（含平價日）<br/>更新 status / first_seen / last_seen] --> S
 | 執行頻率 | 每日一次（06:00 UTC）；不支援即時/多頻次抓取 |
 | 並發 | 同一時間僅允許一個 run，避免同日重複 append 歷史 |
 | 重試與逾時 | 單頁重試 ≤ 3 次；HTTP 逾時需設定上限（建議 10–30 秒） |
-| 歷史增長 | 每日一點：每次成功爬取（含平價日）append `[d,p]`，同日重跑冪等不重複；每日約 1,449 點、每點 2 欄位，repo 體積可控 |
+| 歷史增長 | 每日一點：每次成功爬取（含平價日）append `[d,p]`，同日重跑冪等不重複；完整歷史逐日寫入 `data/daily/YYYYMMDD.json`（{id: price}，每日約 35–40 KB）；`data/items/{g}.json` 各分類檔因每筆 history 僅保留 ≤2 點而固定大小、不再累積成長 |
 | 商品 ID | hash(主分類+正規化名稱)，跨日穩定；名稱正規化（全形/半形、空白）影響 ID 穩定性 |
 | 狀態判定 | in_stock / gone 以「商品是否出現在當日清單」判定 |
 | 價格缺失 | 價格資訊缺失時不記錄該日價格歷史，商品仍依出現與否判定狀態 |
@@ -187,8 +187,9 @@ append [d,p]（含平價日）<br/>更新 status / first_seen / last_seen] --> S
 - [ ] CPU/GPU/RAM/SSD/HDD/主機板為深度規格解析；記憶卡/套裝/劈發價為輕量解析
 - [ ] 商品 ID = hash(主分類 + 正規化名稱)，同商品跨日 ID 一致、同日重跑一致
 - [ ] 每次成功爬取的商品都 append 當日價格點 `[d,p]`（含平價日）；同日重跑不重複 append
+- [ ] 完整歷史寫入 `data/daily/YYYYMMDD.json`（{id: price}，含平價日）；`data/items/{g}.json` 各分類檔每筆 history 僅保留最近 ≤2 點、無 meta/category 欄位
 - [ ] 新商品 first_seen 設為當日；今日消失商品標記為 gone
 - [ ] 單頁失敗自動重試 ≤ 3 次；仍失敗該分類沿用舊資料並於 meta.json 標記
 - [ ] 商品數驟降 >20% 或解析 0 商品 → 不覆寫資料 + 發管理員 Telegram 警報
-- [ ] `data/items.json` 與 `data/meta.json` 正確輸出，meta 含 crawled_at / 商品計數 / 健康指標
+- [ ] `data/items/{g}.json`（各分類檔）與 `data/meta.json` 正確輸出，meta 含 crawled_at / 商品計數 / 健康指標
 - [ ] 寫檔失敗時既有資料不受影響（原子寫入）

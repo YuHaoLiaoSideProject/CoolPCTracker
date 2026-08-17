@@ -1,6 +1,6 @@
 # 開發方案決策文件：原價屋商品價格追蹤
 
-> **已演進註記**：本文為 2026-08-15 的歷史決策記錄；圖表庫已由 ECharts 演進為 lightweight-charts、對外資料面已改為 `api/` 日期制命名（`api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）、`__DATA_VERSION__` build 注入已移除（改 runtime 發現），以現行 development/uiux 規格為準。
+> **已演進註記**：本文為 2026-08-15 的歷史決策記錄；圖表庫已由 ECharts 演進為 lightweight-charts、對外資料面歷經兩次演進——① O4 拆檔（2026-08-17）：`api/items/YYYYMMDD.json` 日期快照移除，改為 `api/latest.json`＋`api/daily/`＋`api/trends/{id}.json`（index 以 `latest_file` 指向）；② **契約 v2 分類拆檔（2026-08-17 定稿）**：`api/latest.json` 與 `latest_file` 再移除，`data/items.json` 單檔改為 `data/items/{g}.json` 每分類一檔（純 items 陣列、無 meta/category 欄位），對外為 `api/items/{g}.json` 鏡像＋`api/index.json` 的 `categories[]`（id/name/file/count）、`__DATA_VERSION__` build 注入已移除（改 runtime 發現），以現行 development/uiux 規格與 README「資料/API 組織」為準。
 
 ## 📌 決策摘要
 

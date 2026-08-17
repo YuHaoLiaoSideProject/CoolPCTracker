@@ -6,6 +6,13 @@ refreshed：flags/spec/subcategory/name 異動傳播（code review 發現 #1 修
 同日重跑（末筆歷史已是今日且價格相同）不重複 append。
 失敗分類商品（今日未成功爬取）→ carryover_ids → 原樣保留。
 
+V2 拆檔契約：items 依分類分檔 data/items/{g}.json（g = 分類 G 頁索引，檔名 g{index}；
+頂層即 array——無 meta 包裝、無 category 欄位；category 是內部欄位，load 由檔名
+回填、save 不序列化）；meta 唯一檔 data/meta.json（不再有內嵌 meta；meta.json
+缺失 → 視為首次執行、items 空）。save 在序列化層把每個 item 的 history 截到最近
+2 點（不影響記憶體中完整 history、不影響 load/diff/apply）；每日價格點由
+write_daily 寫入 data/daily/{YYYYMMDD}.json = {id: price}；所有寫入皆 compact JSON。
+
 store 測試一律使用 pytest tmp_path，不碰真實檔案系統。
 今日商品以「提議歷史 [[今日, 價格]]」傳入 diff；價格缺失時 history=[]。
 """
@@ -18,6 +25,7 @@ from pathlib import Path
 import pytest
 
 import crawler.store as store_module
+from crawler.categories import CATEGORIES
 from crawler.store import DiffResult, Item, STATUS_GONE, STATUS_IN_STOCK, Store
 
 TODAY = date(2026, 8, 16)
@@ -40,6 +48,27 @@ def make_item(item_id: str = "a1", name: str = "測試商品", category: str = "
                 first_seen=first_seen, last_seen=last_seen, history=history)
 
 
+def write_items_file(tmp_path: Path, g_index: int, entries: list[dict]) -> Path:
+    """直接寫一個分類檔 data/items/g{g_index}.json（模擬既有資料；頂層 array）。"""
+    items_dir = tmp_path / "items"
+    items_dir.mkdir(parents=True, exist_ok=True)
+    path = items_dir / f"g{g_index}.json"
+    path.write_text(json.dumps(entries, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def write_meta_file(tmp_path: Path, meta: dict) -> Path:
+    path = tmp_path / "meta.json"
+    path.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def g_filename(category_name: str) -> str:
+    """分類 name → 預期檔名 g{index}.json（與 categories.py 白名單一致）。"""
+    g = next(c.g_index for c in CATEGORIES if c.name == category_name)
+    return f"g{g}.json"
+
+
 # ── load ────────────────────────────────────────────────────────────────────
 
 class TestLoad:
@@ -49,47 +78,109 @@ class TestLoad:
         assert items == {}
         assert meta == {}
 
-    def test_load_existing_items_json_indexed_by_id(self, tmp_path):
-        payload = {
-            "meta": {"crawled_at": "2026-08-15T06:00:00Z"},
-            "items": [
-                {"id": "a1", "category": "CPU", "subcategory": "Intel 第14代",
-                 "name": "Intel i5-13600K", "spec": {"brand": "Intel"},
-                 "flags": {"hot": True}, "status": "in_stock",
-                 "first_seen": "2026-08-15", "last_seen": "2026-08-15",
-                 "history": [["2026-08-15", 9990]]},
-                {"id": "a2", "category": "顯示卡", "subcategory": "RTX 4060",
-                 "name": "MSI RTX 4060", "spec": {}, "flags": {},
-                 "status": "gone", "first_seen": "2026-08-15", "last_seen": "2026-08-15",
-                 "history": [["2026-08-15", 9990]]},
-            ],
-        }
-        (tmp_path / "items.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    def test_meta_missing_treats_as_first_run_items_empty(self, tmp_path):
+        """V2：meta.json 缺失 → 視為首次執行 → items 空（即使 items/ 有殘檔也不採信）。"""
+        write_items_file(tmp_path, 4, [
+            {"id": "a1", "subcategory": "Intel 第14代", "name": "Intel i5-13600K",
+             "spec": {}, "flags": {}, "status": "in_stock",
+             "first_seen": "2026-08-15", "last_seen": "2026-08-15",
+             "history": [["2026-08-15", 9990]]},
+        ])
+        items, meta = Store(tmp_path).load()
+        assert items == {}
+        assert meta == {}
+
+    def test_load_merges_all_category_files_and_backfills_category(self, tmp_path):
+        """V2：讀 data/items/{g}.json 全部檔合併；category 由檔名 g{i} 回填。"""
+        write_meta_file(tmp_path, {"crawled_at": "2026-08-15T06:00:00Z"})
+        write_items_file(tmp_path, 4, [
+            {"id": "a1", "subcategory": "Intel 第14代", "name": "Intel i5-13600K",
+             "spec": {"brand": "Intel"}, "flags": {"hot": True}, "status": "in_stock",
+             "first_seen": "2026-08-15", "last_seen": "2026-08-15",
+             "history": [["2026-08-15", 9990]]},
+        ])
+        write_items_file(tmp_path, 12, [
+            {"id": "a2", "subcategory": "RTX 4060", "name": "MSI RTX 4060",
+             "spec": {}, "flags": {}, "status": "gone",
+             "first_seen": "2026-08-15", "last_seen": "2026-08-15",
+             "history": [["2026-08-15", 9990]]},
+        ])
         items, meta = Store(tmp_path).load()
         assert set(items) == {"a1", "a2"}
+        assert items["a1"].category == "CPU"       # 檔名 g4.json → CPU
+        assert items["a2"].category == "顯示卡"    # 檔名 g12.json → 顯示卡
         assert items["a1"].name == "Intel i5-13600K"
         assert items["a1"].history == [["2026-08-15", 9990]]
         assert items["a1"].price == 9990
         assert items["a2"].status == STATUS_GONE
-
-    def test_load_meta_from_items_json_when_meta_json_absent(self, tmp_path):
-        (tmp_path / "items.json").write_text(
-            json.dumps({"meta": {"crawled_at": "2026-08-15T06:00:00Z"}, "items": []}, ensure_ascii=False),
-            encoding="utf-8")
-        _, meta = Store(tmp_path).load()
         assert meta == {"crawled_at": "2026-08-15T06:00:00Z"}
 
-    def test_load_meta_json_takes_precedence(self, tmp_path):
-        (tmp_path / "items.json").write_text(
-            json.dumps({"meta": {"embedded": 1}, "items": []}, ensure_ascii=False), encoding="utf-8")
-        (tmp_path / "meta.json").write_text(
-            json.dumps({"crawled_at": "2026-08-15T06:00:00Z", "previous_total": 2}), encoding="utf-8")
+    def test_load_meta_reads_only_meta_json(self, tmp_path):
+        """V2：meta 一律讀 data/meta.json；items 檔無任何內嵌 meta 可回退。"""
+        write_meta_file(tmp_path, {"crawled_at": "2026-08-15T06:00:00Z", "previous_total": 2})
+        write_items_file(tmp_path, 4, [
+            {"id": "a1", "name": "Intel i5-13600K", "subcategory": "", "spec": {},
+             "flags": {}, "status": "in_stock", "first_seen": "2026-08-15",
+             "last_seen": "2026-08-15", "history": [["2026-08-15", 9990]]},
+        ])
         _, meta = Store(tmp_path).load()
         assert meta == {"crawled_at": "2026-08-15T06:00:00Z", "previous_total": 2}
 
-    def test_load_corrupt_items_json_raises(self, tmp_path):
-        (tmp_path / "items.json").write_text("{not valid json", encoding="utf-8")
+    def test_load_missing_items_dir_returns_empty(self, tmp_path):
+        """meta.json 存在但 items/ 不存在 → items 空（後續正常建立分類檔）。"""
+        write_meta_file(tmp_path, {"status": "ok"})
+        items, meta = Store(tmp_path).load()
+        assert items == {}
+        assert meta == {"status": "ok"}
+
+    def test_load_entry_optional_fields_default(self, tmp_path):
+        """無 category 欄位 + 缺省欄位 → 預設值；category 由檔名回填。"""
+        write_meta_file(tmp_path, {"status": "ok"})
+        write_items_file(tmp_path, 6, [{"id": "m1", "name": "DDR5 32G"}])
+        items, _ = Store(tmp_path).load()
+        r = items["m1"]
+        assert r.category == "記憶體"  # g6.json → 記憶體
+        assert r.subcategory == ""
+        assert r.spec == {}
+        assert r.flags == {}
+        assert r.status == STATUS_IN_STOCK
+        assert r.first_seen == ""
+        assert r.history == []
+        assert r.price is None
+
+    def test_load_corrupt_meta_json_raises(self, tmp_path):
+        (tmp_path / "meta.json").write_text("{not valid json", encoding="utf-8")
         with pytest.raises(ValueError):
+            Store(tmp_path).load()
+
+    def test_load_corrupt_items_file_raises(self, tmp_path):
+        write_meta_file(tmp_path, {"status": "ok"})
+        write_items_file(tmp_path, 4, [{"id": "a1", "name": "x"}])
+        (tmp_path / "items" / "g6.json").write_text("{not valid json", encoding="utf-8")
+        with pytest.raises(ValueError):
+            Store(tmp_path).load()
+
+    def test_load_items_file_must_be_array(self, tmp_path):
+        """單檔頂層必須是 array（無 meta 包裝）：object → ValueError。"""
+        write_meta_file(tmp_path, {"status": "ok"})
+        (tmp_path / "items").mkdir()
+        (tmp_path / "items" / "g4.json").write_text(
+            json.dumps({"meta": {}, "items": []}), encoding="utf-8")
+        with pytest.raises(ValueError):
+            Store(tmp_path).load()
+
+    def test_load_rejects_malformed_filename(self, tmp_path):
+        write_meta_file(tmp_path, {"status": "ok"})
+        (tmp_path / "items").mkdir()
+        (tmp_path / "items" / "gx.json").write_text("[]", encoding="utf-8")
+        with pytest.raises(ValueError, match="檔名格式錯誤"):
+            Store(tmp_path).load()
+
+    def test_load_rejects_untracked_g_index(self, tmp_path):
+        """檔名 G 超出追蹤白名單（如 g2）→ ValueError（白名單外永不抓取）。"""
+        write_meta_file(tmp_path, {"status": "ok"})
+        write_items_file(tmp_path, 2, [{"id": "x1", "name": "未知分類商品"}])
+        with pytest.raises(ValueError, match="未追蹤分類"):
             Store(tmp_path).load()
 
 
@@ -433,24 +524,43 @@ class TestRefreshed:
         assert result[0].last_seen == TODAY_STR
 
 
-# ── save ────────────────────────────────────────────────────────────────────
+# ── save（V2：依分類分檔 data/items/{g}.json） ───────────────────────────────
 
 class TestSave:
-    def test_save_writes_items_json_with_all_fields(self, tmp_path):
+    @staticmethod
+    def _assert_compact(path: Path) -> None:
+        """全檔 compact（separators=(",",":")）：重新序列化自己的內容應逐字元相同。"""
+        raw = path.read_text(encoding="utf-8")
+        assert raw == json.dumps(json.loads(raw), ensure_ascii=False,
+                                 separators=(",", ":")) + "\n"
+
+    def test_save_writes_per_category_files_without_meta_or_category(self, tmp_path):
+        """V2：依分類分組寫 data/items/g{index}.json——頂層 array、無 meta 包裝、
+        無 category 欄位；meta 唯一檔 data/meta.json。"""
         store = Store(tmp_path)
         items = [
             make_item("a1", name="Intel i5-13600K", price=9790, status=STATUS_IN_STOCK,
                       first_seen=YESTERDAY_STR, last_seen=TODAY_STR,
                       history=[[YESTERDAY_STR, 9990], [TODAY_STR, 9790]],
                       spec={"brand": "Intel", "model": "i5-13600K"}, flags={"hot": True}),
+            make_item("gpu1", name="RTX 5090", category="顯示卡", price=49990,
+                      first_seen=YESTERDAY_STR, last_seen=TODAY_STR,
+                      history=[[YESTERDAY_STR, 50990], [TODAY_STR, 49990]]),
         ]
         meta = {"crawled_at": "2026-08-16T06:00:00Z", "status": "ok"}
         store.save(items, meta)
-        doc = json.loads((tmp_path / "items.json").read_text(encoding="utf-8"))
-        assert doc["meta"] == meta
-        assert len(doc["items"]) == 1
-        assert doc["items"][0] == {
-            "id": "a1", "category": "CPU", "subcategory": "Intel 第14代",
+
+        cpu_file = tmp_path / "items" / g_filename("CPU")        # g4.json
+        gpu_file = tmp_path / "items" / g_filename("顯示卡")     # g12.json
+        assert cpu_file.exists()
+        assert gpu_file.exists()
+        # 無 meta 包裝：頂層就是 array
+        cpu_doc = json.loads(cpu_file.read_text(encoding="utf-8"))
+        assert isinstance(cpu_doc, list)
+        assert len(cpu_doc) == 1
+        # 無 category 欄位；其餘欄位完整保留
+        assert cpu_doc[0] == {
+            "id": "a1", "subcategory": "Intel 第14代",
             "name": "Intel i5-13600K",
             "spec": {"brand": "Intel", "model": "i5-13600K"},
             "flags": {"hot": True},
@@ -458,15 +568,62 @@ class TestSave:
             "first_seen": "2026-08-15", "last_seen": "2026-08-16",
             "history": [["2026-08-15", 9990], ["2026-08-16", 9790]],
         }
+        gpu_doc = json.loads(gpu_file.read_text(encoding="utf-8"))
+        assert len(gpu_doc) == 1
+        assert gpu_doc[0]["id"] == "gpu1"
+        assert "category" not in gpu_doc[0]
+        assert "meta" not in gpu_doc  # 檔內無任何 meta 包裝
+        # meta 唯一檔
         assert json.loads((tmp_path / "meta.json").read_text(encoding="utf-8")) == meta
+        # data/items.json 不存在（由 data/items/ 目錄取代）
+        assert not (tmp_path / "items.json").exists()
+        self._assert_compact(cpu_file)  # V2：分類檔全檔 compact 寫入
+        self._assert_compact(gpu_file)
+        self._assert_compact(tmp_path / "meta.json")
+
+    def test_save_truncates_history_to_last_two_points(self, tmp_path):
+        """O4：save 序列化層把 history 截到最近 2 點（保留末 2 點）；不足 2 點原樣。
+        截斷只發生在寫檔層，記憶體中 item 的完整 history 不受影響。"""
+        store = Store(tmp_path)
+        full_history = [
+            ["2026-08-10", 9990], ["2026-08-11", 9990], ["2026-08-12", 10490],
+            ["2026-08-15", 10490], ["2026-08-16", 9790],
+        ]
+        item = make_item("a1", name="Intel i5-13600K", price=9790,
+                         first_seen="2026-08-10", last_seen=TODAY_STR,
+                         history=full_history)
+        store.save([item], {"status": "ok"})
+
+        doc = json.loads((tmp_path / "items" / g_filename("CPU")).read_text(encoding="utf-8"))
+        assert doc[0]["history"] == [["2026-08-15", 10490], ["2026-08-16", 9790]]
+        assert item.history == full_history  # 記憶體中的完整 history 不受截斷影響
+
+    def test_save_short_history_kept_as_is(self, tmp_path):
+        """O4：history 不足 2 點（1 點或空）→ 原樣寫出。"""
+        store = Store(tmp_path)
+        one_point = make_item("a1", price=9990, history=[[TODAY_STR, 9990]],
+                              first_seen=TODAY_STR, last_seen=TODAY_STR)
+        no_history = make_item("a2", price=None, history=[])
+        store.save([one_point, no_history], {"status": "ok"})
+        doc = json.loads((tmp_path / "items" / g_filename("CPU")).read_text(encoding="utf-8"))
+        by_id = {i["id"]: i for i in doc}
+        assert by_id["a1"]["history"] == [[TODAY_STR, 9990]]
+        assert by_id["a2"]["history"] == []
 
     def test_save_atomic_os_replace_failure_keeps_existing(self, tmp_path, monkeypatch):
-        """原子寫入：os.replace 拋例外 → 既有檔案不受影響、不留暫存檔。"""
+        """原子寫入：os.replace 拋例外 → 既有分類檔與 meta 不受影響、不留暫存檔。"""
         store = Store(tmp_path)
-        store.save([make_item("a1", price=9990, history=[[YESTERDAY_STR, 9990]],
-                              first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR)],
-                   {"crawled_at": "first"})
-        original_items = (tmp_path / "items.json").read_text(encoding="utf-8")
+        store.save([
+            make_item("a1", price=9990, history=[[YESTERDAY_STR, 9990]],
+                      first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+            make_item("gpu1", name="RTX 5090", category="顯示卡", price=49990,
+                      history=[[YESTERDAY_STR, 50990]],
+                      first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        ], {"crawled_at": "first"})
+        cpu_file = tmp_path / "items" / g_filename("CPU")
+        gpu_file = tmp_path / "items" / g_filename("顯示卡")
+        original_cpu = cpu_file.read_text(encoding="utf-8")
+        original_gpu = gpu_file.read_text(encoding="utf-8")
         original_meta = (tmp_path / "meta.json").read_text(encoding="utf-8")
 
         def boom(src, dst):
@@ -477,29 +634,116 @@ class TestSave:
             store.save([make_item("a1", price=1, history=[[TODAY_STR, 1]],
                                   first_seen=TODAY_STR, last_seen=TODAY_STR)],
                        {"crawled_at": "second"})
-        assert (tmp_path / "items.json").read_text(encoding="utf-8") == original_items
+        assert cpu_file.read_text(encoding="utf-8") == original_cpu
+        assert gpu_file.read_text(encoding="utf-8") == original_gpu
         assert (tmp_path / "meta.json").read_text(encoding="utf-8") == original_meta
-        assert sorted(p.name for p in tmp_path.iterdir()) == ["items.json", "meta.json"]
+        # 無暫存檔殘留
+        assert sorted(p.name for p in (tmp_path / "items").iterdir()) == \
+            sorted([cpu_file.name, gpu_file.name])
+        assert sorted(p.name for p in tmp_path.iterdir()) == ["items", "meta.json"]
 
     def test_save_round_trip_with_load(self, tmp_path):
-        """save 產生的 JSON 可被 load 回讀（round-trip）。"""
+        """save 產生的分類檔可被 load 回讀（round-trip；category 由檔名回填）。"""
         store = Store(tmp_path)
         items = [
             make_item("a1", name="Intel i5-13600K", price=9790,
                       first_seen=YESTERDAY_STR, last_seen=TODAY_STR,
                       history=[[YESTERDAY_STR, 9990], [TODAY_STR, 9790]],
                       spec={"brand": "Intel"}, flags={"hot": True}),
-            make_item("a2", name="MSI RTX 4060", price=None, status=STATUS_GONE,
-                      first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR,
+            make_item("a2", name="MSI RTX 4060", category="顯示卡", price=None,
+                      status=STATUS_GONE, first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR,
                       history=[[YESTERDAY_STR, 9990]]),
+            make_item("b1", name="DDR5 32G", category="記憶體", price=2999,
+                      first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR,
+                      history=[[YESTERDAY_STR, 2999]]),
         ]
-        meta = {"crawled_at": "2026-08-16T06:00:00Z", "total": 2, "status": "ok"}
+        meta = {"crawled_at": "2026-08-16T06:00:00Z", "total": 3, "status": "ok"}
         store.save(items, meta)
         loaded_items, loaded_meta = store.load()
         assert loaded_meta == meta
-        assert set(loaded_items) == {"a1", "a2"}
+        assert set(loaded_items) == {"a1", "a2", "b1"}
         assert loaded_items["a1"] == items[0]
-        assert loaded_items["a2"] == items[1]
+        assert loaded_items["a2"] == items[1]     # category（顯示卡）由 g12.json 回填
+        assert loaded_items["b1"] == items[2]     # category（記憶體）由 g6.json 回填
+        assert loaded_items["a1"].category == "CPU"
+
+    def test_save_unknown_category_raises(self, tmp_path):
+        """未知分類無法決定檔名 → ValueError，且不寫任何 items/meta 檔。"""
+        store = Store(tmp_path)
+        item = make_item("x1", name="幽靈商品", category="不存在分類", price=1000)
+        with pytest.raises(ValueError, match="未知分類"):
+            store.save([item], {"status": "ok"})
+        assert not (tmp_path / "items").exists()
+        assert not (tmp_path / "meta.json").exists()
+
+    def test_save_filenames_match_categories_g_indexes(self, tmp_path):
+        """檔名 g{index} = categories.py 的 G 頁索引（所有追蹤分類皆可對映）。"""
+        store = Store(tmp_path)
+        items = [make_item(f"i{i}", name=f"商品{i}", category=c.name, price=1000 + i)
+                 for i, c in enumerate(CATEGORIES)]
+        store.save(items, {"status": "ok"})
+        files = sorted(p.name for p in (tmp_path / "items").iterdir())
+        assert files == sorted(f"g{c.g_index}.json" for c in CATEGORIES)
+        assert set(files) == {f"g{c.g_index}.json" for c in CATEGORIES}  # 每分類一檔
+        # 各檔筆數 = 該分類商品數
+        for c in CATEGORIES:
+            doc = json.loads((tmp_path / "items" / f"g{c.g_index}.json").read_text(encoding="utf-8"))
+            assert len(doc) == 1
+            assert doc[0]["id"] == f"i{CATEGORIES.index(c)}"
+
+
+# ── write_daily（O4 每日價格點檔 data/daily/YYYYMMDD.json） ──────────────────
+
+
+class TestWriteDaily:
+    def test_writes_price_map_compact(self, tmp_path):
+        """O4：write_daily 把 {id: price} 以 compact JSON 寫入 data/daily/{YYYYMMDD}.json。"""
+        store = Store(tmp_path)
+        store.write_daily(date(2026, 8, 16), {"a1": 9990, "a2": 9790})
+        path = tmp_path / "daily" / "20260816.json"
+        assert path.exists()
+        assert json.loads(path.read_text(encoding="utf-8")) == {"a1": 9990, "a2": 9790}
+        raw = path.read_text(encoding="utf-8")
+        assert raw == json.dumps({"a1": 9990, "a2": 9790}, ensure_ascii=False,
+                                 separators=(",", ":")) + "\n"  # compact
+
+    def test_filename_uses_execution_date(self, tmp_path):
+        """檔名 = 執行日 YYYYMMDD（date 物件格式化）；不同日期各自成檔。"""
+        store = Store(tmp_path)
+        store.write_daily(date(2026, 8, 15), {"a1": 9990})
+        store.write_daily(date(2026, 8, 16), {"a1": 9790})
+        assert json.loads((tmp_path / "daily" / "20260815.json").read_text(encoding="utf-8")) == {"a1": 9990}
+        assert json.loads((tmp_path / "daily" / "20260816.json").read_text(encoding="utf-8")) == {"a1": 9790}
+
+    def test_overwrite_same_day(self, tmp_path):
+        """同日重跑：覆寫同一 YYYYMMDD.json（不產生 _N 後綴或重複檔）。"""
+        store = Store(tmp_path)
+        store.write_daily(date(2026, 8, 16), {"a1": 9990, "a2": 8888})
+        store.write_daily(date(2026, 8, 16), {"a1": 9990})  # 同日新結果覆寫
+        files = sorted(p.name for p in (tmp_path / "daily").iterdir())
+        assert files == ["20260816.json"]
+        assert json.loads((tmp_path / "daily" / "20260816.json").read_text(encoding="utf-8")) == {"a1": 9990}
+
+    def test_atomic_failure_keeps_existing(self, tmp_path, monkeypatch):
+        """原子寫入：os.replace 拋例外 → 既有 daily 檔不受影響、不留暫存檔。"""
+        store = Store(tmp_path)
+        store.write_daily(date(2026, 8, 16), {"a1": 9990})
+        original = (tmp_path / "daily" / "20260816.json").read_text(encoding="utf-8")
+
+        def boom(src, dst):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(store_module.os, "replace", boom)
+        with pytest.raises(OSError):
+            store.write_daily(date(2026, 8, 16), {"a1": 1})
+        assert (tmp_path / "daily" / "20260816.json").read_text(encoding="utf-8") == original
+        assert sorted(p.name for p in (tmp_path / "daily").iterdir()) == ["20260816.json"]
+
+    def test_empty_price_map_writes_empty_object(self, tmp_path):
+        """當日無價格商品 → 仍寫出空物件檔（成功 run 的 daily 檔一律存在）。"""
+        store = Store(tmp_path)
+        store.write_daily(date(2026, 8, 16), {})
+        assert json.loads((tmp_path / "daily" / "20260816.json").read_text(encoding="utf-8")) == {}
 
 
 # ── write_meta ──────────────────────────────────────────────────────────────

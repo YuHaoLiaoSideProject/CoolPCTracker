@@ -1,28 +1,30 @@
 @crawler @crawler-data-collection @p0 @regression
 Feature: 爬蟲資料收集管道
   作為一個 系統（每日排程自動觸發）
-  我希望 自動抓取原價屋手機版 9 個分類頁、解析商品、與既有資料比對並每日累積當日價格點（含平價日）
+  我希望 自動抓取原價屋手機版 9 個分類頁、解析商品、與既有資料比對、每日累積當日價格點（含平價日）並產出每日價格點檔
   以便 前端能展示最新商品價格與跨日歷史趨勢
 
   Background:
     Given 系統具備 9 個分類頁的清單：G=1 套裝/準系統、G=3 劈發價組合區、G=4 CPU、G=5 主機板、G=6 記憶體、G=7 SSD、G=8 HDD、G=9 記憶卡（子分類過濾）、G=12 顯示卡
-    And 既有資料檔 data/items.json 已存在
+    And 既有資料檔 data/items/{g}.json 已存在（每分類一檔，g=分類 G 索引）
+    And 系統每次成功爬取時產出每日價格點檔 data/daily/YYYYMMDD.json（{"<item_id>": price}，完整歷史序列）
+    # 契約 v2（分類拆檔）：data/items/{g}.json 頂層為純 items 陣列（無 meta、無 category 欄位；subcategory/spec/flags/name/status/first_seen/last_seen/history 保留）；每筆 history 僅保留最近 ≤2 點（compact [d,p]）；完整跨日歷史由 data/daily/ 每日價格點檔承載；meta 集中在 data/meta.json
 
   @smoke @happy-path @p0
   Scenario: 每日排程完整執行爬蟲管道
     Given 目前時間為每日 06:00 UTC（台北 14:00）
     And 原價屋手機版正常回應請求
     When 系統依序抓取 9 個分類頁並以 CP950 解碼
-    And 系統解析出商品清單、產生商品 ID 並與既有 items.json 比對
+    And 系統解析出商品清單、產生商品 ID 並與既有分類檔比對
     And 系統更新異動商品的歷史記錄
-    Then 系統寫出更新後的 data/items.json 與 data/meta.json
+    Then 系統寫出更新後的 data/items/{g}.json（每分類一檔）與 data/meta.json
     And meta.json 記錄 crawled_at、各分類商品計數與失敗分類
 
   @happy-path @p0
   Scenario: 新商品首次出現
-    Given 今日分類頁包含一個既有 items.json 中不存在的商品「Intel i5-13600K【14核/20緒】3.5GHz(↑5.1G)/20M/UHD770/125W【代理盒裝】」
+    Given 今日分類頁包含一個既有分類檔中不存在的商品「Intel i5-13600K【14核/20緒】3.5GHz(↑5.1G)/20M/UHD770/125W【代理盒裝】」
     When 爬蟲執行完畢
-    Then items.json 新增該商品
+    Then 所屬分類檔 data/items/4.json 新增該商品
     And 該商品的 first_seen 與 last_seen 皆為今日
     And 該商品狀態為 in_stock
     And 該商品 history 含一筆今日價格記錄
@@ -31,8 +33,10 @@ Feature: 爬蟲資料收集管道
   Scenario Outline: 商品價格異動時追加歷史（異動日）
     Given 商品「<商品名>」昨日價格為 <昨日價格> 元
     When 今日爬取到該商品價格為 <今日價格> 元
-    Then 系統於 history 尾端 append 一筆 [今日, <今日價格>]
+    Then 系統於該商品歷史尾端 append 一筆 [今日, <今日價格>]
+    And 系統將今日價格點寫入 data/daily/YYYYMMDD.json（{<商品 id>: <今日價格>}）
     And 該商品 last_seen 更新為今日
+    # 註：分類檔序列化時每筆 history 僅保留最近 ≤2 點（完整歷史由 data/daily/ 承載）
     Examples:
       | 商品名           | 昨日價格 | 今日價格 |
       | Intel i5-13600K  | 9990     | 9790     |
@@ -51,7 +55,8 @@ Feature: 爬蟲資料收集管道
     Given 商品「Intel i5-13600K」昨日價格為 9990 元
     And 今日價格仍為 9990 元且狀態維持 in_stock
     When 爬蟲執行完畢
-    Then items.json 中該商品 history 尾端 append 一筆 [今日, 9990]（平價日仍累積）
+    Then 系統於該商品 history 尾端 append 一筆 [今日, 9990]（平價日仍累積；分類檔每筆 history 最多保留最近 ≤2 點）
+    And 系統亦將今日價格點 {<商品 id>: 9990} 寫入 data/daily/YYYYMMDD.json（平價日每日一點不遺漏）
     And 該商品 last_seen 更新為今日
 
   @business-rules @p1
@@ -148,7 +153,7 @@ Feature: 爬蟲資料收集管道
   Scenario: 商品數驟降超過 20% 時不覆寫資料並發警報
     Given 前次爬取解析出 1,449 個商品
     When 本次解析出商品數低於 1,159 個（降幅超過 20%）
-    Then 系統不覆寫 data/items.json
+    Then 系統不覆寫 data/items/{g}.json
     And 系統發送管理員 Telegram 警報
     And 既有資料保持原狀
 
@@ -156,7 +161,7 @@ Feature: 爬蟲資料收集管道
   Scenario: HTML 結構改版導致解析出 0 商品
     Given 原價屋手機版頁面 HTML 結構改版
     When 系統解析 9 個分類頁皆無法解析出任何商品
-    Then 系統不覆寫 data/items.json
+    Then 系統不覆寫 data/items/{g}.json
     And meta.json 標記本次 run 失敗
     And 系統發送管理員 Telegram 警報
 
@@ -200,4 +205,4 @@ Feature: 爬蟲資料收集管道
     Given 今日 06:00 已執行過一次爬蟲並更新資料
     When 今日再次執行爬蟲且價格與狀態皆無異動
     Then 系統不重複 append 歷史（末筆歷史已是今日且價格相同 → 不重複）
-    And 同日同價格僅保留一筆歷史記錄
+    And data/daily/ 亦不重複寫入今日價格點（同日同價格僅保留一筆歷史記錄）

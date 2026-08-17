@@ -21,5 +21,5 @@ export interface SpecCondition {
 export interface FilterState {
   keyword: string
   conditions: SpecCondition[]
-  categoryKey: string | null
+  categoryId: string | null // v2：分類 id（null = 全部；與 useItems.activeCategoryId 一致）
 }

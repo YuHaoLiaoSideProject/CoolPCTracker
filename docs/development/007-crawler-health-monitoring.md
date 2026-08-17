@@ -16,7 +16,7 @@
 核心包含：
 
 1. **health.py 健康檢查模組**：以純函數判定 `ok` / `partial` / `failed` 三態，封裝 20% 驟降門檻、首次執行跳過偵測、異常類型與計數比對規則（本功能核心，pytest 可測）。
-2. **meta.json 健康指標模型**：完整記錄 `crawled_at`、各分類計數、解析狀態、來源頁面資訊（URL / G 索引 / 抓取結果）、失敗分類與異常原因；**健康指標恆更新，items.json 依狀態決定是否覆寫，兩者分離**。
+2. **meta.json 健康指標模型**：完整記錄 `crawled_at`、各分類計數、解析狀態、來源頁面資訊（URL / G 索引 / 抓取結果）、失敗分類與異常原因；**健康指標恆更新，data/items/{g}.json 各分類檔依狀態決定是否覆寫，兩者分離**。
 3. **管理員 Telegram 警報**：與 006 共用傳訊工具，異常時向管理員推送含異常類型、失敗分類、本次/上次計數的警報（單向通知，不要求回覆）。
 4. **管道整合**：與 001 的 fetcher/parser 例外傳遞、002 的 exit code 契約與手動補爬保護串接，讓健康檢查成為每日管道的強制關卡。
 5. **前端新鮮度顯示**：讀取 `meta.json` 的 `crawled_at` 顯示「今日 / 昨日 / N 天前」，超過 7 天顯示「資料可能過期」提示。
@@ -57,7 +57,7 @@ web/src/
 
 ### 1.3 `crawler/health.py` — 健康檢查模組
 
-**職責**：接收 001 管道逐分類產生的結果，判定本次 run 的解析狀態（`ok` / `partial` / `failed`），產出新的 meta.json 內容，並生成管理員警報文案。**不直接碰 items.json**（寫入決策由 main.py 依回傳狀態執行，store.py 負責 I/O）。
+**職責**：接收 001 管道逐分類產生的結果，判定本次 run 的解析狀態（`ok` / `partial` / `failed`），產出新的 meta.json 內容，並生成管理員警報文案。**不直接碰 data/items/{g}.json**（寫入決策由 main.py 依回傳狀態執行，store.py 負責 I/O）。
 
 **對外 interface**：
 
@@ -147,7 +147,7 @@ def build_meta(
 ) -> MetaDoc:
     """依決策結果建構新的 meta.json：
     - ok / partial：crawled_at = now（資料已實際更新）
-    - failed：crawled_at 沿用 previous（items.json 未動，新鮮度不可造假）；checked_at 恆為 now
+    - failed：crawled_at 沿用 previous（data/items/{g}.json 未動，新鮮度不可造假）；checked_at 恆為 now
     - 失敗分類計數沿用 previous 值；成功分類計數用本次值
     - anomaly 區塊僅在 failed/partial 且有異常原因時輸出
     - version 欄位必須沿用 previous['version']（不存在則 0）——002 version_data.py 以此為 prev 判定基準，
@@ -170,7 +170,7 @@ def build_alert_text(report: HealthReport) -> Optional[str]:
 | 驟降門檻 | `current_total < previous_total × 80%` 才判異常；**恰等於 80% 正常** | Scenario Outline：1000→800 ok、1000→799 failed |
 | 首次執行 | `previous is None` 時**跳過驟降偵測**，直接 ok 寫入、不發警報 | Scenario：首次執行無 meta.json |
 | 邊界計算 | 使用整數比較 `current*5 < prev*4` 避免浮點誤差 | 同上 |
-| parser 例外 | 任一分類 parser 拋例外 → 整批 `failed`、items.json 不覆寫（防改版污染） | Scenario：parser 拋出例外 |
+| parser 例外 | 任一分類 parser 拋例外 → 整批 `failed`、data/items/{g}.json 不覆寫（防改版污染） | Scenario：parser 拋出例外 |
 | 部分失敗 | 抓取失敗（非 parser）且非全部失敗 → `partial`：成功分類更新、失敗分類保留 | Scenario：顯示卡頁失敗 |
 | 空表格分類 | 單一分類解析出 0 商品（count==0）且上次該分類有商品 → 視為失敗分類：`partial`、failed_categories 記錄、沿用舊資料不標 gone（成功分類照常更新） | 001 BDD「分類頁為空表格」沿用 |
 | 全部失敗 | 9 頁重試後全敗 → `failed(fetch_failed)` | Scenario：全部抓取失敗 |
@@ -221,15 +221,15 @@ def run() -> int:
     if report.status == HealthStatus.OK:
         # 001：diff → apply（每日一點 append [d,p]、含平價日、冪等防護；gone 標記）→ 全量覆寫
         applied = store.apply(store.diff(new_items, previous_items), today, previous_items)
-        store.save(applied, meta={})                    # items.json 原子寫入（meta 由步驟 ④ 輸出）
+        store.save(applied, meta={})                    # data/items/{g}.json 各分類檔原子寫入（meta 由步驟 ④ 輸出）
     elif report.status == HealthStatus.PARTIAL:
         # 007 §1.5：成功分類跑 001 diff/append 邏輯；失敗分類沿用既有資料（不 append 當日點、不標 gone）
         merged = store.merge_items(previous_items, new_items, report.failed_categories)
         store.save(merged, meta={})
     else:                                               # FAILED
-        pass                                            # items.json 不動（保留既有資料）
+        pass                                            # data/items/{g}.json 不動（保留既有資料）
 
-    # ④ 健康指標恆更新（與 items.json 分離；build_meta 需沿用 previous 的 version 供 002 cache-busting）
+    # ④ 健康指標恆更新（與 data/items/{g}.json 分離）
     meta = build_meta(previous, report, results, now=utcnow())
     store.write_meta(meta)
 
@@ -267,7 +267,7 @@ def merge_items(previous_items: list[Item], new_items: list[Item],
     成功分類以本次解析結果更新（含 diff / history append，001 邏輯）。"""
 ```
 
-**partial 合併語意**：`items.json` 以「商品 category」歸屬分類。失敗分類中既有商品**保持原狀態與歷史不變**（不含本日資料）；成功分類照常跑 001 的 diff → append → gone 邏輯。合併後寫入 items.json。
+**partial 合併語意**：各分類檔 `data/items/{g}.json` 以「檔名 g」歸屬分類。失敗分類的既有商品**保持原狀態與歷史不變**（不含本日資料）；成功分類照常跑 001 的 diff → append → gone 邏輯。合併後寫入對應分類檔。
 
 **測試重點（health_test.py）**：
 - 20% 邊界：1000→900/800/799/500 四例（BDD Examples 全覆蓋）
@@ -293,7 +293,7 @@ def send_admin_alert(text: str) -> None:
 
 ### 1.7 前端消費點（meta.json 新鮮度顯示）
 
-BDD 之「前端新鮮度」場景由一個 composable 消費載入資料的 `meta.crawled_at`（來自 `api/index.json` merged meta／日期制快照，無新 API）：
+BDD 之「前端新鮮度」場景由一個 composable 消費載入資料的 `crawled_at`（來自 `api/index.json` 頂層 crawled_at，**無 latest_file、無 api/latest.json**；分類檔經 categories[].file 動態發現），無新 API：
 
 ```typescript
 // web/src/composables/useDataFreshness.ts
@@ -313,7 +313,7 @@ export function useDataFreshness(meta: { crawled_at: string } | null): Freshness
 | 功能 | 整合點 | 契約 |
 |------|--------|------|
 | **001 爬蟲管道** | fetcher 拋 `FetchError`、parser 拋 `ParserError`（逐分類捕獲，單頁失敗不中斷）；store 原子寫入共用；meta.json 欄位擴充（001 已有 crawled_at / counts / failed_categories，007 新增 status / sources / anomaly / previous_total）；001 BDD「驟降 >20% 不覆寫 + 警報」與「解析 0 商品」場景由 health 模組正式化 | `CategoryResult` 為管道與健康檢查的資料契約 |
-| **002 排程與部署** | **exit code 契約**：`0` = ok/partial（工作流繼續 commit + deploy）；`1` = failed（健康檢查擋下，工作流停止後續步驟、不部署，對應 002 BDD「爬蟲失敗保留舊資料且不部署」）；`2` = 其他執行失敗（寫檔失敗等），同樣使工作流停止（002 僅以 0/非 0 判斷）；`workflow_dispatch` 手動補爬走相同管道 → **同受健康檢查保護**；concurrency 控制沿用（防並發 commit）；meta.json **不含 `version`**（版本發現改由 `api/index.json` 的 `latest_file`／`files[]`，002 維護） | exit code 為健康狀態對工作流的唯一通道 |
+| **002 排程與部署** | **exit code 契約**：`0` = ok/partial（工作流繼續 commit + deploy）；`1` = failed（健康檢查擋下，工作流停止後續步驟、不部署，對應 002 BDD「爬蟲失敗保留舊資料且不部署」）；`2` = 其他執行失敗（寫檔失敗等），同樣使工作流停止（002 僅以 0/非 0 判斷）；`workflow_dispatch` 手動補爬走相同管道 → **同受健康檢查保護**；concurrency 控制沿用（防並發 commit）；meta.json **不含 `version`**（版本發現改由 `api/index.json` 的 `categories[]`／`daily_files[]`，002 維護） | exit code 為健康狀態對工作流的唯一通道 |
 | **006 Telegram** | 共用 `send_message`（token 存 secrets `TELEGRAM_BOT_TOKEN`）；新增管理員 chat id secret `TELEGRAM_ADMIN_CHAT_ID`；警報發送失敗僅 log、**不影響資料 commit 與 exit code**（006 同規則：token 失效不影響資料更新） | 管理員警報為單向通知，無需回覆處理 |
 
 ---
@@ -329,7 +329,7 @@ export function useDataFreshness(meta: { crawled_at: string } | null): Freshness
    ┌────┼─────────────────────────────────────────────┐
    │ ok                                               │ partial                        │ failed
    ▼                                                 ▼                                ▼
-store.write_items（全量覆寫）                store.merge_items（成功分類更新        items.json 不動
+store.write_items（寫各分類檔）               store.merge_items（成功分類更新）      data/items/{g}.json 不動
    │                                             + 失敗分類沿用舊資料）                │
    ▼                                                 ▼                                ▼
 build_meta：                              build_meta：                           build_meta：
@@ -338,7 +338,7 @@ build_meta：                              build_meta：                        
                                            failed_categories = [...]            anomaly = {type, counts, detail}
    └──────────────┬──────────────────────────────┴──────────────────────────────────┬┘
                   ▼（三路皆執行）                                                    │
-          store.write_meta（meta.json 恆更新，與 items.json 分離）◄───────────────────┘
+          store.write_meta（meta.json 恆更新，與 data/items/{g}.json 分離）◄───────────────────┘
                   │
                   ▼
       report.alert_text 非 None？（僅 partial / failed 有）
@@ -356,7 +356,7 @@ build_meta：                              build_meta：                        
 ```
 
 **核心原則（資料一致性）**：
-1. **items.json 只在資料可信時被覆寫**：ok 全量覆寫；partial 僅成功分類覆寫；failed 完全不動。
+1. **data/items/{g}.json 各分類檔只在資料可信時被覆寫**：ok 全部分類覆寫；partial 僅成功分類覆寫；failed 完全不動。
 2. **meta.json 恆更新**：健康指標記錄每次執行的結果，異常資訊不會因資料保留而遺失。
 3. **crawled_at 反映資料真實新鮮度**：failed 時不更新（避免「今天爬過」的假象），另以 `checked_at` 記錄系統仍在運作。
 
@@ -368,7 +368,7 @@ build_meta：                              build_meta：                        
 
 判定式：`current_total < previous_total × 80%`（整數比較 `current*5 < prev*4`，**恰等於 80% 不判異常**）。
 
-| 上次 | 本次 | 降幅 | 比較 | 狀態 | items.json | 警報 |
+| 上次 | 本次 | 降幅 | 比較 | 狀態 | data/items/{g}.json | 警報 |
 |------|------|------|------|:---:|:---:|:---:|
 | 1000 | 900 | 10% | 900 ≥ 800 | ok | 覆寫 | 不發送 |
 | 1000 | 800 | 20%（邊界） | 800 = 800 → **不**異常 | ok | 覆寫 | 不發送 |
@@ -385,7 +385,7 @@ build_meta：                              build_meta：                        
 
 ### 6.3 partial / 全失敗 / parser 例外
 
-| 情境 | 判定 | items.json | meta.json | 警報內容 |
+| 情境 | 判定 | data/items/{g}.json | meta.json | 警報內容 |
 |------|:---:|------|------|------|
 | 部分分類頁抓取失敗（如僅顯示卡 G=12，重試後仍敗） | `partial` | 成功分類（其餘 8 頁）正常更新；失敗分類沿用舊資料 | status=partial、failed_categories=[顯示卡] | 含失敗分類清單 |
 | 單一分類解析出 0 商品（空表格，上次該分類有商品） | `partial` | 成功分類正常更新；空表格分類沿用舊資料（不標 gone） | status=partial、failed_categories 含該分類 | 含失敗分類清單 |
@@ -414,7 +414,7 @@ build_meta：                              build_meta：                        
 ### 6.5 手動補爬受保護（無法繞過健康檢查）
 
 - `workflow_dispatch` 手動補爬執行**與 cron 完全相同的管道**，健康檢查位於同一關卡，**無 bypass 開關**。
-- 手動補爬時若商品數較上次低於 20% → 與 cron 相同：items.json 不覆寫、meta status=failed、發警報（BDD 明訂）。
+- 手動補爬時若商品數較上次低於 20% → 與 cron 相同：data/items/{g}.json 不覆寫、meta status=failed、發警報（BDD 明訂）。
 - 手動補爬成功且商品數正常 → 正常覆寫、meta status=ok、不發警報。
 - 並發保護沿用 002：concurrency 確保同一時間僅一個 run 寫入。
 

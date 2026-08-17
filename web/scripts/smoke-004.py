@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""004 真資料 smoke test（playwright）— 以 api/ 日期制快照為期望值驗證前端。
+"""004 真資料 smoke test（playwright）— 以 api/ 分類檔聚合為期望值驗證前端（契約 v2）。
 
 前置：`npm run build` 後 `npx vite preview`（build 收尾把 ../api/** 複製進 dist/api/）。
 
 驗證（真資料，期望值由資料動態計算，不硬編碼）：
-1. 列表載入：全部商品卡片 = items 陣列數；側欄 9 分類計數與真資料逐項一致
+1. 列表載入（v2 以 ?category=all 進入「全部」視圖）：全部商品卡片 = 全分類 items 聚合數；
+   側欄分類計數與真資料逐項一致
 2. 點分類（CPU）／回全部
 3. 搜尋「RTX 5060」（以 search.ts 相同語意計算期望值：name + spec 平鋪值 lowercase 子字串）
 4. 規格篩選 VRAM≥12G → 清除
 5. 詳情頁（真 GPU deep link）：目前價／首日追蹤／歷史最低／規格表／價格趨勢圖 canvas／目標價 markLine 流程
 6. 邊界：無效 id → 找不到此商品；console/pageerror 無錯誤
-期望值一律由 api/index.json（latest_file）→ api/items/YYYYMMDD[_n].json 計算，不硬編碼。
+期望值一律由 api/index.json（v2：categories[] 目錄 + crawled_at；**無 latest_file**）→
+逐一載入 api/items/{file}（純陣列）聚合計算；前端以 `?v={crawled_at}` 快取穿透
+（鏡像 useItems.itemFileUrl），不硬編碼。
 """
 import json
 import re
@@ -33,12 +36,26 @@ def check(name, cond, extra=""):
         failures.append(name)
 
 
-# ── 期望值：讀 api/index.json 的 latest_file → 對應日期制快照（與 vite build 複製進 dist/api/ 同一檔案） ──
+# ── 期望值：讀 api/index.json（categories[] + crawled_at）→ 逐一載入分類檔聚合 ──
+#    （與 vite build 複製進 dist/api/ 同一批檔案；前端以 ?v=crawled_at 快取穿透）
 def load_real_data():
+    """回傳 (categories, crawled_at, items)；items 為全部分類聚合（每筆依分類檔 stamp category）。"""
     index = json.loads((REPO_ROOT / "api" / "index.json").read_text(encoding="utf-8"))
-    latest_file = index["latest_file"]
-    doc = json.loads((REPO_ROOT / latest_file).read_text(encoding="utf-8"))
-    return latest_file, doc["items"]
+    categories = index["categories"]
+    crawled_at = index["crawled_at"]
+    assert categories and crawled_at, "index.json 應含 categories[] 與 crawled_at（v2 契約；不再有 latest_file）"
+    items = []
+    for cat in categories:
+        file = cat["file"]
+        # 相容全路徑（api/items/4.json）與單檔名（4.json）兩種寫法
+        rel = file[len("api/items/"):] if file.startswith("api/items/") else file
+        raw = json.loads((REPO_ROOT / "api" / "items" / rel).read_text(encoding="utf-8"))
+        assert isinstance(raw, list), f"{file} 應為純陣列（v2 分類檔）"
+        for it in raw:
+            it = dict(it)
+            it.setdefault("category", cat["name"])  # v2 Item 無 category → 依分類檔 stamp
+            items.append(it)
+    return categories, crawled_at, items
 
 
 def flatten_spec(spec):
@@ -68,11 +85,12 @@ def match_keyword(it, q):
 
 
 def main():
-    latest_file, items = load_real_data()
+    categories, crawled_at, items = load_real_data()
     total = len(items)
     counts = {}
     for it in items:
         counts[it["category"]] = counts.get(it["category"], 0) + 1
+    cpu_id = next(c["id"] for c in categories if c["name"] == "CPU")
 
     # 搜尋期望值（與前端同語意）
     q_rtx = "rtx 5060"
@@ -90,7 +108,7 @@ def main():
             break
     assert gpu_detail is not None, "找不到 RTX 3060 12G 真商品"
 
-    print(f"=== 真資料期望值：latest_file={latest_file} total={total} "
+    print(f"=== 真資料期望值：categories={len(categories)} ?v={crawled_at[:19]} total={total} "
           f"搜尋「{q_rtx}」={len(exp_rtx)} VRAM≥12G={len(exp_vram)} 詳情={gpu_detail['name'][:30]}…")
 
     with sync_playwright() as p:
@@ -100,15 +118,18 @@ def main():
         page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
         page.on("pageerror", lambda e: errors.append(str(e)))
 
-        # ── 1. 列表載入：全部商品卡 + 側欄分類計數 ──
+        # ── 1. 列表載入（?category=all 全部視圖）：全部分類卡片 + 側欄分類計數 ──
         t0 = time.time()
-        page.goto(BASE, wait_until="networkidle")
-        page.wait_for_selector(".product-card", timeout=15000)
+        page.goto(BASE + "#/?category=all", wait_until="networkidle")
+        page.wait_for_function(
+            f"document.querySelectorAll('.product-card').length === {total}",
+            timeout=15000,
+        )
         check(f"全部商品卡片 = {total}", page.locator(".product-card").count() == total,
               f"got {page.locator('.product-card').count()}")
         print(f"      （首屏 {total} 卡片渲染耗時 {time.time() - t0:.1f}s）")
 
-        # 側欄 9 分類計數逐項比對
+        # 側欄分類計數逐項比對（v2 側欄數值取自 index counts，與分類檔聚合一致）
         for cat, exp in counts.items():
             el = page.locator(".sidebar .cat", has_text=cat)
             cnt = el.locator(".cat-cnt").inner_text().strip()
@@ -116,17 +137,25 @@ def main():
         all_cnt = page.locator(".sidebar .cat", has_text="全部").locator(".cat-cnt").inner_text().strip()
         check(f"側欄 全部 計數 = {total}", all_cnt == str(total), f"got {all_cnt}")
 
-        # ── 2. 點分類 CPU → URL 帶 category → 回全部 ──
+        # ── 2. 點分類 CPU（v2 URL 帶分類 id，如 ?category=4）→ 回全部 ──
         page.locator(".sidebar .cat", has_text="CPU").click()
-        page.wait_for_url(re.compile(r"category=CPU"))
-        check("點 CPU → URL category=CPU", "category=CPU" in page.url, page.url)
+        page.wait_for_url(re.compile(rf"category={re.escape(cpu_id)}(?:&|$)"))
+        page.wait_for_function(
+            f"document.querySelectorAll('.product-card').length === {counts['CPU']}",
+            timeout=10000,
+        )
+        check(f"點 CPU → URL category={cpu_id}", f"category={cpu_id}" in page.url, page.url)
         check(f"CPU 分類卡片 = {counts['CPU']}", page.locator(".product-card").count() == counts["CPU"],
               f"got {page.locator('.product-card').count()}")
         page.locator(".sidebar .cat", has_text="全部").click()
-        page.wait_for_selector(".product-card")
+        page.wait_for_url(re.compile(r"category=all"))
+        page.wait_for_function(
+            f"document.querySelectorAll('.product-card').length === {total}",
+            timeout=15000,
+        )
         check(f"回全部 → 卡片 = {total}", page.locator(".product-card").count() == total)
 
-        # ── 3. 搜尋 RTX 5060 ──
+        # ── 3. 搜尋 RTX 5060（非空關鍵字 → 自動切至全部視圖 + loadAll 跨分類） ──
         page.locator(".search-input").fill("RTX 5060")
         page.wait_for_function(
             f"document.querySelectorAll('.product-card').length === {len(exp_rtx)}",
@@ -192,8 +221,10 @@ def main():
         page.goto(BASE + "#/product/8a4b2c6d1e9f3a71", wait_until="networkidle")
         check("無效 id → 找不到此商品", page.locator(".state-title").inner_text() == "找不到此商品",
               page.locator(".state-title").inner_text())
-        page.locator(".state-center .back-link").click()  # not-found 頁返回連結（非 breadcrumb）
+        page.wait_for_selector(".state-center .back-link")  # not-found 頁返回連結（非 breadcrumb）
+        page.locator(".state-center .back-link").click()
         page.wait_for_url(re.compile(r"/$"))
+        page.wait_for_function("document.querySelectorAll('.product-card').length >= 1", timeout=15000)
         check("返回列表", page.locator(".product-card").count() >= 1)
 
         # ── 7. console / pageerror（favicon 404 除外） ──
@@ -202,7 +233,7 @@ def main():
 
         browser.close()
 
-    print(f"\n=== smoke（真資料 {latest_file}）: {len(failures)} failed / total 30 ===")
+    print(f"\n=== smoke（?v={crawled_at[:10]}）: {len(failures)} failed / total 30 ===")
     sys.exit(1 if failures else 0)
 
 

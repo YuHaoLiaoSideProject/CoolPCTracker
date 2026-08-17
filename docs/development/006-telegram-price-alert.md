@@ -4,7 +4,7 @@
 > **技術決策**：`docs/tech-decisions/tech-decision-原價屋商品價格追蹤-2026-08-15.md`（§3.1 技術棧、§3.2 步驟⑤ telegram、§3.3 `data/telegram.json`、§5 風險登錄）
 > **操作流程**：`docs/interaction-flows/006-telegram-price-alert.md`
 > **BDD**：`docs/bdds/006-telegram-price-alert.feature`
-> **整合功能**：001（`data/items.json` 來源）、002（每日 run 觸發與 commit）、007（管理員警報共用傳訊）
+> **整合功能**：001（`data/items/{g}.json` 來源），002（每日 run 觸發與 commit）、007（管理員警報共用傳訊）
 > **狀態**：設計完成，待開發
 
 ## 概述
@@ -54,7 +54,7 @@ coolpc-tracker/
 ```
 職責：
  1. getUpdates 輪詢（offset 推進、去重）處理使用者指令
- 2. 依追蹤清單比對當日 items.json → 降價 / 消失通知
+ 2. 依追蹤清單比對當日 data/items/{g}.json 各分類檔 → 降價 / 消失通知
  3. 維護 data/telegram.json（offset + 追蹤清單）並原子寫回
  4. token 無效 / 網路失敗時降級：記錄錯誤、不影響資料 commit 與部署（BDD S24/S25）
 
@@ -93,7 +93,7 @@ POLL_RETRIES = 2                   # getUpdates 網路失敗重試次數（BDD S
 @dataclass
 class WatchItem:
     """單筆追蹤商品（telegram.json users[chat_id] 的元素）。"""
-    item_id: str          # items.json 的商品 id（001 產生，跨日穩定）
+    item_id: str          # data/items/{g}.json 的商品 id（001 產生，跨日穩定）
     name: str             # 商品名稱快照（消失後通知/清單仍可顯示）
     target_price: int     # 目標價（正整數，新台幣）
     added_at: str         # 加入日期 YYYY-MM-DD
@@ -113,12 +113,12 @@ class TelegramState:
 
 @dataclass(frozen=True)
 class ItemRef:
-    """telegram 模組所需的商品視圖（由 001 store 結果轉換，不直接依賴 items.json schema）。"""
+    """telegram 模組所需的商品視圖（由 001 store 結果轉換，不直接依賴 data/items/{g}.json schema）。"""
     item_id: str
     name: str
     price: int | None        # 當日現價；None = 當日無價格資料
     status: str              # "in_stock" | "gone"
-    lowest_price: int | None # history 最小值（含今日）；None = 無歷史
+    lowest_price: int | None # 完整歷史最小值（O4：由 data/daily 或 api/trends/{id}.json 聚合；data/items/{g}.json 每筆僅 ≤2 點）；None = 無歷史
     gone_date: str | None    # 消失日期（status=gone 時 = last_seen）
 
 @dataclass
@@ -240,7 +240,7 @@ def handle_unknown() -> str:
 ```python
 def evaluate_notifications(state: TelegramState,
                            items_by_id: dict[str, ItemRef]) -> list[tuple[str, str]]:
-    """比對追蹤清單與當日 items.json（BDD S18–S22）。
+    """比對追蹤清單與當日 data/items/{g}.json 各分類檔（BDD S18–S22）。
     每筆 WatchItem：
     - 商品有當日價格：price <= target_price → 降價通知（等於也算，BDD S19）
                          否則 → 不發送（未達標且未消失，BDD S21）
@@ -294,10 +294,11 @@ from crawler.telegram_bot import run_telegram_phase, ItemRef
 
 
 def to_item_refs() -> list[ItemRef]:
-    """由 001 產出的 data/items.json 轉換 ItemRef（001 store 結果即當日商品清單）：
-    price=末筆歷史 p、status=in_stock/gone、lowest_price=history 最小值（無歷史視同現價）、
+    """由 001 產出的 data/items/{g}.json 轉換 ItemRef（001 store 結果即當日商品清單；契約 v2：每分類一檔、純 items 陣列）：
+    price=末筆歷史 p、status=in_stock/gone、lowest_price=完整歷史最小值（O4：data/items/{g}.json history 每筆僅 ≤2 點，
+    需由 data/daily 序列或 api/trends/{id}.json 聚合；無歷史視同現價）、
     gone_date=status=gone 時的 last_seen。"""
-    # TODO: 讀 data/items.json → 逐筆建 ItemRef（item_id/name/price/status/lowest_price/gone_date）
+    # TODO: 讀 data/items/{g}.json（各分類檔）→ 逐筆建 ItemRef（item_id/name/price/status/lowest_price/gone_date）
 
 
 def main() -> int:
@@ -333,16 +334,16 @@ jobs:
       - run: python scripts/version_data.py  # 002：異動判定 + 版本化
       - run: python scripts/telegram_hook.py # 006：commit 前執行，telegram.json 異動併入本次 commit
         continue-on-error: true
-      # ... commit data/（items.json + meta.json + telegram.json）→ build → deploy（002）...
+      # ... commit data/（items/{g}.json + meta.json + telegram.json）→ build → deploy（002）...
 ```
 
-> **整合點調整說明（002）**：002 已依 006 flow §B5「telegram.json 與 items.json 一併 commit」調整順序為 **store 寫檔 → telegram 階段 → 單次 commit（items.json + meta.json + telegram.json）→ build → deploy**，單一 commit 保持兩檔一致；telegram 階段無異動時（token 未設定/無新訊息）telegram.json 不變，commit 照常僅含資料檔。
+> **整合點調整說明（002）**：002 已依 006 flow §B5「telegram.json 與資料檔一併 commit」調整順序為 **store 寫檔 → telegram 階段 → 單次 commit（items/{g}.json + meta.json + telegram.json）→ build → deploy**，單一 commit 保持兩檔一致；telegram 階段無異動時（token 未設定/無新訊息）telegram.json 不變，commit 照常僅含資料檔。
 
 ### 1.5 跨功能整合點
 
 | 功能 | 整合方式 |
 |------|---------|
-| **001（items.json 來源）** | telegram 階段的比對資料完全來自 001 store 產出的當日商品清單（hook 讀取 data/items.json 轉換 ItemRef）；`ItemRef` 轉換規則：`price`=當日現價、`status`=in_stock/gone、`lowest_price`=history 最小值（無歷史時視同現價）、`gone_date`=status=gone 時的 last_seen。001 商品數驟降保護（007）失敗時 telegram 階段不執行（爬蟲步驟非 0 結束 → 後續 step 不執行） |
+| **001（data/items/{g}.json 來源）** | telegram 階段的比對資料完全來自 001 store 產出的當日商品清單（hook 讀取 data/items/{g}.json 各分類檔轉換 ItemRef）；`ItemRef` 轉換規則：`price`=當日現價、`status`=in_stock/gone、`lowest_price`=完整歷史最小值（O4：分類檔每筆 history 僅 ≤2 點，由 data/daily 序列或 api/trends/{id}.json 聚合；無歷史時視同現價）、`gone_date`=status=gone 時的 last_seen。001 商品數驟降保護（007）失敗時 telegram 階段不執行（爬蟲步驟非 0 結束 → 後續 step 不執行） |
 | **002（每日 run 觸發）** | telegram 階段由 `scripts/telegram_hook.py` 在爬蟲成功後、**資料 commit 前**執行（002 §1.6 預留整合點）；token 由 crawl.yml secrets 注入；本階段失敗不影響資料 commit、build 與 Pages 部署（BDD S24） |
 | **007（警報共用傳訊）** | 007 管理員警報與 006 共用同一 Bot token 與 sendMessage 機制：007 為單向警報（chat_id 固定為 secrets 的 `TELEGRAM_ADMIN_CHAT_ID`），006 為互動式（chat_id 來自使用者訊息）。實作上建議將「token 讀取 + sendMessage 原語」抽為共用小工具（如 `crawler/notify.py`）供兩模組使用；兩者職責分離，互不阻塞 |
 
@@ -556,7 +557,7 @@ UNINITIALIZED ──首次 run，無檔案──▶ 讀取失敗/不存在 → �
 | 階段結束（成功） | `save_state()` 原子寫入（tmp + os.replace） |
 | token 無效 / getUpdates 重試仍失敗 | **不寫回**——telegram.json 維持本次 run 前的狀態（BDD S24/S25） |
 | 狀態損毀（json 解析失敗） | 備份 `.corrupt-<ts>` 後以空狀態啟動，避免卡死 |
-| git commit | 與 items.json 一併 commit（§1.4 整合點調整說明） |
+| git commit | 與 items/{g}.json 一併 commit（§1.4 整合點調整說明） |
 
 `telegram.json` schema（首次 run 建立）：
 
@@ -579,7 +580,7 @@ UNINITIALIZED ──首次 run，無檔案──▶ 讀取失敗/不存在 → �
 
 ```
 00 觸發（002：cron 06:00 UTC / workflow_dispatch；concurrency group 保證單一 run）
- 1. 001 爬蟲：fetch → parse → spec → store（更新 items.json、meta.json）
+ 1. 001 爬蟲：fetch → parse → spec → store（更新 items/{g}.json 各分類檔、meta.json）
  2. 007 健康檢查：商品數驟降 >20% / parser 例外？
       ├─ 是 → 保留舊資料 + 管理員 Telegram 警報 → 略過 telegram 階段 → 結束
       └─ 否 → 繼續
@@ -589,7 +590,7 @@ UNINITIALIZED ──首次 run，無檔案──▶ 讀取失敗/不存在 → �
       c. evaluate_notifications 比對追蹤清單與當日 items → 推送降價/消失通知
       d. save_state() 寫回 telegram.json
       e. 失敗（token 無效/網路）→ log、不寫回、不影響後續
- 4. 002 commit data/（items.json + meta.json + telegram.json 一併）
+ 4. 002 commit data/（items/{g}.json + meta.json + telegram.json 一併）
  5. 002 Vite build → 部署 GitHub Pages
  6. 結束（等待下次 run）
 ```
@@ -669,8 +670,8 @@ UNINITIALIZED ──首次 run，無檔案──▶ 讀取失敗/不存在 → �
 | 5 | 指令 handlers：/start /help /watch /unwatch /list /unknown + 測試（上限 20、重複 watch 更新目標價、已達標提示、候選清單） | 1, 2, 4 |
 | 6 | 通知評估：`evaluate_notifications` + `format_price_alert` / `format_gone_alert` + 測試（`<=` 含等於、gone、無價格跳過、未達標不發送、歷史最低） | 1, 4 |
 | 7 | run 整合：`run_telegram_phase`（offset 推進、run 內去重、token 無效不寫回、網路失敗重試不寫回）+ 測試 | 3, 5, 6 |
-| 8 | 整合點：`scripts/telegram_hook.py` 呼叫 `run_telegram_phase`（002 預留 step，commit 前）+ crawl.yml 注入 `TELEGRAM_BOT_TOKEN`（+ 007 所需 `TELEGRAM_ADMIN_CHAT_ID`）；commit 順序為 store → telegram → commit（items.json + telegram.json 一併） | 7 |
-| 9 | E2E fixture 驗收：以 fixture items.json + telegram.json 跑完整 run，逐項對照 BDD 驗收清單（25 Scenario） | 8 |
+| 8 | 整合點：`scripts/telegram_hook.py` 呼叫 `run_telegram_phase`（002 預留 step，commit 前）+ crawl.yml 注入 `TELEGRAM_BOT_TOKEN`（+ 007 所需 `TELEGRAM_ADMIN_CHAT_ID`）；commit 順序為 store → telegram → commit（items/{g}.json + telegram.json 一併） | 7 |
+| 9 | E2E fixture 驗收：以 fixture data/items/{g}.json（各分類檔）+ telegram.json 跑完整 run，逐項對照 BDD 驗收清單（25 Scenario） | 8 |
 
 ```
 DAG：1,2,3,4 並行 → 5(依 1,2,4) → 6(依 1,4) → 7(依 3,5,6) → 8(依 7) → 9(依 8)

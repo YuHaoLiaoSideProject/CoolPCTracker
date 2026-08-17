@@ -15,7 +15,7 @@
 |------|------|
 | **角色** | ① Telegram 使用者（公開，無需註冊登入，以 Telegram user id 識別）② 系統自動觸發（GitHub Actions 每日 cron run） |
 | **觸發入口** | ① 使用者在 Telegram 搜尋並開啟 Bot 對話、送出指令文字 ② 每日 06:00 UTC（台北 14:00）cron 自動觸發 |
-| **前置條件** | Bot token 已設定於 GitHub Actions secrets；data/telegram.json 存在（含 offset 與追蹤清單）；每日爬蟲已完成並更新 data/items.json（9 分類 ≈ 1,449 商品） |
+| **前置條件** | Bot token 已設定於 GitHub Actions secrets；data/telegram.json 存在（含 offset 與追蹤清單）；每日爬蟲已完成並更新 data/items/{g}.json 各分類檔（9 分類 ≈ 1,449 商品） |
 | **使用情境** | 使用者想買某張顯示卡但覺得現價太貴 → 用 /watch 訂閱並設目標價 → 隔日價格跌到目標價以下，Telegram 主動收到通知 → 立即下單；已停售/下架商品也會收到消失通知，避免空等 |
 
 ## 3. 操作流程圖
@@ -47,7 +47,7 @@ flowchart TD
 flowchart TD
     W1([使用者送出 /watch 關鍵字 目標價]) --> W2{格式正確<br/>且目標價為正整數?}
     W2 -->|否| W3[Bot 回覆格式錯誤訊息<br/>附正確範例 /watch 關鍵字 目標價]
-    W2 -->|是| W4[以關鍵字模糊比對當日商品清單<br/>data/items.json]
+    W2 -->|是| W4[以關鍵字模糊比對當日商品清單<br/>data/items/{g}.json 各分類檔]
     W4 --> W5{符合商品數?}
     W5 -->|0 個| W6[Bot 回覆「找不到符合商品」<br/>建議改短關鍵字]
     W5 -->|多個| W7[Bot 回覆候選清單<br/>請改用更精確關鍵字重送]
@@ -68,7 +68,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    S1([每日 06:00 UTC cron 觸發]) --> S2[爬蟲抓取 9 分類頁<br/>更新 data/items.json]
+    S1([每日 06:00 UTC cron 觸發]) --> S2[爬蟲抓取 9 分類頁<br/>更新 data/items/{g}.json]
     S2 --> S3[telegram 模組讀取 data/telegram.json<br/>取得 bot offset 與追蹤清單]
     S3 --> S4[輪詢 getUpdates 處理新指令<br/>更新追蹤清單 並推進 offset]
     S4 --> S5[比對每筆追蹤商品<br/>目前價 ≤ 目標價?]
@@ -163,8 +163,8 @@ flowchart TD
 | | 描述 |
 |---|------|
 | **觸發** | GitHub Actions cron（每日 06:00 UTC = 台北 14:00）自動觸發 |
-| **操作前** | 前一天 data/items.json、data/telegram.json 已 commit；token 存於 secrets |
-| **系統回應** | 爬蟲抓取 9 個分類頁 → 解析 → 與昨日 diff → 更新 data/items.json（商品價格、status=gone、history append） |
+| **操作前** | 前一天 data/items/{g}.json、data/telegram.json 已 commit；token 存於 secrets |
+| **系統回應** | 爬蟲抓取 9 個分類頁 → 解析 → 與昨日 diff → 更新 data/items/{g}.json 各分類檔（商品價格、status=gone、history append） |
 | **操作後** | items.json 反映當日最新價格與商品存在狀態 |
 | **下一步** | 步驟 B2：telegram 模組開始 |
 
@@ -234,7 +234,7 @@ flowchart TD
 | 身份識別 | 以 Telegram user id 識別使用者，無註冊/登入/密碼；公開可用 |
 | 比對範圍 | 模糊比對僅限當日商品清單（9 分類 ≈ 1,449 商品），非全站 6,626 |
 | 訂閱上限 | 每使用者最多追蹤 20 個商品（設計規則，防濫發訊息）；目標價須為正整數（新台幣） |
-| 觸發條件 | 現價 ≤ 目標價即觸發（等於也算達標）；歷史最低價取該商品 history 陣列最小值，通知時一併附上 |
+| 觸發條件 | 現價 ≤ 目標價即觸發（等於也算達標）；歷史最低價取該商品完整歷史最小值（O4：由 api/trends/{id}.json 或 data/daily 聚合——列表快照 history 僅 ≤2 點），通知時一併附上 |
 | 去重機制 | getUpdates offset 持久化於 data/telegram.json，訊息處理後推進 offset，避免重複回覆與重複通知 |
 | 資料持久化 | offset 與追蹤清單同存於 data/telegram.json，隨 git commit 版控；Bot token 僅存 GitHub Actions secrets，絕不進 repo |
 | 單次 run 規模 | 每日訊息量低（指令回覆 + 達標通知），無需處理 Bot API rate limit 節流 |

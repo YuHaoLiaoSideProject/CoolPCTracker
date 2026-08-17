@@ -1,5 +1,8 @@
 // web/e2e/003-filtering.spec.ts — 003「列表＋搜尋篩選」篩選功能 E2E
-// 以真實資料（依 api/index.json 的 latest_file 動態解析的日期制快照）計算 oracle，避免寫死隨資料漂移的筆數。
+// 以真實資料（依 api/index.json 的 categories[] 目錄逐一載入 api/items/{file} 聚合，
+// 並以 crawled_at 組 ?v= 快取穿透 URL）計算 oracle，避免寫死隨資料漂移的筆數。
+// v2：列表頁預設僅載入第一個分類 → gotoListing 改以 ?category=all 進入「全部」視圖
+// （loadAll() 全分類聚合），維持既有「全商品集合」篩選斷言語意。
 // 涵蓋：單一規格篩選、多條件 AND、搜尋＋篩選並用、清除全部、無結果空狀態、
 //       邊界值納入（≥ 語意）、無規格欄位商品靜默排除。
 import { test, expect, type Page } from "@playwright/test"
@@ -16,9 +19,10 @@ import {
 const ITEMS: RawItem[] = loadItems()
 const TOTAL = ITEMS.length
 
-/** 開啟列表頁並等待資料載入完成（pl-count 顯示總筆數） */
+/** 開啟列表頁「全部」視圖並等待資料載入完成（pl-count 顯示總筆數）
+ *  v2：預設視圖僅載入第一個分類；?category=all → loadAll() 全分類聚合 */
 async function gotoListing(page: Page): Promise<void> {
-  await page.goto("/CoolPCTracker/")
+  await page.goto("/CoolPCTracker/#/?category=all")
   await expect(page.locator(".pl-count b")).toHaveText(String(TOTAL))
 }
 

@@ -7,7 +7,7 @@ Feature: Telegram 降價通知
   Background:
     Given Bot 已從 GitHub Actions secret 取得有效 token
     And data/telegram.json 已存在且包含 bot offset 與使用者追蹤清單
-    And 每日爬蟲已完成且 data/items.json 已更新當日商品清單
+    And 每日爬蟲已完成且 data/items/{g}.json 已更新當日分類商品清單
 
   @p0 @smoke @happy-path
   Scenario: 使用者首次使用發送 /start 取得使用說明

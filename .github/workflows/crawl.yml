@@ -31,7 +31,7 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
                                # 顯式取「job 執行當下」的 main tip：預設 checkout 用觸發時點 GITHUB_SHA，
                                # 若前一次 run 或並發 run 剛 push 過，工作目錄會拿到舊的資料基準（BDD @edge-case @robustness）
-          fetch-depth: 1       # 工作目錄即含上次 api/items/*.json（供 version_data diff 比對）
+          fetch-depth: 1       # 工作目錄即含上次 api/items/{g}.json、api/daily/ 與 api/trends/（供 version_data diff 比對）
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -53,9 +53,9 @@ jobs:
       - name: Version data (diff + cache-busting)
         id: version
         run: python scripts/version_data.py
-        # 輸出 changed=true|false、filename={YYYYMMDD[_n]}.json（steps.version.outputs.*；無異動 → 跳過 commit）
-        # BDD @business-rule @cache-busting：同日多份 → YYYYMMDD → YYYYMMDD_1 → …
-        # BDD @edge-case @initial-setup：首次執行建立 api/items/{date}.json + api/index.json + meta.json
+        # 輸出 changed=true|false、filename={YYYYMMDD}.json（最新 daily 檔名；無異動 → 跳過 commit）
+        # BDD @business-rule @cache-busting：data/items/{g} 分類檔每日覆寫、URL 以 index.crawled_at 組 ?v= 穿透
+        # BDD @edge-case @initial-setup：首次執行建立 api/items/{g}.json + api/daily/{date}.json + api/trends/ + api/index.json
         # BDD @business-rule @regression：無異動 → changed=false
 
       - name: Telegram notification hook (feature 006 placeholder)
@@ -72,8 +72,9 @@ jobs:
         run: |
           git config user.name "coolpc-tracker[bot]"
           git config user.email "coolpc-tracker[bot]@users.noreply.github.com"
-          git add data/ api/    # data/ 真相 + api/ 衍生 API（index.json/latest.json/items/）
+          git add data/ api/    # data/ 真相（items/{g} + daily/ + meta.json + telegram.json）+ api/ 衍生層（items/{g}、daily/、trends/、index.json）
           git commit -m "chore(data): 更新商品資料 ${{ steps.version.outputs.filename }}"
+          # filename = 最新 daily 檔名（如 20260816.json），version_data 輸出（steps.version.outputs.filename）
           git pull --rebase        # 併入並發期間 main 上其他人類 commit；實質衝突 → step 失敗
           git push
         # push 失敗（權限不足/衝突）→ step 失敗 → run 失敗、異動停留工作目錄

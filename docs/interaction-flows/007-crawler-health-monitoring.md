@@ -35,7 +35,7 @@ flowchart TD
     Exc -- 是 --> KeepOld[保留既有資料<br/>meta.json 記 failed]
     Exc -- 否 --> Check{本次商品數<br/>低於上次 20%?}
     Check -- 是 --> KeepOld
-    Check -- 否 --> Save[覆寫 data/items.json]
+    Check -- 否 --> Save[覆寫 data/items/{g}.json 各分類檔]
     Save --> Meta[更新 meta.json<br/>crawled_at / 各分類計數<br/>解析狀態 ok / 來源頁面資訊]
     Meta --> Fresh[前端顯示資料新鮮度<br/>crawled_at 距今天數]
     Fresh --> Done([結束])
@@ -96,7 +96,7 @@ flowchart TD
 |---|------|
 | **觸發** | 健康檢查通過 |
 | **操作前** | 資料判定正常 |
-| **系統回應** | 覆寫 `data/items.json` 為本次最新資料；`data/meta.json` 記錄 crawled_at（ISO 8601）、各分類商品數、解析狀態 `ok`、來源頁面資訊（URL / G 索引 / 抓取結果） |
+| **系統回應** | 覆寫 `data/items/{g}.json` 各分類檔為本次最新資料；`data/meta.json` 記錄 crawled_at（ISO 8601）、各分類商品數、解析狀態 `ok`、來源頁面資訊（URL / G 索引 / 抓取結果） |
 | **操作後** | 資料更新完成，meta.json 為最新健康指標 |
 | **下一步** | 步驟 8：前端顯示資料新鮮度 |
 
@@ -161,8 +161,8 @@ flowchart TD
 
 ## 7. 驗收檢查清單
 
-- [ ] 商品數正常時，`data/items.json` 被覆寫為本次資料，且 `meta.json` 解析狀態為 `ok`
-- [ ] 本次商品數較上次低於 20% 時，`data/items.json` **不被覆寫**，維持既有資料
+- [ ] 商品數正常時，`data/items/{g}.json` 各分類檔被覆寫為本次資料，且 `meta.json` 解析狀態為 `ok`
+- [ ] 本次商品數較上次低於 20% 時，`data/items/{g}.json` **不被覆寫**，維持既有資料
 - [ ] 商品數驟降時，發送 Telegram 警報給管理員，內容含異常分類與本次/上次計數
 - [ ] parser 解析過程拋出例外時，保留舊資料且發送 Telegram 管理員警報
 - [ ] 全部分類頁抓取失敗時，狀態為 `failed`；部分分類失敗時，成功分類更新、失敗分類保留舊資料，狀態為 `partial`

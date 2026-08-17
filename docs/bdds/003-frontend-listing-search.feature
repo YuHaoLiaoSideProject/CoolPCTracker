@@ -8,6 +8,8 @@ Feature: 前端列表與搜尋篩選（frontend-listing-search）
     Given 網站已部署於 GitHub Pages，且同 origin 的資料 API 包含約 1,449 筆追蹤商品
     And 我以一般訪客身分開啟網站首頁（無需登入）
     And 首頁已完成資料載入
+    # 契約 v2（分類拆檔）：useItems 依側欄 lazy 載入 api/items/{g}.json（每分類一檔、純 items 陣列、無 category 欄位，
+    # 分類為外部狀態）；全站搜尋／詳情 deep link／追蹤需 loadAll 聚合全部分類；詳情趨勢圖用 api/trends/{id}.json（useTrend）
 
   @happy-path @smoke @p0
   Scenario: 進入首頁並瀏覽全部商品

@@ -28,10 +28,10 @@
 
 ### 1.1 資料來源契約（資料 API，與 001/003 共用）
 
-本功能不新增任何後端 API，僅**讀取** 003 共用載入的資料（由 001 爬蟲產出 `data/items.json`、002 衍生 `api/` 日期制快照，003 `useItems` runtime 兩段式 fetch `api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json`）。本規格用到以下欄位（與技術決策 §3.4 一致）：
+本功能不新增任何後端 API，僅**讀取** 003 共用載入的資料（契約 v2 分類拆檔：001 爬蟲產出 `data/items/{g}.json`（每分類一檔、純 items 陣列、每筆 history ≤2 點、無 category 欄位）＋ `data/daily/` 每日價格點檔；002 鏡像 `api/items/{g}.json` 並組裝 `api/index.json`（categories[]）；003 `useItems` runtime 讀 `api/index.json`（categories[]）並 `loadAll` 聚合 `api/items/{g}.json?v={crawled_at}`）。本規格用到以下欄位（與技術決策 §3.4 一致）：
 
 ```jsonc
-// data/items.json（本功能讀取契約，欄位以 001 產出為準）
+// data/items/{g}.json（本功能讀取契約：每分類一檔、純 items 陣列、無 meta/category 欄位；欄位以 001 產出為準）
 {
   "meta": { "crawled_at": "2026-08-15T06:00:00Z" },
   "items": [
@@ -41,14 +41,14 @@
       "name": "Intel i5-13600K ...",
       "spec": { "brand": "Intel", "model": "i5-13600K", "cores": 14, /* … */ },
       "status": "in_stock",               // in_stock / gone（下架）
-      "history": [ ["2026-08-15", 9990] ]  // compact [d,p] 陣列（001 格式決策）；每日一點累積（含平價日）
+      "history": [ ["2026-08-15", 9990] ]  // compact [d,p] 陣列（001 格式決策）；O4：列表快照僅最近 ≤2 點（完整歷史由 api/trends/{id}.json 提供）
     }
   ]
 }
 ```
 
 - **目前價格** = `history` 最後一筆的 `p`；`status === 'gone'` 時視為無目前價格（顯示「—」）。
-- **迷你趨勢** = `history` 尾端 7 筆（不足 2 筆時顯示「資料不足」）。
+- **迷你趨勢** = `history` 尾端 7 筆（不足 2 筆時顯示「資料不足」）。⚠️ **O4 註記**：列表快照 history 僅 ≤2 點，短於 7 日；005 實作迷你趨勢時需由 `api/trends/{id}.json`（或 data/daily 聚合）取得 ≥7 點歷史（見 004 useTrend 模式）。
 - ⚠️ 原始 JSON 的 `history` 為 compact 陣列 `["2026-08-15", 9990]`（001 格式決策），`useItems`（003）載入層正規化為 `{ d, p }` 後元件使用（與 003/004 同一契約）。
 
 ### 1.2 與 003 / 004 的整合點（預留契約）
@@ -65,7 +65,7 @@
 | 比價結果路由 | 005：路由 `/compare` | 003：`router/index.ts` | `{ path: '/compare', name: 'compare' }` |
 | 商品資料共用載入 | 003：`useItems()` | 005：`WatchlistView` / `CompareView` | 005 以 `useItems()` 為契約引用，實作以 003 為準 |
 
-> ⚠️ 003/004 尚未實作前，005 內部先以 **mock 資料源介面**（`useItems()` 假名 + 相容 items.json 結構的 fixture）開發並通過 Vitest 測試，待 003 落地後替換為真實載入。
+> ⚠️ 003/004 尚未實作前，005 內部先以 **mock 資料源介面**（`useItems()` 假名 + 相容分類檔（純 items 陣列）結構的 fixture）開發並通過 Vitest 測試，待 003 落地後替換為真實載入。
 
 ---
 
@@ -102,7 +102,7 @@ web/src/
 
 /** 追蹤清單項目：只存最小資訊，單筆 < 1KB（全站 1,449 件全追蹤仍遠低於 5MB 上限） */
 export interface WatchlistItem {
-  id: string                    // 商品 id（與 items.json 主鍵一致）
+  id: string                    // 商品 id（與 data/items/{g}.json 主鍵一致）
   addedAt: string               // 加入時間（ISO 8601）
   lastPriceSnapshot: number     // 上次查看價格快照（價差基準；加入時以當下價格初始化）
   priceSnapshotAt: string       // 快照時間（ISO 8601）
@@ -290,12 +290,12 @@ export function useCompare(): {
 
 ### 2.6 utils/compare.ts — 比較表純函數
 
-職責：把「已選商品 × items.json」合併後的輸入轉成比較表；所有邏輯為純函數，便於 Vitest 單元測試（對應 BDD 比較表場景）。
+職責：把「已選商品 × 分類檔聚合（loadAll）」合併後的輸入轉成比較表；所有邏輯為純函數，便於 Vitest 單元測試（對應 BDD 比較表場景）。
 
 ```typescript
 // web/src/utils/compare.ts
 
-/** 比較表輸入：由呼叫端（CompareView）依 selected + items.json 解析 */
+/** 比較表輸入：由呼叫端（CompareView）依 selected + 分類檔聚合（useItems.loadAll）解析 */
 export interface CompareItem {
   id: string
   name: string
@@ -361,7 +361,7 @@ interface WatchRow {
 const { items, remove, reorder, updatePriceSnapshot, error: storageError, clearError } = useWatchlist()
 const { items: productItems, loading, error: loadError, retry: reload } = useItems()   // ← 003 契約：items/meta/loading/error/retry/isStale
 
-// 合併 localStorage 追蹤項目 × items.json：
+// 合併 localStorage 追蹤項目 × 分類檔聚合（useItems.allItems）：
 //   - 商品存在且 in_stock → 取 history 末筆為現價，diff = price − lastPriceSnapshot
 //   - 商品不存在或 gone    → 標示「已下架」，price = null、diff = null（不自動清除，供手動移除）
 const rows = computed<WatchRow[]>(() => { /* … */ })
@@ -398,7 +398,7 @@ import WatchlistButton from '@/components/WatchlistButton.vue'
 const { selected, count, clear } = useCompare()
 const { items: productItems, loading, error: loadError, retry: reload } = useItems()   // ← 003 契約：items/meta/loading/error/retry/isStale
 
-// 依 selected 解析商品：命中 items.json 且 in_stock → price = 末筆歷史價；
+// 依 selected 解析商品：命中聚合 items 且 in_stock → price = 末筆歷史價；
 // 下架/不存在 → status='gone'、price=null（比較表該欄標示「已下架」）
 const compareItems = computed<CompareItem[]>(() => { /* … */ })
 
@@ -442,7 +442,7 @@ function onClearCompare(): void {
 |--------|-----|------|----------|------|
 | localStorage | `coolpc.watchlist.v1` | `{ version: 1, items: WatchlistItem[] }` | 永久（單瀏覽器、本機專屬，不跨裝置/不雲端同步；清除瀏覽器資料即遺失） | 追蹤清單 |
 | sessionStorage | `coolpc.compare.v1` | `{ version: 1, items: CompareSelectionItem[] }` | 同分頁跨路由保留；關閉分頁即清空 | 比價選取 |
-| fetch（同 origin） | `api/index.json` → `latest_file` → `api/items/YYYYMMDD[_n].json` | 見 §1.1 讀取契約 | 每日爬蟲更新（002 衍生） | 商品資料（003 共用載入） |
+| fetch（同 origin） | `api/index.json`（categories[]）→ `loadAll` 聚合 `api/items/{g}.json?v={crawled_at}` | 見 §1.1 讀取契約 | 每日爬蟲更新（002 組裝） | 商品資料（003 共用載入） |
 
 - **版本化規則**：key 內含 `.v{n}` 前綴 + payload 內含 `version` 欄位；讀取時版本不符 → 走 migrate 掛鉤（目前無舊版）。**v0 相容**：若偵測到無版本包裹的舊格式（純 id 陣列，即 IF §1 所述 key `coolpc.watchlist`），自動遷移為 v1（`addedAt=now`、快照補 `null` → 首次開頁補快照）。實際 storage key 由 `writeVersioned` 以 `${key}.v${version}` 組合（`coolpc.watchlist.v1` / `coolpc.compare.v1`，與上表一致）。
 - **損毀自癒**：JSON 解析失敗 → 原值備份至 `coolpc.watchlist.corrupt-{ts}` 後重置為空，頁面不當機。
@@ -452,7 +452,8 @@ function onClearCompare(): void {
 ## 4. 資料流
 
 ```
-api/index.json → latest_file → api/items/YYYYMMDD[_n].json ──fetch──▶ useItems()（003）──▶ WatchlistView / CompareView
+api/index.json（categories[]）→ loadAll 聚合 api/items/{g}.json?v={crawled_at} ──fetch──▶ useItems()（003）──▶ WatchlistView / CompareView
+（迷你趨勢需 ≥7 點歷史：另行 fetch api/trends/{id}.json）
                                                     ▲
 localStorage   ◀──read/write── useWatchlist ──▶ 列表/詳情按鈕（WatchlistButton）
 (coolpc.watchlist.v1)                              │
@@ -464,7 +465,7 @@ sessionStorage ◀──read/write── useCompare ──▶ 勾選框/浮動�
 
 **主流程 B 順序**：勾選 → `useCompare.add`（同分類檢查＋上限）→ sessionStorage 寫入 → `CompareBar` 顯示 N/6 → 點「開始比價」（`canStart` 校驗）→ 路由 `/compare` → `CompareView` 解析商品 → `buildCompareRows` 並排 + `findCheapestIds` 標最便宜。
 
-**主流程 A 順序**：點「加入追蹤」→ `useWatchlist.add`（去重＋錯誤處理）→ localStorage 寫入 → 各入口按鈕狀態即時反映 → 開啟 `/watchlist` → 合併 items.json → 顯示價差（現價 − 快照）→ 渲染完更新快照基準。
+**主流程 A 順序**：點「加入追蹤」→ `useWatchlist.add`（去重＋錯誤處理）→ localStorage 寫入 → 各入口按鈕狀態即時反映 → 開啟 `/watchlist` → 合併聚合 items（useItems.allItems）→ 顯示價差（現價 − 快照）→ 渲染完更新快照基準。
 
 ---
 
@@ -490,7 +491,7 @@ sessionStorage ◀──read/write── useCompare ──▶ 勾選框/浮動�
 | 1 | 重複加入已在清單的商品 | @business-rules「已在追蹤清單的商品不重複加入」 | `useWatchlist.add` 先 `isTracked` 檢查 → 回傳 `already-tracked`，**不寫入** | 按鈕維持「已追蹤」；toast「該商品已在追蹤清單」；清單僅 1 筆 |
 | 2 | 瀏覽器不支援／封鎖 localStorage | @error-handling「瀏覽器不支援 localStorage 時加入追蹤失敗」 | `isStorageAvailable('local') === false` → `error = unsupported`；add 回傳 `storage-unavailable`，不寫入任何資料 | 「瀏覽器未開放本機儲存，無法使用追蹤功能」；頁面不當機 |
 | 3 | localStorage 空間已滿（寫入失敗） | @error-handling「localStorage 空間已滿時無法新增追蹤」 | `writeVersioned` 捕捉 `QuotaExceededError` → `error = quota-exceeded`；add **先更新 ref 後寫入，失敗 rollback**（UI 與 storage 一致） | 「儲存空間已滿，無法新增追蹤項目」；原有清單不受影響 |
-| 4 | 追蹤商品已下架（不在當日 items.json 或 status=gone） | @edge-case「追蹤的商品已下架」 | 合併時商品不存在/gone → `price=null`、`diff=null`；**不自動清除**，供手動移除 | 標示「已下架」；價格欄顯示「—」 |
+| 4 | 追蹤商品已下架（不在當日聚合 items 或 status=gone） | @edge-case「追蹤的商品已下架」 | 合併時商品不存在/gone → `price=null`、`diff=null`；**不自動清除**，供手動移除 | 標示「已下架」；價格欄顯示「—」 |
 | 5 | 迷你趨勢歷史不足 2 日 | @edge-case「迷你趨勢歷史資料不足」 | `history.length < 2` → 不渲染 Sparkline | 顯示「資料不足」 |
 | 6 | 迷你趨勢僅顯示最近 7 日 | @business-rules「迷你趨勢僅顯示最近 7 日歷史」 | 截取 `history` 尾端 7 筆（`history.slice(-7)`） | 圖表僅含 7 日資料 |
 | 7 | 價差基準 | @business-rules「價差以『上次查看價格』為基準」 | `diff = 現價 − lastPriceSnapshot`；開頁渲染後以現價更新快照並寫回 | 漲：`+500 元` 漲價樣式；跌：`-500 元` 跌價樣式；持平：灰 |

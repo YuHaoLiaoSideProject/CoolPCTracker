@@ -1,20 +1,19 @@
 <script setup lang="ts">
-// web/src/components/CategorySidebar.vue — 分類側欄（開發規格 003 §2.7）
-// 渲染 9 大分類（含「全部」）、高亮目前分類、顯示各分類商品數。
-// 不直接操作 URL——透過 select 事件交給 ListingView 統一同步 router。
-import { CATEGORIES, type CategoryKey } from "@/data/categories"
+// web/src/components/CategorySidebar.vue — 分類側欄（契約 v2：資料驅動）
+// 渲染「全部」＋ index.json categories[] 全部分類、高亮目前分類、顯示各分類商品數
+// （count 直接來自 index 統計 — lazy 載入下 items 未全載時側欄數字才正確）。
+// 不直接操作 URL／資料——透過 select 事件交給 ListingView 統一處理（loadCategory/loadAll + router）。
+import type { CategoryMeta } from "@/types/item"
 
 defineProps<{
-  active: CategoryKey | null // 目前分類；null = 全部
-  counts?: Record<string, number> // 分類中文標籤 → 商品數（由 ListingView 計算傳入）
+  categories: CategoryMeta[] // 由 useItems 提供（index.json 目錄）
+  active: string | null // 目前選中分類 id；null = 全部
+  total: number // 「全部」的總筆數（index counts 加總）
 }>()
 
 const emit = defineEmits<{
-  (e: "select", key: CategoryKey | null): void // null = 全部
+  (e: "select", id: string | null): void // null = 全部（→ ListingView 呼叫 loadAll）
 }>()
-
-const total = (counts: Record<string, number> | undefined): number =>
-  counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0
 </script>
 
 <template>
@@ -29,19 +28,19 @@ const total = (counts: Record<string, number> | undefined): number =>
         @click="emit('select', null)"
       >
         <span>全部</span>
-        <span class="cat-cnt" aria-hidden="true">{{ total(counts) }}</span>
+        <span class="cat-cnt" aria-hidden="true">{{ total }}</span>
       </button>
       <button
-        v-for="c in CATEGORIES"
-        :key="c.key"
+        v-for="c in categories"
+        :key="c.id"
         type="button"
         class="cat"
-        :class="{ 'is-active': active === c.key }"
-        :aria-pressed="active === c.key"
-        @click="emit('select', c.key)"
+        :class="{ 'is-active': active === c.id }"
+        :aria-pressed="active === c.id"
+        @click="emit('select', c.id)"
       >
-        <span>{{ c.label }}</span>
-        <span class="cat-cnt" aria-hidden="true">{{ counts?.[c.label] ?? 0 }}</span>
+        <span>{{ c.name }}</span>
+        <span class="cat-cnt" aria-hidden="true">{{ c.count }}</span>
       </button>
     </div>
   </nav>

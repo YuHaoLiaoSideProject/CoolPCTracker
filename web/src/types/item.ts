@@ -1,8 +1,11 @@
-// web/src/types/item.ts — data/items.json 前端契約（開發規格 003 §2.2）
+// web/src/types/item.ts — 前端資料契約 v2（分類分檔，2026-08-17）
+// 契約 v2：api/index.json 的 categories[] 為分類目錄（id/name/file/count）；
+// api/items/{file} 為「純陣列」（單一分類 items，每筆**無 category 欄位**——
+// 分類是外部狀態：載入哪個檔就知道哪個分類）。Item 型別移除 category。
 // 與 crawler/store.py Item + spec_parser 產出對齊；未解析到的欄位為 undefined。
 
 /** 歷史價格點：d = 日期（UTC），p = 台幣整數。
- *  ⚠️ items.json 原始格式為 compact 陣列 ["2026-08-15", 9990]（001 格式決策），
+ *  ⚠️ API 原始格式為 compact 陣列 ["2026-08-15", 9990]（001 格式決策），
  *  由 useItems.parseItemsFile 於載入層正規化為本物件型別；元件一律使用正規化後型別。 */
 export interface PricePoint {
   d: string // "2026-08-15"
@@ -39,7 +42,7 @@ export type ItemStatus = "in_stock" | "gone"
 
 export interface Item {
   id: string // hash(主分類 + 正規化名稱)，跨日穩定（001 為 sha256 hex[:16]）
-  category: string // 分類**中文標籤**（與 categories.ts label 對齊）：CPU/主機板/…
+  // ⚠️ 契約 v2：**無 category 欄位**（分類為外部狀態，見 CategoryMeta + itemToCategory 對照）
   subcategory?: string // 子分類標題
   name: string
   spec: ItemSpec // 可能為空物件 {}（無結構化規格）
@@ -50,12 +53,28 @@ export interface Item {
   history: PricePoint[] // 僅異動時 append；可能為空陣列或僅 1 筆
 }
 
-/** data/items.json 頂層契約 */
+/** api/index.json categories[] 單一分類目錄（契約 v2）：
+ *  id/name/file/count 均由 index.json 提供（id 與 file 對 crawler 為 G 索引相關，
+ *  前端一律視為不透明字串；file 為相對於 api/items/ 的檔名）。 */
+export interface CategoryMeta {
+  id: string // 不分類負載的不透明 id（URL ?category= 參數值）
+  name: string // 分類中文標籤（卡片 chips／詳情麵包屑顯示用）
+  file: string // api/items/{file} 檔名（如 "g4.json"）
+  count: number // 該分類商品數（側欄顯示；來自 index 當日統計）
+}
+
+/** parseItemsFile 輸出容器（舊 001/002 形狀 {meta, items} 亦相容）：
+ *  v2 純陣列檔的 meta 由呼叫端注入（index.crawled_at）。 */
 export interface ItemsFile {
-  meta: {
-    crawled_at: string // UTC ISO 字串，供過期判定（>7 天，與 007 新鮮度規則共用）
-    source: string
-    [key: string]: unknown
-  }
+  meta: { crawled_at: string; source: string }
   items: Item[]
+}
+
+/** api/trends/{item_id}.json 契約（O4）：單一商品完整歷史（依 d 升冪、全歷史）。
+ *  原始 history 為 compact [d, p] 陣列（001 格式決策），由 useTrend.parseTrendFile
+ *  於載入層正規化為 PricePoint[]；元件一律使用正規化後型別。
+ *  ⚠️ 分類檔（api/items/）的 history 只剩最近 ≤2 點，完整歷史一律由此檔取得。 */
+export interface TrendFile {
+  id: string // 與 Item.id 相同（hash(主分類 + 正規化名稱)）
+  history: PricePoint[] // 依 d 升冪；可能為空陣列（該商品尚無價格紀錄）
 }

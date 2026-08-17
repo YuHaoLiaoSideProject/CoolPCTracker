@@ -1,12 +1,15 @@
 <script setup lang="ts">
-// web/src/views/ListingView.vue — 列表頁組合與 deep link（開發規格 003 §2.12）
-// 組合全部元件；URL 分類參數為分類狀態的唯一真相來源（雙向同步）；
-// 掛載時依 ?category=<key> 初始化（deep link）；載入/錯誤/空狀態只在列表區域。
-import { computed, onMounted, watch } from "vue"
+// web/src/views/ListingView.vue — 列表頁組合與 deep link（契約 v2：分類分檔 lazy 載入）
+// - 分類狀態唯一真相：useItems.activeCategoryId（index 載入後預設第一個分類）；
+//   URL ?category=<id>（"all" = 全部）與之雙向同步。
+// - 分類切換 = loadCategory(id)（快取已載入 → 立即切換）；「全部」= loadAll()。
+// - 全站搜尋：輸入非空關鍵字 → 切至「全部」並確保全部分類已載入（跨分類搜尋）。
+// - 載入/錯誤/空狀態只在列表區域；任何資料失敗不影響側欄／搜尋框渲染。
+import { computed, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useItems } from "@/composables/useItems"
 import { useFilters } from "@/composables/useFilters"
-import { isCategoryKey, type CategoryKey } from "@/data/categories"
+import { isCategoryKey, labelOf } from "@/data/categories"
 import { formatDateTime } from "@/utils/format"
 import type { Item } from "@/types/item"
 import CategorySidebar from "@/components/CategorySidebar.vue"
@@ -15,34 +18,87 @@ import SpecFilterPanel from "@/components/SpecFilterPanel.vue"
 import ProductList from "@/components/ProductList.vue"
 import ErrorState from "@/components/ErrorState.vue"
 
+const ALL = "all" // URL ?category=all = 全部視圖
+
 const route = useRoute()
 const router = useRouter()
-const { items, meta, loading, error, retry, isStale } = useItems()
-const filters = useFilters(items)
+const {
+  items, meta, loading, error, retry, isStale,
+  categories, activeCategoryId, itemToCategory,
+  loadCategory, loadAll,
+} = useItems()
+const filters = useFilters(items, itemToCategory, activeCategoryId)
 // 解構為頂層 binding → 模板中 ref 自動 unwrap（vue-tsc 不 unwrap 巢狀 ref）
-const { keyword, conditions, categoryKey, filteredItems, addCondition, removeCondition, clearAll, setCategory } = filters
+const { keyword, conditions, filteredItems, addCondition, removeCondition, clearAll } = filters
 
-// —— deep link：初次進入即依 ?category=<key> 呈現（BDD：直接以分類頁網址進入）——
-const initial = route.query.category
-if (isCategoryKey(initial)) setCategory(initial as CategoryKey)
+// —— URL 參數解析：id 優先；`all` = 全部；舊版 key（?category=GPU）依名稱對照回 id；其餘 → null（預設）——
+function resolveParam(v: unknown): string | null | typeof ALL {
+  if (v === ALL) return ALL
+  if (typeof v === "string" && categories.value.some(c => c.id === v)) return v
+  if (isCategoryKey(v)) {
+    const c = categories.value.find(c => c.name === labelOf(v))
+    if (c) return c.id
+  }
+  return null
+}
+
+/** 套用目前 URL 至資料層（index 目錄就緒後才有效；重複呼叫冪等） */
+function applyUrlToState(): void {
+  const id = resolveParam(route.query.category)
+  if (id === ALL) {
+    void loadAll()
+  } else if (id) {
+    void loadCategory(id)
+  } else {
+    // 無參數 → 預設第一個分類（useItems bootstrap 已自動載入；此處確保 active 一致）
+    const first = categories.value[0]?.id ?? null
+    if (first) void loadCategory(first)
+  }
+}
+// index 目錄就緒（categories 更新）時套用 URL（deep link / 直接以分類網址進入）
+watch(categories, applyUrlToState, { immediate: true })
 
 // —— URL 與狀態雙向同步：點側欄 → router.replace 更新 URL；URL 變（含前進/後退）→ 更新狀態 ——
-function selectCategory(key: CategoryKey | null) {
-  router.replace(key ? { query: { category: key } } : { query: {} })
+function selectCategory(id: string | null) {
+  router.replace(id ? { query: { category: id } } : { query: { category: ALL } })
+  if (id) void loadCategory(id)
+  else void loadAll()
 }
 watch(
   () => route.query.category,
-  v => {
-    if (isCategoryKey(v)) setCategory(v as CategoryKey)
-    else setCategory(null)
-  },
+  () => applyUrlToState(),
 )
 
-// 各分類商品數（側欄顯示）
-const counts = computed(() => {
-  const map: Record<string, number> = {}
-  for (const it of items.value) map[it.category] = (map[it.category] ?? 0) + 1
-  return map
+// —— 全站搜尋：非空關鍵字 → 切至「全部」並 loadAll()（跨分類聚合消費）——
+watch(keyword, (k, prev) => {
+  if (k.trim() && !prev?.trim()) {
+    void loadAll() // 已載入分類快取命中；其餘分類併發抓取
+    router.replace({ query: { category: ALL } })
+  }
+})
+
+// 側欄「全部」總數 = index counts 加總（lazy 下 items 未全載，不能算 items）
+const sidebarTotal = computed(() => categories.value.reduce((a, c) => a + c.count, 0))
+
+// 卡片／詳頁需要分類名：itemId → categoryId → category name（v2 外部對照）
+const categoryNames = computed<Record<string, string>>(() => {
+  const nameById = new Map(categories.value.map(c => [c.id, c.name]))
+  const out: Record<string, string> = {}
+  for (const [iid, cid] of itemToCategory.value) {
+    const n = nameById.get(cid)
+    if (n) out[iid] = n
+  }
+  return out
+})
+
+// 目前視圖的「未過濾總數」（分類視圖 = 該分類已載入筆數；全部 = 已載入總數）
+const universeTotal = computed(() => {
+  if (activeCategoryId.value) {
+    let n = 0
+    for (const cid of itemToCategory.value.values()) if (cid === activeCategoryId.value) n += 1
+    return n
+  }
+  return items.value.length
 })
 
 // —— 004/005 事件轉接：004 已接 /product/:id 路由（onOpen）；
@@ -65,14 +121,16 @@ function onToggleCompare(_item: Item) {
 function onClearAll() {
   const wasCategoryEmpty = keyword.value.trim() === "" && conditions.value.length === 0
   clearAll()
-  if (wasCategoryEmpty) setCategory(null)
+  if (wasCategoryEmpty) selectCategory(null)
 }
 
-const showError = computed(() => !!error.value && items.value.length === 0)
-const showOldData = computed(() => !!error.value && items.value.length > 0)
+// 錯誤分流：目前視圖「零筆」（無任何已載入命中）且無 loading 時顯示錯誤；有歷史資料 → 舊資料橫幅
+const showError = computed(() => !!error.value && !loading.value && filteredItems.value.length === 0)
+const showOldData = computed(() => !!error.value && !loading.value && filteredItems.value.length > 0)
 
 // 背景預載詳情頁 chunk（含 lightweight-charts）：首屏不阻塞；首次點進詳情頁免等待下載。
 // requestIdleCallback 為主，Safari 無此 API 時 fallback 到 setTimeout。
+import { onMounted } from "vue"
 onMounted(() => {
   const prefetch = () => import("@/views/ProductDetailView.vue")
   const ric = (window as any).requestIdleCallback
@@ -98,8 +156,9 @@ onMounted(() => {
 
     <aside class="listing-sidebar">
       <CategorySidebar
-        :active="categoryKey as CategoryKey | null"
-        :counts="counts"
+        :categories="categories"
+        :active="activeCategoryId"
+        :total="sidebarTotal"
         @select="selectCategory"
       />
     </aside>
@@ -114,7 +173,7 @@ onMounted(() => {
         />
       </div>
 
-      <!-- 載入中：skeleton（側欄/搜尋框仍可見，不白屏） -->
+      <!-- 載入中：skeleton（側欄/搜尋框仍可見，不白屏；快取切換不觸發） -->
       <div v-if="loading" class="skeleton-list" aria-busy="true">
         <div v-for="n in 6" :key="n" class="sk" />
       </div>
@@ -129,9 +188,10 @@ onMounted(() => {
         </div>
         <ProductList
           :items="filteredItems"
-          :total="items.length"
+          :total="universeTotal"
           :keyword="keyword"
           :conditions="conditions"
+          :category-names="categoryNames"
           @clear-all="onClearAll"
           @open="onOpen"
           @toggle-watch="onToggleWatch"

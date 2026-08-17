@@ -8,7 +8,7 @@ GitHub Pages 靜態站 + Telegram 通知。
 | 功能 | 狀態 | 說明 |
 |------|------|------|
 | 001 crawler-data-collection | ✅ 完成 | TDD 開發，155 tests 全綠；fetcher/parser/spec_parser/store/main 6 模組 |
-| 002 排程與 Pages 部署 | ✅ 完成 | crawl.yml 每日排程 + workflow_dispatch + 日期制單檔快照（同日覆寫） |
+| 002 排程與 Pages 部署 | ✅ 完成 | crawl.yml 每日排程 + workflow_dispatch + 契約 v2 api/ 衍生層（items/{g}/daily/trends/index） |
 | 003-005 前端（Vue 3） | ⏳ Issue #3/#4/#5 | 需 data/*.json 產出後開發 |
 | 006 Telegram 價格警報 | ⏳ Issue #7 | |
 | 007 健康監控＋警報 | ⏳ Issue #8 | notify hook 簽名已預留 |
@@ -35,7 +35,7 @@ docs/development/       ← 開發規格（模組介面、資料結構、測試�
 # 手動跑爬蟲（002 完成前之本地驗證）
 .venv/bin/python -m crawler.main --data-dir data [--date YYYY-MM-DD]
 
-# 資料異動判定 + 重建 api/（index.json / latest.json / items/YYYYMMDD.json 每日一份、同日覆寫）
+# 資料異動判定 + 重建 api/ 衍生層（latest.json / daily/YYYYMMDD.json / trends/{id}.json / index.json）
 .venv/bin/python scripts/version_data.py
 
 # 前端（web/）
@@ -64,26 +64,32 @@ Issue 內已含：目標、對應文件路徑、驗收要點 → 指向 issue �
 3. **loop-review**：完成後多輪審查（Blocking/Major/Minor，fix 模式），至 Blocking=0 停止
 4. **完成後**：更新對應 issue（勾選驗收、close）、必要時補 docs
 
-## 資料 / API 組織（AirTicketsPrice 模式：data/ 真相 + api/ 衍生）
+## 資料 / API 組織（契約 v2：分類拆檔，data/ 真相 + api/ 衍生的分類鏡像）
 
 ```
-crawler/main.py ──寫──▶ data/items.json + data/meta.json   （原始真相，git 版控）
+crawler/main.py ──寫──▶ data/items/{g}.json（每分類一檔，純 items 陣列；無 meta/category 欄位；history 僅 ≤2 點）
+            ├───────▶ data/meta.json（meta 集中於此）
+            └───────▶ data/daily/YYYYMMDD.json（每日價格點 {item_id: price}，完整歷史序列）
                                 │
-scripts/version_data.py ──讀 data/ 比對上次最新快照──▶
+scripts/version_data.py ──讀 data/ 組裝 api/ 衍生層──▶
     ├─ 防線：meta.status == "failed" 或 total == 0 → 不寫任何檔
-    ├─ 有異動：寫 api/items/{YYYYMMDD}.json（= {crawled_at, items}；同台北日期檔存在 → 覆寫，不再產生 _1/_2 後綴）
-    │          寫 api/latest.json（穩定端點，最新快照覆寫語意）
-    │          重建 api/index.json（files[] 每日一列的乾淨日期檔日誌 + latest_file + merged meta）
+    ├─ 有異動：鏡像 api/items/{g}.json（= data/items/{g}.json，每分類一檔；無 api/latest.json）
+    │          鏡像 api/daily/YYYYMMDD.json（= data/daily 每日價格點，新增/更新才寫）
+    │          全量重建 api/trends/{item_id}.json（逐商品完整歷史，詳情趨勢圖 1 request）
+    │          重建 api/index.json（categories[]（id/name/file/count）、daily_files[]、trends_prefix）
     └─ 無異動：不動任何檔（同日重跑資料未變 → 無空 commit）
 
 前端 useItems.ts ──runtime──▶
-    1. GET api/index.json  → latest_file
-    2. GET {latest_file}（api/items/YYYYMMDD.json）→ parse → 渲染
+    1. GET api/index.json  → categories[]（＋ crawled_at）
+    2. 依側欄 lazy 載入 GET api/items/{g}.json?v={crawled_at}（每分類一檔；卡片漲跌用 history ≤2 點）
+    3. 全站搜尋/詳情 deep link/追蹤：loadAll 聚合全部分類檔
+    4. 詳情頁趨勢圖/歷史最低：GET api/trends/{id}.json（useTrend，失敗不影響其餘頁面）
 ```
 
-- `data/` 是唯一真相（crawler 只寫這裡）；`api/` 是對外 API 面（version_data.py 產出、可重建）。
-- `api/index.json` 是前端唯一入口：`files[]` 列完整日期檔歷史、`latest_file` 指向最新檔。
-- 快照檔名取自 `crawled_at` 轉 Asia/Taipei（UTC+8）的日期 YYYYMMDD，**每日一份**；同台北日期檔存在 → **覆寫**（不再產生 `_1`/`_2` 後綴）；`meta.status == "failed"` 或 `total == 0` → 不寫任何檔。
+- 分類 G 對照：1=套裝/準系統、3=劈發價組合區、4=CPU、5=主機板、6=記憶體、7=SSD、8=HDD、9=記憶卡、12=顯示卡（`{g}` = 分類檔名）。
+- `data/` 是唯一真相（crawler 只寫這裡）：分類檔 `data/items/{g}.json` 只留最新狀態（純 items 陣列、無 meta/category 欄位，每筆 history ≤2 點，固定大小）；meta 集中於 `data/meta.json`；完整跨日歷史由 `data/daily/YYYYMMDD.json` 每日價格點檔承載（2026-08-17 分類拆檔，見 `docs/tech-decisions/tech-decision-資料拆檔方案-2026-08-17.md` 契約 v2 演進）。
+- `api/` 是對外 API 面（version_data.py 產出、可重建）：`api/items/{g}.json` 各分類鏡像（純 items 陣列，**取代 v1 的 api/latest.json / data/items.json 單檔**）、`api/daily/YYYYMMDD.json` 每日價格點鏡像、`api/trends/{item_id}.json` 逐商品完整歷史、`api/index.json` 為前端唯一入口（`categories[]`（id/name/file/count）、`daily_files[]`、`trends_prefix`；**無 latest_file、無 latest**）。
+- `meta.status == "failed"` 或 `total == 0` → 不寫任何檔；無異動 → 不寫檔（無空 commit）。
 - 前端 runtime 發現資料檔（不再 build 注入 `__DATA_VERSION__`）；dev 由 vite middleware 服務 `../api`，
   build 時自動把 `../api/**` 複製進 `dist/api/`（非手動 drift）。
 
@@ -91,9 +97,9 @@ scripts/version_data.py ──讀 data/ 比對上次最新快照──▶
 
 ```
 crawler/    Python 爬蟲套件（categories/fetcher/parser/spec_parser/store/main + tests/）
-data/       爬蟲輸出（items.json / meta.json，git 版控，首跑由 store 建立）—— 原始真相
-api/        衍生 API 成品（version_data.py 產出：index.json / latest.json / items/YYYYMMDD.json 每日一份、同日覆寫）
-scripts/    version_data.py（diff → 日期制快照 + 重建 api/index.json）
+data/       爬蟲輸出（items/{g}.json 各分類檔（純 items 陣列、history ≤2 點、無 meta/category）/ meta.json / daily/YYYYMMDD.json 每日價格點檔，git 版控，首跑由 store 建立）—— 原始真相
+api/        衍生 API 成品（version_data.py 產出：items/{g}.json 分類鏡像 / daily/YYYYMMDD.json 鏡像 / trends/{item_id}.json / index.json（categories[]））
+scripts/    version_data.py（diff → 組裝 api/ 衍生層 + 重建 api/index.json）
 docs/       全部文件（tech-decisions / interaction-flows / bdds / development）
-web/        Vue3 + Vite 前端（runtime fetch api/index.json；build 產出 dist/）
+web/        Vue3 + Vite 前端（runtime fetch api/index.json（categories[]）→ lazy 載入 api/items/{g}.json?v={crawled_at}；詳情頁 fetch api/trends/{id}.json；build 產出 dist/）
 ```

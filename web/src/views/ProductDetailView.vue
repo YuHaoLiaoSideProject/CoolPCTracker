@@ -3,13 +3,13 @@
 // 路由 /product/:id（hash history）。四態：loading（skeleton）／error（載入失敗＋retry）／
 // not-found（找不到商品＋返回列表）／ready（完整版面）。
 // 目標價為 session 級 ref：離開路由即銷毀（E12）；驗證訊息以 BDD Examples 為唯一事實來源（E6）。
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import SpecTable from "@/components/SpecTable.vue"
 import PriceTrendChart from "@/components/PriceTrendChart.vue"
 import WatchActions from "@/components/WatchActions.vue"
 import ErrorState from "@/components/ErrorState.vue"
-import { useItems } from "@/composables/useItems"
+import { useItems, useTrend } from "@/composables/useItems"
 import { usePriceHistory, formatTrendLabel } from "@/composables/usePriceHistory"
 import { useCrawledAt } from "@/composables/useCrawledAt"
 import { parseTargetPrice } from "@/utils/targetPrice"
@@ -17,17 +17,53 @@ import { formatPrice } from "@/utils/format"
 
 const route = useRoute()
 const router = useRouter()
-const { items, meta, loading, error, retry, isStale } = useItems() // 003 契約：共用載入（單例共享，不重複 fetch）
+const {
+  items, meta, loading, error, retry, isStale,
+  categories, itemToCategory, loadAll,
+} = useItems() // 契約 v2：共用載入（單例共享；分類 lazy 載入）
 
 // —— 商品解析（E15：encode/decode 防呆）——
 const itemId = computed(() => decodeURIComponent(String(route.params.id)))
 const item = computed(() => items.value.find((i) => i.id === itemId.value))
-const showError = computed(() => !!error.value)
+const showError = computed(() => !!error.value && !loading.value && !item.value)
 const notFound = computed(() => !loading.value && !error.value && !item.value)
 
-// —— 價格摘要（§2.4）——
-const history = computed(() => item.value?.history ?? [])
-const { stats } = usePriceHistory(history)
+// —— 分類名（v2：Item 無 category；依 itemToCategory + categories 外部對照；找不到→空）——
+const itemCategoryName = computed(() => {
+  if (!item.value) return ""
+  const cid = itemToCategory.value.get(item.value.id)
+  return categories.value.find(c => c.id === cid)?.name ?? ""
+})
+
+// —— 詳情 deep link：商品未載入（如直接開 /product/:id）→ loadAll()（已載分類快取命中）——
+// loading 期間 notFound 保持 false；載入完仍找不到 → 已載完所有分類 → 確為不存在
+watch(
+  () => ({ found: !!item.value, loading: loading.value, error: error.value, cats: categories.value.length }),
+  ({ found, loading: l, error: e }) => {
+    if (found || l || e) return // 已找到／載入中（等完成）／索引失敗（走錯誤分支）
+    void loadAll() // 逐分類補載（只抓未載入者）
+  },
+  { immediate: true },
+)
+
+// —— 價格摘要（目前價／漲跌徽章：列表 state 的短歷史；O4 後每筆僅 ≤2 點仍照常計算）——
+const listHistory = computed(() => item.value?.history ?? [])
+const { stats } = usePriceHistory(listHistory)
+
+// —— 歷史趨勢（O4：完整歷史來自 api/trends/{id}.json，不再依賴列表快照）——
+// 趨勢區塊自有 loading/error 狀態；載入失敗只影響趨勢區塊，其餘頁面照常渲染。
+const trend = useTrend(itemId) // id 為 computed → 路由參數變化自動重新載入
+const trendHistory = computed(() => trend.history.value)
+const { stats: trendStats } = usePriceHistory(trendHistory)
+
+// 歷史最低／Y 軸區間：優先完整趨勢歷史；trend 載入中或失敗時退回列表短歷史（不空白、不影響頁面）
+const histMin = computed(() => trendStats.value.low ?? stats.value.low)
+const histLowDate = computed(() => trendStats.value.lowDate ?? stats.value.lowDate)
+const histMax = computed(() => {
+  const h = trendHistory.value.length ? trendHistory.value : listHistory.value
+  if (!h.length) return null
+  return Math.max(...h.map((pt) => pt.p))
+})
 
 // —— 最後更新時間（台北時區）與過期判斷（§2.6 / E11，與 003 isStale 同規則）——
 const { updatedLabel, isStale: crawledAtStale } = useCrawledAt(computed(() => meta.value?.crawled_at))
@@ -37,9 +73,6 @@ const targetInput = ref("")
 const targetPrice = ref<number | null>(null)
 const targetError = ref("") // 非空 → 輸入框紅框＋提示（E6）
 const targetOutOfRange = ref(false) // 超出歷史區間提示（E7）
-
-const histMin = computed(() => stats.value.low)
-const histMax = computed(() => (history.value.length ? Math.max(...history.value.map((h) => h.p)) : null))
 
 // Y 軸範圍：納入目標價後自動擴展（BDD E7：9,000 超出 9,990~11,500 仍套用且軸 ×0.98/×1.02 擴展）
 const yMin = computed(() => Math.min(histMin.value ?? 0, targetPrice.value ?? Infinity) * 0.98)
@@ -120,7 +153,7 @@ const trendClass = computed(() =>
       <nav class="detail-breadcrumb" aria-label="麵包屑">
         <a href="#/" @click.prevent="backToList">← 返回列表</a>
         <span class="crumb-sep" aria-hidden="true">/</span>
-        <span class="crumb-current">{{ item.category }}</span>
+        <span class="crumb-current">{{ itemCategoryName || "商品" }}</span>
       </nav>
 
       <h1 class="detail-title">
@@ -150,9 +183,9 @@ const trendClass = computed(() =>
         </div>
         <div class="ps-block">
           <span class="ps-label">歷史最低</span>
-          <span v-if="stats.low != null" class="price-low">
-            {{ formatPrice(stats.low) }}
-            <span class="low-date">（{{ stats.lowDate }}）</span>
+          <span v-if="histMin != null" class="price-low">
+            {{ formatPrice(histMin) }}
+            <span class="low-date">（{{ histLowDate }}）</span>
           </span>
           <span v-else class="ps-na">—</span>
         </div>
@@ -195,17 +228,25 @@ const trendClass = computed(() =>
           目標價超出歷史區間（已套用，圖表 Y 軸已自動擴展）
         </p>
 
-        <template v-if="stats.empty">
+        <!-- 趨勢區塊四態（O4：完整歷史獨立載入）：載入中／失敗（不影響其餘頁面）／無歷史／圖表 -->
+        <div v-if="trend.loading.value" class="trend-status" aria-busy="true" aria-label="趨勢載入中">
+          趨勢資料載入中…
+        </div>
+        <div v-else-if="trend.error.value" class="trend-status trend-status--error" role="alert">
+          <span>{{ trend.error.value === "parse" ? "趨勢資料格式錯誤" : "趨勢資料載入失敗" }}</span>
+          <button type="button" class="trend-retry" @click="trend.retry()">重新載入</button>
+        </div>
+        <template v-else-if="trendHistory.length === 0">
           <p class="no-history">尚無歷史資料</p>
         </template>
         <template v-else>
           <PriceTrendChart
-            :history="history"
+            :history="trendHistory"
             :target-price="targetPrice"
             :y-min="yMin"
             :y-max="yMax"
           />
-          <p v-if="stats.single" class="chart-note">首日追蹤：僅 1 筆歷史資料，尚無漲跌比較。</p>
+          <p v-if="trendStats.single" class="chart-note">首日追蹤：僅 1 筆歷史資料，尚無漲跌比較。</p>
         </template>
       </section>
 
@@ -466,6 +507,45 @@ const trendClass = computed(() =>
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   font-size: 14px;
+}
+
+/* ── 趨勢區塊 loading／error（O4：趨勢資料獨立載入，失敗不影響其餘頁面） ── */
+.trend-status {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.trend-status--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.trend-retry {
+  height: var(--h);
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.trend-retry:hover {
+  color: var(--brand);
+  border-color: var(--brand);
 }
 
 /* ── 錯誤／找不到（與 003 共用語義） ── */
