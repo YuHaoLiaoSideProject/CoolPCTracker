@@ -1,12 +1,15 @@
-<!-- web/src/views/DashboardView.vue — Dashboard 頁面（017 + 018 + 019 整合）-->
-<!-- 整合 CategoryTabs + SpecGroupChips + DashboardCard + DashboardSkeleton + ErrorState + EmptyState -->
+<!-- web/src/views/DashboardView.vue — Dashboard 頁面（017 + 018 + 019 + 022 整合）-->
+<!-- 整合 CategoryTabs + SpecGroupChips + DashboardFilterBar + DashboardCard + DashboardSkeleton + ErrorState + EmptyState -->
 <script setup lang="ts">
 import { computed, watch } from "vue"
 import { useItems } from "@/composables/useItems"
 import { useDashboard } from "@/composables/useDashboard"
 import { useSpecGroups } from "@/composables/useSpecGroups"
+import { useDashboardFilters } from "@/composables/useDashboardFilters"
+import type { DashboardItem } from "@/composables/useDashboard"
 import CategoryTabs from "@/components/CategoryTabs.vue"
 import SpecGroupChips from "@/components/SpecGroupChips.vue"
+import DashboardFilterBar from "@/components/DashboardFilterBar.vue"
 import DashboardCard from "@/components/DashboardCard.vue"
 import DashboardSkeleton from "@/components/DashboardSkeleton.vue"
 import ErrorState from "@/components/ErrorState.vue"
@@ -38,12 +41,47 @@ const categoryName = computed(() => {
 })
 const specGroups = useSpecGroups(categoryItems, categoryName)
 
-// —— Dashboard 邏輯（017 + 019）——
-const { dashboardItems, activeCategory, switchCategory } = useDashboard(
+// —— 篩選 + 排序（022）——
+const dashboardFilters = useDashboardFilters(categoryItems)
+
+// —— Dashboard 邏輯（017 + 019）：取 activeCategory / switchCategory ——
+const { extractCurrentPrice, activeCategory, switchCategory } = useDashboard(
   categoryItems,
   activeCategoryId,
   specGroups.resetGroup,
 )
+
+// —— 顯示商品（分組 ∩ 篩選排序 → DashboardItem[]）——
+const groupedIds = computed(() => {
+  return new Set(specGroups.groupedItems.value.map((i) => i.id))
+})
+
+const displayItems = computed(() =>
+  dashboardFilters.sortedItems.value.filter((i) => groupedIds.value.has(i.id)),
+)
+
+const displayDashboardItems = computed<DashboardItem[]>(() => {
+  const list = displayItems.value
+  if (list.length === 0) return []
+
+  // 計算分類最低價
+  let lowestPrice: number | null = null
+  let lowestId: string | null = null
+  for (const item of list) {
+    const price = extractCurrentPrice(item)
+    if (price != null && (lowestPrice == null || price < lowestPrice)) {
+      lowestPrice = price
+      lowestId = item.id
+    }
+  }
+
+  return list.map((item) => ({
+    item,
+    currentPrice: extractCurrentPrice(item),
+    isLowest: lowestId != null && item.id === lowestId,
+    lowestPrice,
+  }))
+})
 
 // —— loadingIds（CategoryTabs spinner 用）——
 const loadingIds = computed(() => {
@@ -52,6 +90,11 @@ const loadingIds = computed(() => {
   if (id && isLoadingCategory(id)) s.add(id)
   return s
 })
+
+// —— 篩選空狀態處理 ——
+function handleFilterClear() {
+  dashboardFilters.clearFilters()
+}
 
 // —— 預設選取第一個分類 ——
 watch(
@@ -68,7 +111,7 @@ watch(
 <template>
   <main class="dashboard-view">
     <!-- 骨架屏 -->
-    <DashboardSkeleton v-if="loading && !dashboardItems.length" />
+    <DashboardSkeleton v-if="loading && !displayDashboardItems.length" />
 
     <!-- 錯誤狀態 -->
     <ErrorState v-else-if="error" :kind="error" @retry="retry" />
@@ -92,10 +135,28 @@ watch(
         @select="specGroups.selectGroup"
       />
 
+      <!-- 篩選控制項（022） -->
+      <DashboardFilterBar
+        v-if="categoryItems.length > 0"
+        :sort-mode="dashboardFilters.sortMode.value"
+        :price-min="dashboardFilters.priceMin.value"
+        :price-max="dashboardFilters.priceMax.value"
+        :available-brands="dashboardFilters.availableBrands.value"
+        :selected-brands="dashboardFilters.selectedBrands.value"
+        :result-count="displayItems.length"
+        :total-count="categoryItems.length"
+        :has-active-filter="dashboardFilters.hasActiveFilter.value"
+        @update:sort="dashboardFilters.setSortMode"
+        @update:price-min="dashboardFilters.setPriceMin"
+        @update:price-max="dashboardFilters.setPriceMax"
+        @update:brands="dashboardFilters.toggleBrand"
+        @clear="handleFilterClear"
+      />
+
       <!-- 商品列表 -->
-      <section v-if="dashboardItems.length" class="dashboard-list" aria-label="商品列表">
+      <section v-if="displayDashboardItems.length" class="dashboard-list" aria-label="商品列表">
         <DashboardCard
-          v-for="di in dashboardItems"
+          v-for="di in displayDashboardItems"
           :key="di.item.id"
           :item="di.item"
           :category-name="activeCategory?.name ?? ''"
@@ -104,7 +165,14 @@ watch(
         />
       </section>
 
-      <!-- 空狀態 -->
+      <!-- 篩選空狀態 -->
+      <EmptyState
+        v-else-if="dashboardFilters.hasActiveFilter.value"
+        kind="filter"
+        @clear="handleFilterClear"
+      />
+
+      <!-- 分類空狀態 -->
       <EmptyState v-else kind="category" />
     </template>
   </main>

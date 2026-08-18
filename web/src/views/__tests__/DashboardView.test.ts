@@ -39,8 +39,28 @@ vi.mock("@/composables/useSpecGroups", () => ({
     hasGroups: ref(false),
     groups: ref([]),
     selectedGroupKey: ref(null),
+    groupedItems: computed(() => mockItems.value),
     selectGroup: vi.fn(),
     resetGroup: vi.fn(),
+  }),
+}))
+
+vi.mock("@/composables/useDashboardFilters", () => ({
+  useDashboardFilters: (items: { value: Item[] }) => ({
+    sortMode: ref("price_asc"),
+    priceMin: ref(null),
+    priceMax: ref(null),
+    selectedBrands: ref(new Set()),
+    availableBrands: computed(() => []),
+    filteredItems: computed(() => items.value),
+    sortedItems: computed(() => items.value),
+    hasActiveFilter: ref(false),
+    setSortMode: vi.fn(),
+    setPriceMin: vi.fn(),
+    setPriceMax: vi.fn(),
+    toggleBrand: vi.fn(),
+    clearFilters: vi.fn(),
+    resetAll: vi.fn(),
   }),
 }))
 
@@ -65,6 +85,8 @@ vi.mock("@/composables/useDashboard", () => ({
     })
     return {
       dashboardItems,
+      extractCurrentPrice: (item: Item) =>
+        item.history.length > 0 ? item.history[item.history.length - 1].p : null,
       activeCategory: computed(() => {
         const id = categoryId.value
         return id ? mockCategories.value.find((c: CategoryMeta) => c.id === id) ?? null : null
@@ -231,7 +253,7 @@ describe("DashboardView 整合測試", () => {
       const card = w.findComponent({ name: "DashboardCard" })
       expect(card.props("item").id).toBe("a")
       expect(card.props("categoryName")).toBe("CPU")
-      expect(card.props("lowestPrice")).toBeNull()
+      expect(card.props("lowestPrice")).toBe(9990)
     })
 
     it("多筆商品正確渲染多張卡片", () => {
