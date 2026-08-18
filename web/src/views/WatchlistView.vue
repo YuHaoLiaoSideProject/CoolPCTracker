@@ -227,6 +227,7 @@ function onRemove(id: string) {
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+  overflow: hidden;
   transition: opacity var(--transition), background-color var(--transition), border-color var(--transition);
 }
 
@@ -293,6 +294,7 @@ function onRemove(id: string) {
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .card-price-group {
@@ -330,6 +332,8 @@ function onRemove(id: string) {
 
 .card-sparkline {
   flex-shrink: 0;
+  width: 80px;
+  min-width: 80px;
 }
 
 .remove-btn {
