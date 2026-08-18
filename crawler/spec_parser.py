@@ -171,8 +171,8 @@ _RAM_BRANDS: tuple[str, ...] = (
     "科賦", "PNY", "Samsung", "三星", "UMAX", "凌航", "T-FORCE",
     "Biwin", "佰維", "Origin code", "Origin",
 )
-_RE_RAM_SPEC = re.compile(r"\b(DDR[0-9]|D[0-9])\b", re.IGNORECASE)  # DDR5 / DDR4 / D5 / D4
-_RE_RAM_CLOCK = re.compile(r"\b(?:DDR[0-9]|D[0-9])\s*[-/]?\s*(\d+)\b", re.IGNORECASE)  # DDR5-5600 / D5-5600 → 5600
+_RE_RAM_SPEC = re.compile(r"\b(DDR[0-9]L?|D[0-9]L?)\b", re.IGNORECASE)  # DDR5 / DDR4 / DDR3L / D5 / D4
+_RE_RAM_CLOCK = re.compile(r"\b(?:DDR[0-9]L?|D[0-9]L?)\s*[-/]?\s*(\d+)\b", re.IGNORECASE)  # DDR5-5600 / DDR3L-1600 / D5-5600 → 5600
 _RE_RAM_GB_MULT = re.compile(r"(\d+)\s*GB\s*[*×x]\s*(\d+)\b", re.IGNORECASE)  # 8GB*2 → 16
 _RE_RAM_GB = re.compile(r"(\d+)\s*GB\b", re.IGNORECASE)  # 16GB（優先）
 _RE_RAM_G = re.compile(r"(\d+)\s*G(?:\s*\*\s*(\d+))?\b", re.IGNORECASE)  # 16G / 8G*2
@@ -210,8 +210,13 @@ def _parse_ram(name: str) -> Spec:
     m = _RE_RAM_SPEC.search(rest)
     if m:
         raw_spec = m.group(1).upper()
-        # D4/D5 簡寫正規化為 DDR4/DDR5
-        extra["spec"] = f"DDR{raw_spec[-1]}" if raw_spec.startswith("D") and len(raw_spec) == 2 else raw_spec
+        # 正規化：D4/D5 → DDR4/DDR5，DDR3L → DDR3（移除 L 後綴）
+        if raw_spec.startswith("D") and not raw_spec.startswith("DDR") and len(raw_spec) <= 3:
+            extra["spec"] = f"DDR{raw_spec[-1]}"
+        elif raw_spec.endswith("L"):
+            extra["spec"] = raw_spec[:-1]  # DDR3L → DDR3
+        else:
+            extra["spec"] = raw_spec
     m = _RE_RAM_CLOCK.search(rest)
     if m:
         extra["clock_mhz"] = int(m.group(1))
