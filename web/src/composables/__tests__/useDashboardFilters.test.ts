@@ -1,6 +1,6 @@
 // web/src/composables/__tests__/useDashboardFilters.test.ts — useDashboardFilters 單元測試（022）
-import { describe, expect, it, vi, beforeEach } from "vitest"
-import { ref, nextTick } from "vue"
+import { describe, expect, it, beforeEach } from "vitest"
+import { ref, nextTick, type Ref } from "vue"
 import type { Item } from "@/types/item"
 import { useDashboardFilters } from "@/composables/useDashboardFilters"
 
@@ -40,7 +40,7 @@ function makeItems(): Item[] {
 // ── Tests ──
 
 describe("useDashboardFilters", () => {
-  let items: ReturnType<typeof ref<Item[]>>
+  let items: Ref<Item[]>
 
   beforeEach(() => {
     items = ref(makeItems())

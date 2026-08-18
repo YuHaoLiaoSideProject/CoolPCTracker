@@ -3,7 +3,7 @@
 import { SORT_OPTIONS } from "@/types/dashboardFilter"
 import type { SortMode } from "@/types/dashboardFilter"
 
-const props = defineProps<{
+defineProps<{
   sortMode: SortMode
   priceMin: number | null
   priceMax: number | null

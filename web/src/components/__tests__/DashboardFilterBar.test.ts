@@ -1,5 +1,5 @@
 // web/src/components/__tests__/DashboardFilterBar.test.ts — DashboardFilterBar 單元測試（022）
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { mount } from "@vue/test-utils"
 import DashboardFilterBar from "@/components/DashboardFilterBar.vue"
 import type { SortMode } from "@/types/dashboardFilter"
