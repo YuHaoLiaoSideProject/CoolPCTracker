@@ -1,9 +1,12 @@
 <script setup lang="ts">
 // web/src/App.vue — 全站外框（頂部 header + <router-view>）（開發規格 003 §2.1）
-import { ref, onMounted } from "vue"
+import { ref, computed, onMounted } from "vue"
 import CompareBar from "@/components/CompareBar.vue"
+import { useWatchlist } from "@/composables/useWatchlist"
 
 const dark = ref(false)
+const { items: watchlistItems } = useWatchlist()
+const watchlistCount = computed(() => watchlistItems.value.length)
 
 function applyTheme(v: boolean) {
   dark.value = v
@@ -38,6 +41,13 @@ function toggleTheme() {
         </a>
         <span class="app-sub">原價屋商品價格追蹤</span>
         <div class="app-header-right">
+          <router-link to="/watchlist" class="watchlist-link">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span>我的追蹤</span>
+            <span v-if="watchlistCount > 0" class="watchlist-badge">{{ watchlistCount }}</span>
+          </router-link>
           <button
             class="theme-btn"
             type="button"

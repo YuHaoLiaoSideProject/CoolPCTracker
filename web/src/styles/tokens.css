@@ -196,3 +196,40 @@ a {
 .theme-btn:hover {
   color: var(--text);
 }
+
+/* ── 追蹤清單導覽連結（005） ────────────────────── */
+.watchlist-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  height: var(--h);
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.watchlist-link:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.watchlist-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
