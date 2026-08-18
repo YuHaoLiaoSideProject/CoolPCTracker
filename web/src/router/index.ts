@@ -10,5 +10,7 @@ export const router = createRouter({
     // 004：商品詳情頁（/product/:id；id 為 hex，仍以 encodeURIComponent 防呆）
     // 懶載入：詳情頁帶 lightweight-charts，動態 import 拆成獨立 chunk，列表頁首屏不背圖表庫
     { path: "/product/:id", name: "product-detail", component: () => import("@/views/ProductDetailView.vue") },
+    { path: "/watchlist", name: "watchlist", component: () => import("@/views/WatchlistView.vue") },
+    { path: "/compare", name: "compare", component: () => import("@/views/CompareView.vue") },
   ],
 })

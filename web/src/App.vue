@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // web/src/App.vue — 全站外框（頂部 header + <router-view>）（開發規格 003 §2.1）
 import { ref, onMounted } from "vue"
+import CompareBar from "@/components/CompareBar.vue"
 
 const dark = ref(false)
 
@@ -57,5 +58,6 @@ function toggleTheme() {
     </header>
 
     <router-view />
+    <CompareBar />
   </div>
 </template>

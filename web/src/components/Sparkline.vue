@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // web/src/components/Sparkline.vue — SVG 迷你趨勢圖（開發規格 003 §2.10）
-// viewBox 0 0 100 28 polyline；history < 2 筆不畫線，顯示「—」
-// （與 005 追蹤頁「資料不足」語意一致）。
+// viewBox 0 0 100 28 polyline；history < 2 筆不畫線，顯示「資料不足」。
 import { computed } from "vue"
 import type { PricePoint } from "@/types/item"
 
@@ -35,7 +34,7 @@ const poly = computed(() => {
   >
     <polyline :points="poly" />
   </svg>
-  <span v-else class="sparkline--empty">—</span>
+  <span v-else class="sparkline--empty">資料不足</span>
 </template>
 
 <style scoped>
