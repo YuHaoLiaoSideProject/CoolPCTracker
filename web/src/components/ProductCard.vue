@@ -6,19 +6,17 @@ import { computed } from "vue"
 import type { Item } from "@/types/item"
 import { usePriceDelta, specChipTexts } from "@/composables/usePriceDelta"
 import Sparkline from "./Sparkline.vue"
+import WatchlistButton from "./WatchlistButton.vue"
+import CompareToggle from "./CompareToggle.vue"
 import { formatPrice } from "@/utils/format"
 
 const props = defineProps<{
   item: Item
-  categoryName?: string // 分類中文標籤（v2：Item 無 category，由外部 itemToCategory + categories 對照）
-  watched?: boolean // 005：已追蹤狀態（005 實作前預設 false）
-  compareSelected?: boolean // 005：比價已勾選
+  categoryName?: string
 }>()
 
 const emit = defineEmits<{
-  (e: "open", item: Item): void // 004：點名稱/卡片 → 詳情頁
-  (e: "toggle-watch", item: Item): void // 005：追蹤按鈕切換
-  (e: "toggle-compare", item: Item): void // 005：比價勾選切換
+  (e: "open", item: Item): void
 }>()
 
 const { currentPrice, deltaClass, deltaText } = usePriceDelta(props.item)
@@ -60,24 +58,8 @@ const cardLabel = computed(() => {
       <span class="pc-delta" :class="deltaClass">{{ deltaText }}</span>
     </div>
     <div class="pc-actions">
-      <button
-        type="button"
-        class="pc-btn"
-        :class="{ 'is-active': watched }"
-        :aria-pressed="!!watched"
-        @click.stop="emit('toggle-watch', item)"
-      >
-        {{ watched ? "已追蹤" : "追蹤" }}
-      </button>
-      <button
-        type="button"
-        class="pc-btn"
-        :class="{ 'is-active': compareSelected }"
-        :aria-pressed="!!compareSelected"
-        @click.stop="emit('toggle-compare', item)"
-      >
-        {{ compareSelected ? "已勾選" : "比價" }}
-      </button>
+      <WatchlistButton :id="item.id" :price="currentPrice" />
+      <CompareToggle :id="item.id" :category="categoryName ?? ''" variant="button" />
     </div>
   </article>
 </template>

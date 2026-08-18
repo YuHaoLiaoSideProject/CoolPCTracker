@@ -18,9 +18,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "clear-all"): void
-  (e: "open", item: Item): void // 轉接 004 詳情入口
-  (e: "toggle-watch", item: Item): void // 轉接 005
-  (e: "toggle-compare", item: Item): void // 轉接 005
+  (e: "open", item: Item): void
 }>()
 
 const hasActiveFilter = computed(
@@ -61,8 +59,6 @@ const conditionLabels = computed(() => props.conditions.map(c => c.label))
         :item="it"
         :category-name="categoryNames?.[it.id] ?? ''"
         @open="emit('open', $event)"
-        @toggle-watch="emit('toggle-watch', $event)"
-        @toggle-compare="emit('toggle-compare', $event)"
       />
     </div>
 

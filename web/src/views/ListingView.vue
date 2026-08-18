@@ -101,20 +101,9 @@ const universeTotal = computed(() => {
   return items.value.length
 })
 
-// —— 004/005 事件轉接：004 已接 /product/:id 路由（onOpen）；
-//    005 實作時改接 watchlist/compare store（onToggleWatch / onToggleCompare）——
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// —— 004 事件轉接：跳轉詳情頁並回帶分類 context ——
 function onOpen(item: Item) {
-  // 004：跳轉詳情頁並回帶分類 context（?category= 隨 URL 帶至詳情頁，返回列表時保留）
   router.push({ path: `/product/${encodeURIComponent(item.id)}`, query: route.query })
-}
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function onToggleWatch(_item: Item) {
-  // TODO(005): store.toggle(item.id)
-}
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function onToggleCompare(_item: Item) {
-  // TODO(005): store.toggle(item.id)
 }
 
 /** 清除全部條件：保留目前分類（BDD #8）；若本來就無搜尋/篩選（空分類的「查看全部商品」）→ 回全部 */
@@ -194,8 +183,6 @@ onMounted(() => {
           :category-names="categoryNames"
           @clear-all="onClearAll"
           @open="onOpen"
-          @toggle-watch="onToggleWatch"
-          @toggle-compare="onToggleCompare"
         />
       </template>
     </main>
