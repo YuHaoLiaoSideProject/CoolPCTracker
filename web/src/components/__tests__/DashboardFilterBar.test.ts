@@ -6,7 +6,7 @@ import type { SortMode } from "@/types/dashboardFilter"
 
 // ── Helpers ──
 
-function makeProps(overrides?: Partial<InstanceType<typeof DashboardFilterBar>["$props"]>) {
+function makeProps(overrides?: Record<string, unknown>) {
   return {
     sortMode: "price_asc" as SortMode,
     priceMin: null,
@@ -17,6 +17,12 @@ function makeProps(overrides?: Partial<InstanceType<typeof DashboardFilterBar>["
     selectedCapacities: new Set<string>(),
     availableRpms: [] as string[],
     selectedRpms: new Set<string>(),
+    availableRamCapacities: [] as string[],
+    selectedRamCapacities: new Set<string>(),
+    availableDdrTypes: [] as string[],
+    selectedDdrTypes: new Set<string>(),
+    availableInterfaces: [] as string[],
+    selectedInterfaces: new Set<string>(),
     categoryName: null as string | null,
     resultCount: 10,
     totalCount: 10,
@@ -25,7 +31,7 @@ function makeProps(overrides?: Partial<InstanceType<typeof DashboardFilterBar>["
   }
 }
 
-function mountBar(propsOverrides?: Partial<InstanceType<typeof DashboardFilterBar>["$props"]>) {
+function mountBar(propsOverrides?: Record<string, unknown>) {
   return mount(DashboardFilterBar, { props: makeProps(propsOverrides) })
 }
 
@@ -131,7 +137,16 @@ describe("DashboardFilterBar", () => {
       expect(w.findAll(".capacity-item")).toHaveLength(3)
     })
 
-    it("categoryName 非記憶卡/HDD 時不渲染容量篩選", () => {
+    it("categoryName='SSD' 時渲染容量篩選", () => {
+      const w = mountBar({
+        categoryName: "SSD",
+        availableCapacities: ["512GB", "1TB", "2TB"],
+      })
+      expect(w.find(".filter-bar__capacities").exists()).toBe(true)
+      expect(w.findAll(".capacity-item")).toHaveLength(3)
+    })
+
+    it("categoryName 非 SSD/HDD/記憶卡 時不渲染容量篩選", () => {
       const w = mountBar({
         categoryName: "顯示卡",
         availableCapacities: ["8GB", "12GB"],
@@ -139,23 +154,23 @@ describe("DashboardFilterBar", () => {
       expect(w.find(".filter-bar__capacities").exists()).toBe(false)
     })
 
-    it("categoryName='記憶卡' 時渲染容量篩選（替代品牌）", () => {
+    it("categoryName='記憶卡' 時渲染容量篩選和品牌", () => {
       const w = mountBar({
         categoryName: "記憶卡",
         availableCapacities: ["64GB"],
         availableBrands: ["三星", "金士頓"],
       })
-      expect(w.find(".filter-bar__brands").exists()).toBe(false)
+      expect(w.find(".filter-bar__brands").exists()).toBe(true)
       expect(w.find(".filter-bar__capacities").exists()).toBe(true)
     })
 
-    it("categoryName='HDD' 時渲染容量篩選（替代品牌）", () => {
+    it("categoryName='HDD' 時渲染容量篩選和品牌", () => {
       const w = mountBar({
         categoryName: "HDD",
         availableCapacities: ["1TB", "2TB"],
         availableBrands: ["Seagate", "WD"],
       })
-      expect(w.find(".filter-bar__brands").exists()).toBe(false)
+      expect(w.find(".filter-bar__brands").exists()).toBe(true)
       expect(w.find(".filter-bar__capacities").exists()).toBe(true)
     })
 
@@ -214,6 +229,55 @@ describe("DashboardFilterBar", () => {
         availableRpms: [],
       })
       expect(w.find(".filter-bar__rpms").exists()).toBe(false)
+    })
+  })
+
+  describe("記憶體篩選", () => {
+    it("categoryName='記憶體' 時渲染容量篩選", () => {
+      const w = mountBar({
+        categoryName: "記憶體",
+        availableRamCapacities: ["8GB", "16GB", "32GB"],
+      })
+      expect(w.find(".filter-bar__ram-capacities").exists()).toBe(true)
+      expect(w.findAll(".ram-capacity-item")).toHaveLength(3)
+    })
+
+    it("categoryName='記憶體' 時渲染 DDR 類型篩選", () => {
+      const w = mountBar({
+        categoryName: "記憶體",
+        availableDdrTypes: ["DDR4", "DDR5"],
+      })
+      expect(w.find(".filter-bar__ddr-types").exists()).toBe(true)
+      expect(w.findAll(".ddr-type-item")).toHaveLength(2)
+    })
+
+    it("categoryName 非記憶體 時不渲染記憶體篩選", () => {
+      const w = mountBar({
+        categoryName: "SSD",
+        availableRamCapacities: ["8GB"],
+        availableDdrTypes: ["DDR4"],
+      })
+      expect(w.find(".filter-bar__ram-capacities").exists()).toBe(false)
+      expect(w.find(".filter-bar__ddr-types").exists()).toBe(false)
+    })
+  })
+
+  describe("SSD 介面篩選", () => {
+    it("categoryName='SSD' 時渲染介面篩選", () => {
+      const w = mountBar({
+        categoryName: "SSD",
+        availableInterfaces: ["NVMe", "SATA"],
+      })
+      expect(w.find(".filter-bar__interfaces").exists()).toBe(true)
+      expect(w.findAll(".interface-item")).toHaveLength(2)
+    })
+
+    it("categoryName 非 SSD 時不渲染介面篩選", () => {
+      const w = mountBar({
+        categoryName: "HDD",
+        availableInterfaces: ["NVMe", "SATA"],
+      })
+      expect(w.find(".filter-bar__interfaces").exists()).toBe(false)
     })
   })
 

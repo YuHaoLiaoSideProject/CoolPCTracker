@@ -4,11 +4,9 @@
 import { computed, watch } from "vue"
 import { useItems } from "@/composables/useItems"
 import { useDashboard } from "@/composables/useDashboard"
-import { useSpecGroups } from "@/composables/useSpecGroups"
 import { useDashboardFilters } from "@/composables/useDashboardFilters"
 import type { DashboardItem } from "@/composables/useDashboard"
 import CategoryTabs from "@/components/CategoryTabs.vue"
-import SpecGroupChips from "@/components/SpecGroupChips.vue"
 import DashboardFilterBar from "@/components/DashboardFilterBar.vue"
 import DashboardCard from "@/components/DashboardCard.vue"
 import DashboardSkeleton from "@/components/DashboardSkeleton.vue"
@@ -39,12 +37,10 @@ const categoryItems = computed(() => {
   return items.value.filter((item) => itemToCategory.value.get(item.id) === id)
 })
 
-// —— 分組（018）——
 const categoryName = computed(() => {
   const id = activeCategoryId.value
   return id ? categories.value.find((c) => c.id === id)?.name ?? null : null
 })
-const specGroups = useSpecGroups(categoryItems, categoryName)
 
 // —— 篩選 + 排序（022）——
 const dashboardFilters = useDashboardFilters(categoryItems)
@@ -53,17 +49,11 @@ const dashboardFilters = useDashboardFilters(categoryItems)
 const { extractCurrentPrice, activeCategory, switchCategory } = useDashboard(
   categoryItems,
   activeCategoryId,
-  specGroups.resetGroup,
+  () => {},
 )
 
-// —— 顯示商品（分組 ∩ 篩選排序 → DashboardItem[]）——
-const groupedIds = computed(() => {
-  return new Set(specGroups.groupedItems.value.map((i) => i.id))
-})
-
-const displayItems = computed(() =>
-  dashboardFilters.sortedItems.value.filter((i) => groupedIds.value.has(i.id)),
-)
+// —— 顯示商品（篩選排序後）——
+const displayItems = dashboardFilters.sortedItems
 
 const displayDashboardItems = computed<DashboardItem[]>(() => {
   const list = displayItems.value
@@ -132,13 +122,7 @@ watch(
         @select="switchCategory"
       />
 
-      <!-- 分組 Chips（018） -->
-      <SpecGroupChips
-        v-if="specGroups.hasGroups.value"
-        :groups="specGroups.groups.value"
-        :selected-key="specGroups.selectedGroupKey.value"
-        @select="specGroups.selectGroup"
-      />
+
 
       <!-- 篩選控制項（022） -->
       <DashboardFilterBar
@@ -152,6 +136,12 @@ watch(
         :selected-capacities="dashboardFilters.selectedCapacities.value"
         :available-rpms="dashboardFilters.availableRpms.value"
         :selected-rpms="dashboardFilters.selectedRpms.value"
+        :available-ram-capacities="dashboardFilters.availableRamCapacities.value"
+        :selected-ram-capacities="dashboardFilters.selectedRamCapacities.value"
+        :available-ddr-types="dashboardFilters.availableDdrTypes.value"
+        :selected-ddr-types="dashboardFilters.selectedDdrTypes.value"
+        :available-interfaces="dashboardFilters.availableInterfaces.value"
+        :selected-interfaces="dashboardFilters.selectedInterfaces.value"
         :category-name="categoryName"
         :result-count="displayItems.length"
         :total-count="categoryItems.length"
@@ -162,6 +152,9 @@ watch(
         @update:brands="dashboardFilters.toggleBrand"
         @update:capacities="dashboardFilters.toggleCapacity"
         @update:rpms="dashboardFilters.toggleRpm"
+        @update:ram-capacities="dashboardFilters.toggleRamCapacity"
+        @update:ddr-types="dashboardFilters.toggleDdrType"
+        @update:interfaces="dashboardFilters.toggleInterface"
         @clear="handleFilterClear"
       />
 
