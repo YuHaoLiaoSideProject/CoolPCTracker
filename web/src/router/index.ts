@@ -7,6 +7,8 @@ export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: "/", name: "listing", component: ListingView },
+    // 017：Dashboard 頁面（懶載入，<10KB gzipped）
+    { path: "/dashboard", name: "dashboard", component: () => import("@/views/DashboardView.vue") },
     // 004：商品詳情頁（/product/:id；id 為 hex，仍以 encodeURIComponent 防呆）
     // 懶載入：詳情頁帶 lightweight-charts，動態 import 拆成獨立 chunk，列表頁首屏不背圖表庫
     { path: "/product/:id", name: "product-detail", component: () => import("@/views/ProductDetailView.vue") },

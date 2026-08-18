@@ -233,3 +233,25 @@ a {
   font-weight: 700;
   line-height: 1;
 }
+
+/* ── Dashboard 導覽連結（017） ────────────────────── */
+.nav-dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  height: var(--h);
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.nav-dashboard-link:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}

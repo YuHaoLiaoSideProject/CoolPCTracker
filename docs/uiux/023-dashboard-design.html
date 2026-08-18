@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI/UX 設計規格 — Dashboard 頁面完整規格</title>
+<style>
+
+/* ════════════════════════════════════════════════════════════
+   設計 Token（對應前端 CSS 變數 tokens.css）
+   ════════════════════════════════════════════════════════════ */
+:root {
+  --accent: #1a73e8; --accent-hover: #1557b0; --accent-light: rgba(26,115,232,0.12);
+  --success: #188038; --success-light: #e6f4ea; --success-border: #a8dab5;
+  --danger: #c5221f; --danger-light: #fce8e6; --danger-border: #f5c6c2;
+  --warning: #e37400; --warning-light: #fff4e5;
+  --radius: 10px; --radius-sm: 6px; --transition: 0.2s ease;
+  --h: 36px; --h-mobile: 44px; --fs: 0.875rem;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --brand: #1f6feb; --brand-soft: #e8f0fe;
+  --price-up: #e02424; --price-down: #18933f; --price-flat: #6b7280;
+}
+[data-theme="light"] {
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #f6f7f9; --surface-3: #eef0f3;
+  --border: #e3e6ea; --text: #374151; --muted: #9ca3af;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08); --shadow-lg: 0 12px 32px rgba(0,0,0,0.16);
+  --shadow-hover: 0 2px 8px rgba(31,111,235,0.15);
+  --frame: #eef0f3;
+  --text-dim: #6b7280;
+}
+[data-theme="dark"] {
+  --bg: #11191f; --surface: #181e25; --surface-2: #1e2530; --surface-3: #232c38;
+  --border: #262e38; --text: #c7c9ce; --muted: #7d8590;
+  --shadow: 0 2px 16px rgba(0,0,0,0.45); --shadow-lg: 0 12px 36px rgba(0,0,0,0.6);
+  --shadow-hover: 0 2px 8px rgba(76,141,255,0.25);
+  --frame: #0d1318;
+  --text-dim: #8b95a3;
+  --brand: #4c8dff; --brand-soft: #1d2f4d;
+  --price-up: #f87171; --price-down: #4ade80; --price-flat: #9ca3af;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: var(--bg); color: var(--text); transition: background var(--transition), color var(--transition);
+  padding: 2rem 1.25rem 4rem;
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+h1 { font-size: 1.35rem; margin: 0; }
+.sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+.controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.segmented { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; }
+.segmented button { border: none; background: none; color: var(--muted); font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 7px; cursor: pointer; transition: all var(--transition); font-weight: 500; }
+.segmented button:hover { color: var(--text); }
+.segmented button.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+
+.frame { background: var(--frame); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem 1.5rem 1.8rem; margin-bottom: 1.5rem; }
+.frame h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.frame .fsub { color: var(--muted); font-size: 0.82rem; margin: 0 0 1rem; line-height: 1.6; }
+.browser-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; }
+.bdot { width: 11px; height: 11px; border-radius: 50%; }
+.bdot:nth-child(1){ background:#f87171 } .bdot:nth-child(2){ background:#fbbf24 } .bdot:nth-child(3){ background:#34d399 }
+.browser-url { flex: 1; max-width: 420px; margin-left: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.3rem 0.8rem; font-size: 0.75rem; color: var(--muted); }
+.elem-count { font-size: 0.72rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 0.2rem 0.7rem; white-space: nowrap; }
+.elem-count b { color: var(--accent); }
+
+.app-page { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); transition: background var(--transition); overflow: hidden; }
+.app-page.is-mobile { max-width: 390px; margin: 0 auto; }
+
+/* ── Dashboard 專用樣式 ── */
+.dash-header { padding: 16px 20px 0; }
+.dash-header h2 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.dash-header .dash-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+
+/* Tab 列表 */
+.dash-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; scrollbar-width: thin; }
+.dash-tab { height: var(--h); padding: 0 16px; border: none; background: none; color: var(--text-dim); font-size: 0.88rem; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all var(--transition); white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+.dash-tab:hover { background: var(--brand-soft); color: var(--text); }
+.dash-tab.active { color: var(--brand); font-weight: 700; border-bottom-color: var(--brand); }
+.dash-tab .tab-cnt { font-size: 0.72rem; color: var(--text-dim); }
+
+/* 分組 Chips */
+.spec-group-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.spec-group-chip { height: 32px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-size: 0.82rem; cursor: pointer; transition: all var(--transition); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.spec-group-chip:hover { border-color: var(--brand); color: var(--brand); }
+.spec-group-chip.active { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.spec-group-chip .sgc-cnt { font-size: 0.72rem; opacity: 0.7; }
+.spec-group-chip--toggle { background: none; border: none; color: var(--brand); font-size: 0.82rem; cursor: pointer; padding: 0 8px; }
+
+/* 計數列 */
+.dash-count { padding: 10px 20px; font-size: 0.78rem; color: var(--text-dim); }
+.dash-count b { color: var(--text); font-weight: 700; }
+
+/* 商品列表 */
+.dash-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 0 20px 20px; }
+
+/* DashboardCard */
+.dashboard-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+.dashboard-card:hover { border-color: var(--brand); box-shadow: var(--shadow-hover); }
+.dc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.dc-name { font-size: 0.95rem; font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+.dc-gone { flex: 0 0 auto; font-size: 0.7rem; font-weight: 600; color: var(--text-dim); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; background: var(--bg); }
+.dc-lowest { font-size: 1.2rem; flex: 0 0 auto; }
+.dc-specs { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 0.72rem; color: var(--text-dim); background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.dc-price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dc-current { font-size: 1.15rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.dc-history-low { font-size: 0.78rem; color: var(--text-dim); }
+.dc-gone-text { font-size: 1.15rem; color: var(--text-dim); }
+
+/* 骨架屏 */
+.skeleton-tabs { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.ds-tab { width: 80px; height: 32px; border-radius: var(--radius-sm); }
+.skeleton-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 0 20px 20px; }
+.ds-card { height: 120px; border-radius: var(--radius); }
+.shimmer { background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* 空狀態 */
+.empty-state { text-align: center; padding: 48px 16px; color: var(--text-dim); }
+.es-ico { display: inline-flex; margin-bottom: 12px; color: var(--text-dim); }
+.empty-state h3 { font-size: 1rem; font-weight: 600; color: var(--text); margin: 0 0 6px; }
+.empty-state p { font-size: 0.85rem; max-width: 380px; margin: 0 auto; }
+.empty-actions { margin-top: 18px; }
+.btn { height: var(--h); display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: all var(--transition); }
+.btn:hover { border-color: var(--brand); color: var(--brand); }
+
+/* 錯誤狀態 */
+.error-state { text-align: center; padding: 48px 16px; }
+.error-state .es-ico { color: var(--danger); }
+.error-state h3 { font-size: 1rem; font-weight: 600; color: var(--text); margin: 0 0 6px; }
+.error-state p { font-size: 0.85rem; color: var(--text-dim); margin: 0; }
+.btn-retry { background: var(--brand); color: #fff; border-color: var(--brand); margin-top: 16px; }
+.btn-retry:hover { filter: brightness(1.05); }
+
+/* 動畫 */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* ── 元件規格（anatomy）── */
+.anatomy { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.1rem; }
+@media (max-width: 760px) { .anatomy { grid-template-columns: 1fr; } }
+.anat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem 1.1rem; }
+.anat-card h4 { margin: 0 0 0.8rem; font-size: 0.92rem; display: flex; align-items: center; gap: 0.4rem; }
+.anat-card h4 .tag { font-size: 0.62rem; font-weight: 700; background: var(--accent-light); color: var(--accent); border-radius: 20px; padding: 0.12rem 0.5rem; }
+.anat-stage { background: var(--frame); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1rem; margin-bottom: 0.85rem; }
+.anat-dims { font-size: 0.74rem; color: var(--muted); line-height: 1.8; }
+.anat-dims b { color: var(--accent); font-family: var(--mono); }
+
+/* 狀態矩陣表 */
+.states { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 1rem; }
+.states th, .states td { border: 1px solid var(--border); padding: 0.55rem 0.75rem; text-align: left; vertical-align: top; }
+.states th { background: var(--surface-2); font-size: 0.74rem; color: var(--muted); font-weight: 700; }
+.states td:first-child { white-space: nowrap; font-weight: 600; }
+
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0.5rem 1.5rem; margin-top: 1rem; }
+.anno { display: flex; gap: 0.55rem; font-size: 0.8rem; color: var(--muted); align-items: flex-start; line-height: 1.55; }
+.anno .num { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-light); color: var(--accent); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.anno b { color: var(--text); }
+
+.note { font-size: 0.78rem; color: var(--muted); margin-top: 1rem; line-height: 1.7; background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; padding: 0.6rem 0.9rem; }
+.note b { color: var(--accent); }
+
+/* Token 卡片 */
+.tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.tcard { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 0.95rem; }
+.tcard .tk { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.4px; }
+.tcard .tv { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-top: 0.2rem; }
+.tcard .td { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; line-height: 1.5; }
+.tcard .tv.accent { color: var(--accent); }
+
+.footnote { margin-top: 2rem; font-size: 0.72rem; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 0.75rem; line-height: 1.7; }
+
+/* mobile 切換 */
+.frame.mobile-frame { display: none; }
+body.view-mobile .frame.mobile-frame { display: block; }
+body.view-mobile .frame.desktop-frame { display: none; }
+.mobile-frame .app-page { max-width: 390px; margin: 0 auto; }
+.mobile-frame .dash-tab { height: var(--h-mobile); padding: 0 14px; }
+.mobile-frame .spec-group-chip { height: var(--h-mobile); }
+.mobile-frame .dash-list { grid-template-columns: 1fr; }
+
+/* Demo 控制 */
+.demo-controls { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.demo-btn { height: var(--h); display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 0.9rem; border-radius: var(--radius-sm); font-size: var(--fs); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: all var(--transition); white-space: nowrap; font-weight: 500; }
+.demo-btn:hover { background: var(--surface-2); border-color: var(--muted); }
+.demo-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+</style>
+</head>
+<body data-theme="light">
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>📊 Dashboard 頁面 — 完整規格</h1>
+      <div class="sub">響應式佈局 · 分類 Tab · 規格分組 Chips · 商品卡片 · 骨架屏 · 狀態矩陣</div>
+    </div>
+    <div class="controls">
+      <div class="segmented" id="devSwitch">
+        <button data-dev="desktop" class="active">🖥 Desktop</button>
+        <button data-dev="mobile">📱 Mobile</button>
+      </div>
+      <button class="segmented" id="themeToggle" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;">🌙 切換深色</button>
+    </div>
+  </div>
+
+  <!-- ══════════ 1. 設計 Token ══════════ -->
+  <div class="frame">
+    <h2>1️⃣ 設計 Token</h2>
+    <p class="fsub">所有數值對應前端 CSS 變數 <code>tokens.css</code>，是各元件共用的基礎。Dashboard 不新增任何 token。</p>
+    <div class="tokens">
+      <div class="tcard"><div class="tk">控制高度</div><div class="tv accent">36 / 44px</div><div class="td">Tab · Chip · desktop 36px · mobile 44px</div></div>
+      <div class="tcard"><div class="tk">字級</div><div class="tv">14 / 13 / 12px</div><div class="td">卡片名稱 / Tab·Chip / 計數 badge</div></div>
+      <div class="tcard"><div class="tk">圓角</div><div class="tv">6 / 18px</div><div class="td">按鈕 6px · Chips 橢圓 18px</div></div>
+      <div class="tcard"><div class="tk">間距</div><div class="tv">8 / 12px</div><div class="td">Chip 間 8px · Card 間 12px</div></div>
+      <div class="tcard"><div class="tk">動畫</div><div class="tv">150ms</div><div class="td">淡入 · 尊重 reduced-motion</div></div>
+      <div class="tcard"><div class="tk">Focus</div><div class="tv">3px ring</div><div class="td">accent 光圈</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 2. 完整畫面（Desktop） ══════════ -->
+  <div class="frame desktop-frame">
+    <h2>2️⃣ 完整畫面與互動</h2>
+    <p class="fsub">Dashboard 頁面桌面版完整佈局。點擊 Tab 切換分類、點擊 Chips 切換分組。</p>
+    <div class="browser-bar">
+      <span class="bdot"></span><span class="bdot"></span><span class="bdot"></span>
+      <span class="browser-url">https://coolpc-tracker.github.io/#/dashboard</span>
+      <span class="elem-count">互動：<b>Tab × 9 · Chips × 7 · Card × 6</b></span>
+    </div>
+    <div class="app-page" id="desktopPage">
+      <!-- Dashboard Header -->
+      <div class="dash-header">
+        <h2>Dashboard：最便宜商品</h2>
+        <div class="dash-sub">各分類前 10 名最便宜商品，快速掌握市場行情</div>
+      </div>
+
+      <!-- 分類 Tab -->
+      <nav class="dash-tabs" id="desktopTabs" aria-label="分類切換">
+        <button class="dash-tab active" data-cat="cpu">CPU<span class="tab-cnt">156</span></button>
+        <button class="dash-tab" data-cat="mb">主機板<span class="tab-cnt">89</span></button>
+        <button class="dash-tab" data-cat="ram">記憶體<span class="tab-cnt">203</span></button>
+        <button class="dash-tab" data-cat="gpu">顯示卡<span class="tab-cnt">127</span></button>
+        <button class="dash-tab" data-cat="ssd">SSD<span class="tab-cnt">178</span></button>
+        <button class="dash-tab" data-cat="hdd">HDD<span class="tab-cnt">42</span></button>
+        <button class="dash-tab" data-cat="prebuilt">套裝/準系統<span class="tab-cnt">31</span></button>
+        <button class="dash-tab" data-cat="combo">劈發價組合<span class="tab-cnt">18</span></button>
+        <button class="dash-tab" data-cat="mem">記憶卡<span class="tab-cnt">95</span></button>
+      </nav>
+
+      <!-- 分組 Chips（記憶體分類才顯示） -->
+      <div class="spec-group-chips" id="desktopChips" style="display:none;">
+        <button class="spec-group-chip active" data-group="all">全部<span class="sgc-cnt">203</span></button>
+        <button class="spec-group-chip" data-group="ddr5-32">DDR5 32GB<span class="sgc-cnt">45</span></button>
+        <button class="spec-group-chip" data-group="ddr5-16">DDR5 16GB<span class="sgc-cnt">38</span></button>
+        <button class="spec-group-chip" data-group="ddr4-32">DDR4 32GB<span class="sgc-cnt">32</span></button>
+        <button class="spec-group-chip" data-group="ddr4-16">DDR4 16GB<span class="sgc-cnt">41</span></button>
+        <button class="spec-group-chip" data-group="ddr4-8">DDR4 8GB<span class="sgc-cnt">28</span></button>
+        <button class="spec-group-chip" data-group="ddr3-8">DDR3 8GB<span class="sgc-cnt">19</span></button>
+        <button class="spec-group-chip--toggle" id="chipsToggle">更多 (3) ▼</button>
+      </div>
+
+      <!-- 計數 -->
+      <div class="dash-count">共 <b>10</b> 商品（前 10 名最便宜）</div>
+
+      <!-- 商品列表 -->
+      <div class="dash-list" id="desktopList">
+        <!-- Card 1: 歷史新低 -->
+        <article class="dashboard-card" tabindex="0" role="button" aria-label="UMAX DDR5-4800 32GB，目前價格 NT$ 1,090，歷史新低">
+          <div class="dc-top">
+            <div class="dc-name">UMAXDDR5-4800 32GB (16G×2) kit</div>
+            <span class="dc-lowest" title="歷史新低">🥇</span>
+          </div>
+          <div class="dc-specs">
+            <span class="chip">DDR5</span>
+            <span class="chip">32GB</span>
+            <span class="chip">4800MHz</span>
+          </div>
+          <div class="dc-price">
+            <span class="dc-current">NT$ 1,090</span>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="dashboard-card" tabindex="0" role="button" aria-label="金士頓 DDR5-5600 32GB，目前價格 NT$ 1,250">
+          <div class="dc-top">
+            <div class="dc-name">Kingston FURY Beast DDR5-5600 32GB</div>
+          </div>
+          <div class="dc-specs">
+            <span class="chip">DDR5</span>
+            <span class="chip">32GB</span>
+            <span class="chip">5600MHz</span>
+          </div>
+          <div class="dc-price">
+            <span class="dc-current">NT$ 1,250</span>
+            <span class="dc-history-low">歷史最低 NT$ 1,180</span>
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="dashboard-card" tabindex="0" role="button" aria-label="美光 DDR5-6000 32GB，目前價格 NT$ 1,380">
+          <div class="dc-top">
+            <div class="dc-name">Micron Crucial DDR5-6000 32GB (2×16G)</div>
+          </div>
+          <div class="dc-specs">
+            <span class="chip">DDR5</span>
+            <span class="chip">32GB</span>
+            <span class="chip">6000MHz</span>
+          </div>
+          <div class="dc-price">
+            <span class="dc-current">NT$ 1,380</span>
+            <span class="dc-history-low">歷史最低 NT$ 1,320</span>
+          </div>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="dashboard-card" tabindex="0" role="button" aria-label="芝奇 DDR5-6400 32GB，目前價格 NT$ 1,520">
+          <div class="dc-top">
+            <div class="dc-name">G.SKILL Trident Z5 DDR5-6400 32GB</div>
+          </div>
+          <div class="dc-specs">
+            <span class="chip">DDR5</span>
+            <span class="chip">32GB</span>
+            <span class="chip">6400MHz</span>
+          </div>
+          <div class="dc-price">
+            <span class="dc-current">NT$ 1,520</span>
+            <span class="dc-history-low">歷史最低 NT$ 1,450</span>
+          </div>
+        </article>
+
+        <!-- Card 5: 已下架 -->
+        <article class="dashboard-card" tabindex="0" role="button" aria-label="TeamGroup DDR4-3200 32GB，已下架">
+          <div class="dc-top">
+            <div class="dc-name">TeamGroup T-Force Vulcan DDR4-3200 32GB</div>
+            <span class="dc-gone">已下架</span>
+          </div>
+          <div class="dc-specs">
+            <span class="chip">DDR4</span>
+            <span class="chip">32GB</span>
+            <span class="chip">3200MHz</span>
+          </div>
+          <div class="dc-price">
+            <span class="dc-gone-text">已下架</span>
+          </div>
+        </article>
+
+        <!-- Card 6 -->
+        <article class="dashboard-card" tabindex="0" role="button" aria-label="金士頓 DDR4-3200 32GB，目前價格 NT$ 890">
+          <div class="dc-top">
+            <div class="dc-name">Kingston ValueRAM DDR4-3200 32GB</div>
+          </div>
+          <div class="dc-specs">
+            <span class="chip">DDR4</span>
+            <span class="chip">32GB</span>
+            <span class="chip">3200MHz</span>
+          </div>
+          <div class="dc-price">
+            <span class="dc-current">NT$ 890</span>
+            <span class="dc-history-low">歷史最低 NT$ 850</span>
+          </div>
+        </article>
+      </div>
+
+      <!-- Legend -->
+      <div style="padding: 0 20px 20px;">
+        <div class="legend">
+          <div class="anno"><span class="num">1</span><span><b>分類 Tab</b>：頂部水平排列，active 狀態底部 2px brand border + 700 weight。計數 badge 弱化顯示。</span></div>
+          <div class="anno"><span class="num">2</span><span><b>分組 Chips</b>：第二層篩選，pill 形狀。>8 個時折疊為「更多 ▼」。選取態為 brand 底白字。</span></div>
+          <div class="anno"><span class="num">3</span><span><b>🥇 歷史新低</b>：目前價格 === 歷史最低時顯示。emoji 輔助，aria-label 含文字。</span></div>
+          <div class="anno"><span class="num">4</span><span><b>歷史最低價</b>：與目前價格不同時顯示「歷史最低 NT$ X」，弱化字級。</span></div>
+          <div class="anno"><span class="num">5</span><span><b>已下架標籤</b>：`status === 'gone'` 時顯示 pill 標籤，隱藏價格。</span></div>
+          <div class="anno"><span class="num">6</span><span><b>規格 Chips</b>：從 `spec.extra` 自動產生，flex-wrap 換行。</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 3. Mobile ══════════ -->
+  <div class="frame mobile-frame">
+    <h2>3️⃣ Mobile 畫面</h2>
+    <p class="fsub">手機版：Tab 與 Chips 改為水平捲動，卡片單欄，控制元件 44px。</p>
+    <div class="app-page is-mobile">
+      <div class="dash-header">
+        <h2>Dashboard：最便宜商品</h2>
+        <div class="dash-sub">各分類前 10 名最便宜商品</div>
+      </div>
+      <nav class="dash-tabs" aria-label="分類切換">
+        <button class="dash-tab active">CPU<span class="tab-cnt">156</span></button>
+        <button class="dash-tab">主機板<span class="tab-cnt">89</span></button>
+        <button class="dash-tab">記憶體<span class="tab-cnt">203</span></button>
+        <button class="dash-tab">顯示卡<span class="tab-cnt">127</span></button>
+        <button class="dash-tab">SSD<span class="tab-cnt">178</span></button>
+      </nav>
+      <div class="spec-group-chips">
+        <button class="spec-group-chip active">全部<span class="sgc-cnt">156</span></button>
+        <button class="spec-group-chip">Intel 16核<span class="sgc-cnt">42</span></button>
+        <button class="spec-group-chip">AMD 8核<span class="sgc-cnt">38</span></button>
+        <button class="spec-group-chip">Intel 8核<span class="sgc-cnt">35</span></button>
+      </div>
+      <div class="dash-count">共 <b>10</b> 商品</div>
+      <div class="dash-list" style="grid-template-columns: 1fr;">
+        <article class="dashboard-card" tabindex="0" role="button">
+          <div class="dc-top">
+            <div class="dc-name">Intel Core i5-12400F</div>
+            <span class="dc-lowest">🥇</span>
+          </div>
+          <div class="dc-specs"><span class="chip">6核</span><span class="chip">2.5GHz</span></div>
+          <div class="dc-price"><span class="dc-current">NT$ 3,290</span></div>
+        </article>
+        <article class="dashboard-card" tabindex="0" role="button">
+          <div class="dc-top">
+            <div class="dc-name">AMD Ryzen 5 5600X</div>
+          </div>
+          <div class="dc-specs"><span class="chip">6核</span><span class="chip">3.7GHz</span></div>
+          <div class="dc-price">
+            <span class="dc-current">NT$ 3,590</span>
+            <span class="dc-history-low">歷史最低 NT$ 3,450</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <p class="note"><b>Mobile 規範：</b>觸控目標一律 <b>44px</b>（WCAG 2.5.5）。Tab 與 Chips 水平捲動。</p>
+  </div>
+
+  <!-- ══════════ 4. 元件解剖 ══════════ -->
+  <div class="frame">
+    <h2>4️⃣ 元件解剖</h2>
+    <p class="fsub">各元件的結構、尺寸與樣式規格。</p>
+
+    <div class="anatomy">
+      <!-- Tab -->
+      <div class="anat-card">
+        <h4>分類 Tab <span class="tag">Tab</span></h4>
+        <div class="anat-stage">
+          <div style="display:flex; border-bottom: 1px solid var(--border);">
+            <button class="dash-tab active">CPU<span class="tab-cnt">156</span></button>
+            <button class="dash-tab">記憶體<span class="tab-cnt">203</span></button>
+            <button class="dash-tab">顯示卡<span class="tab-cnt">127</span></button>
+          </div>
+        </div>
+        <div class="anat-dims">
+          高度 <b>36px</b>（mobile <b>44px</b>）· padding <b>0 16px</b> · 底部 border <b>2px</b><br>
+          字級 <b>0.88rem</b> · active: <b>font-weight: 700</b> · 計數 badge <b>0.72rem</b><br>
+          容器: <b>display: flex</b> · mobile: <b>overflow-x: auto</b>
+        </div>
+      </div>
+
+      <!-- Chip -->
+      <div class="anat-card">
+        <h4>分組 Chip <span class="tag">SpecGroupChip</span></h4>
+        <div class="anat-stage">
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button class="spec-group-chip active">全部<span class="sgc-cnt">203</span></button>
+            <button class="spec-group-chip">DDR5 32GB<span class="sgc-cnt">45</span></button>
+            <button class="spec-group-chip">DDR4 16GB<span class="sgc-cnt">41</span></button>
+            <button class="spec-group-chip--toggle">更多 (3) ▼</button>
+          </div>
+        </div>
+        <div class="anat-dims">
+          高度 <b>32px</b>（mobile <b>44px</b>）· padding <b>0 14px</b> · 圓角 <b>18px</b>（pill）<br>
+          字級 <b>0.82rem</b> · active: <b>background: brand</b> · 計數 <b>0.72rem</b><br>
+          容器: <b>display: flex; flex-wrap: wrap; gap: 8px</b><br>
+          折疊門檻: <b>>8 個</b> → 前 7 個 + 「更多 ▼」
+        </div>
+      </div>
+
+      <!-- Card -->
+      <div class="anat-card">
+        <h4>DashboardCard <span class="tag">Card</span></h4>
+        <div class="anat-stage">
+          <article class="dashboard-card" style="margin:0;">
+            <div class="dc-top">
+              <div class="dc-name">UMAX DDR5-4800 32GB</div>
+              <span class="dc-lowest">🥇</span>
+            </div>
+            <div class="dc-specs"><span class="chip">DDR5</span><span class="chip">32GB</span></div>
+            <div class="dc-price">
+              <span class="dc-current">NT$ 1,090</span>
+              <span class="dc-history-low">歷史最低 NT$ 1,050</span>
+            </div>
+          </article>
+        </div>
+        <div class="anat-dims">
+          padding <b>12px 14px</b> · 圓角 <b>10px</b> · gap <b>8px</b><br>
+          名稱: <b>0.95rem / 600</b> · 價格: <b>1.15rem / 700</b><br>
+          歷史最低: <b>0.78rem / text-dim</b> · 🥇: <b>1.2rem</b><br>
+          hover: <b>border-color: brand</b> + <b>shadow-hover</b>
+        </div>
+      </div>
+
+      <!-- Skeleton -->
+      <div class="anat-card">
+        <h4>骨架屏 <span class="tag">DashboardSkeleton</span></h4>
+        <div class="anat-stage">
+          <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <div class="shimmer" style="width:80px;height:32px;border-radius:6px;"></div>
+            <div class="shimmer" style="width:90px;height:32px;border-radius:6px;"></div>
+            <div class="shimmer" style="width:70px;height:32px;border-radius:6px;"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="shimmer" style="height:100px;border-radius:10px;"></div>
+            <div class="shimmer" style="height:100px;border-radius:10px;"></div>
+          </div>
+        </div>
+        <div class="anat-dims">
+          Tab 佔位: <b>80px × 32px</b> · Card 佔位: <b>auto × 120px</b><br>
+          動畫: <b>shimmer 1.5s infinite</b> · <b>linear-gradient</b><br>
+          <code>aria-hidden="true"</code>（無互動）
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 5. 狀態矩陣 ══════════ -->
+  <div class="frame">
+    <h2>5️⃣ 狀態矩陣</h2>
+    <p class="fsub">每種狀態的視覺表現與互動行為。</p>
+
+    <table class="states">
+      <tr><th style="width:130px;">狀態</th><th>Tab</th><th>Chip</th><th>Card</th></tr>
+      <tr>
+        <td>idle</td>
+        <td>透明底、text-dim 色、底部無 border</td>
+        <td>surface 底、border 邊框、text-dim 色</td>
+        <td>surface 底、border 邊框、shadow 陰影</td>
+      </tr>
+      <tr>
+        <td>hover</td>
+        <td>brand-soft 淡底</td>
+        <td>border-color: brand、color: brand</td>
+        <td>border-color: brand + shadow-hover</td>
+      </tr>
+      <tr>
+        <td>focus</td>
+        <td>3px accent 光圈</td>
+        <td>3px accent 光圈</td>
+        <td>3px accent 光圈</td>
+      </tr>
+      <tr>
+        <td>active</td>
+        <td>brand 字色、700 weight、底部 2px brand border</td>
+        <td>brand 底、白字、600 weight</td>
+        <td>按下瞬間 surface-2 底</td>
+      </tr>
+      <tr>
+        <td>disabled</td>
+        <td>不適用</td>
+        <td>不適用</td>
+        <td>不適用</td>
+      </tr>
+      <tr>
+        <td>loading</td>
+        <td colspan="3">骨架屏 shimmer：Tab 5 個 + Card 10 個灰色佔位</td>
+      </tr>
+      <tr>
+        <td>error</td>
+        <td colspan="3">ErrorState：SVG 圖示 +「資料載入失敗」+ [重試] 按鈕（brand 底白字）</td>
+      </tr>
+      <tr>
+        <td>空結果</td>
+        <td colspan="3">EmptyState 二分流：空分類 →「此分類目前沒有商品」/ 空分組 →「暫無此規格商品」</td>
+      </tr>
+    </table>
+
+    <div class="note"><b>無障礙：</b>Tab <code>aria-selected</code> · Chip <code>aria-pressed</code> · Card <code>role="button"</code> + <code>aria-label</code>（含商品名與價格）· 骨架屏 <code>aria-hidden</code> · 空狀態 <code>role="status"</code> · 錯誤 <code>role="alert"</code></div>
+  </div>
+
+  <!-- ══════════ 6. 動畫規範 ══════════ -->
+  <div class="frame">
+    <h2>6️⃣ 動畫規範</h2>
+    <p class="fsub">所有動畫於 <code>prefers-reduced-motion: reduce</code> 時關閉。</p>
+
+    <div class="demo-controls">
+      <button class="demo-btn" id="demoSkeleton">⚡ 示範：骨架屏 → 內容</button>
+      <button class="demo-btn" id="demoChips">🔄 示範：Chips 切換</button>
+    </div>
+
+    <table class="states">
+      <tr><th style="width:180px;">動畫</th><th>時間</th><th>觸發</th><th>說明</th></tr>
+      <tr><td>Tab 切換</td><td>150ms fade</td><td>點擊 Tab</td><td>底部 border 滑動 + 列表淡入</td></tr>
+      <tr><td>Chip 切換</td><td>150ms fade</td><td>點擊 Chip</td><td>列表內容淡入（client-side 篩選，無 loading）</td></tr>
+      <tr><td>骨架屏 → 內容</td><td>200ms fade out</td><td>資料載入完成</td><td>骨架屏 opacity 0 → 列表 opacity 1</td></tr>
+      <tr><td>卡片 hover</td><td>150ms ease</td><td>滑鼠進入</td><td>border + shadow 過渡</td></tr>
+      <tr><td>Chips 展開/收起</td><td>200ms ease</td><td>點擊「更多/收起」</td><td>高度過渡</td></tr>
+      <tr><td>shimmer</td><td>1.5s infinite</td><td>骨架屏顯示中</td><td>灰階漸層閃爍</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════ 7. 規格摘要 ══════════ -->
+  <div class="frame">
+    <h2>7️⃣ 規格摘要 — CSS 變數對應</h2>
+    <p class="fsub">實作時直接套用下列變數與結構。</p>
+    <table class="states">
+      <tr><th style="width:200px;">項目</th><th>值</th><th>對應</th></tr>
+      <tr><td>Tab 高度</td><td>36px / 44px</td><td><code>var(--h)</code> / <code>var(--h-mobile)</code></td></tr>
+      <tr><td>Tab active 底色</td><td>brand-soft</td><td><code>var(--brand-soft)</code></td></tr>
+      <tr><td>Tab active border</td><td>brand</td><td><code>var(--brand)</code></td></tr>
+      <tr><td>Chip 高度</td><td>32px / 44px</td><td>自訂（比 Tab 小一級）</td></tr>
+      <tr><td>Chip active</td><td>brand 底 + 白字</td><td><code>var(--brand)</code></td></tr>
+      <tr><td>Card 背景</td><td>surface</td><td><code>var(--surface)</code></td></tr>
+      <tr><td>Card 圓角</td><td>10px</td><td><code>var(--radius)</code></td></tr>
+      <tr><td>Card 陰影</td><td>shadow / shadow-hover</td><td><code>var(--shadow)</code> / <code>var(--shadow-hover)</code></td></tr>
+      <tr><td>歷史新低</td><td>🥇 emoji + aria-label</td><td>輔助標示，不替代文字</td></tr>
+      <tr><td>歷史最低價</td><td>text-dim 色</td><td><code>var(--text-dim)</code></td></tr>
+      <tr><td>已下架</td><td>text-dim + pill 標籤</td><td><code>var(--text-dim)</code></td></tr>
+      <tr><td>Skeleton shimmer</td><td>surface → surface-2</td><td><code>var(--surface)</code> → <code>var(--surface-2)</code></td></tr>
+      <tr><td>Focus ring</td><td>3px accent</td><td><code>var(--focus-ring)</code></td></tr>
+      <tr><td>動畫過渡</td><td>0.2s ease</td><td><code>var(--transition)</code></td></tr>
+      <tr><td>淡入</td><td>150ms</td><td><code>var(--fade)</code></td></tr>
+    </table>
+  </div>
+
+  <div class="footnote">
+    📄 設計文件：<b>docs/uiux/005-dashboard-design.md</b> ・ 本文件：<b>docs/uiux/005-dashboard-design.html</b><br>
+    對應開發規格：<b>009-dashboard-cheapest-products.md</b>、<b>017-dashboard-items.md</b>、<b>018-dashboard-groups.md</b><br>
+    實作範圍：<b>DashboardView.vue + DashboardCard.vue + DashboardSkeleton.vue + SpecGroupChips.vue + useDashboard.ts + useSpecGroups.ts</b>
+  </div>
+</div>
+
+<script>
+// ── 主題切換 ──
+const themeBtn = document.getElementById('themeToggle');
+themeBtn.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+  themeBtn.textContent = dark ? '🌙 切換深色' : '☀️ 切換淺色';
+});
+
+// ── 裝置切換 ──
+const devSwitch = document.getElementById('devSwitch');
+devSwitch.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  devSwitch.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.body.classList.toggle('view-mobile', b.dataset.dev === 'mobile');
+}));
+
+// ── Tab 切換互動（Desktop） ──
+const chipsData = {
+  cpu: null, // CPU 無分組策略
+  mb: null,
+  ram: [
+    { key: 'all', label: '全部', count: 203 },
+    { key: 'ddr5-32', label: 'DDR5 32GB', count: 45 },
+    { key: 'ddr5-16', label: 'DDR5 16GB', count: 38 },
+    { key: 'ddr4-32', label: 'DDR4 32GB', count: 32 },
+    { key: 'ddr4-16', label: 'DDR4 16GB', count: 41 },
+    { key: 'ddr4-8', label: 'DDR4 8GB', count: 28 },
+    { key: 'ddr3-8', label: 'DDR3 8GB', count: 19 },
+  ],
+  gpu: [
+    { key: 'all', label: '全部', count: 127 },
+    { key: 'nvidia-12', label: 'NVIDIA 12GB', count: 35 },
+    { key: 'nvidia-8', label: 'NVIDIA 8GB', count: 42 },
+    { key: 'amd-12', label: 'AMD 12GB', count: 28 },
+    { key: 'amd-8', label: 'AMD 8GB', count: 22 },
+  ],
+  ssd: [
+    { key: 'all', label: '全部', count: 178 },
+    { key: '1tb-nvme', label: '1TB NVMe', count: 52 },
+    { key: '512gb-nvme', label: '512GB NVMe', count: 48 },
+    { key: '1tb-sata', label: '1TB SATA', count: 31 },
+    { key: '2tb-nvme', label: '2TB NVMe', count: 47 },
+  ],
+  hdd: null,
+  prebuilt: null,
+  combo: null,
+  mem: null,
+};
+
+const desktopTabs = document.getElementById('desktopTabs');
+const desktopChips = document.getElementById('desktopChips');
+
+if (desktopTabs) {
+  desktopTabs.addEventListener('click', (e) => {
+    const tab = e.target.closest('.dash-tab');
+    if (!tab) return;
+    desktopTabs.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const cat = tab.dataset.cat;
+    const groups = chipsData[cat];
+    if (groups && groups.length > 1) {
+      desktopChips.style.display = 'flex';
+      desktopChips.innerHTML = groups.map((g, i) =>
+        `<button class="spec-group-chip${i === 0 ? ' active' : ''}" data-group="${g.key}">${g.label}<span class="sgc-cnt">${g.count}</span></button>`
+      ).join('') + (groups.length > 8 ? '<button class="spec-group-chip--toggle">更多 (' + (groups.length - 7) + ') ▼</button>' : '');
+    } else {
+      desktopChips.style.display = 'none';
+    }
+  });
+}
+
+// ── Chip 切換互動 ──
+document.addEventListener('click', (e) => {
+  const chip = e.target.closest('.spec-group-chip');
+  if (!chip || chip.classList.contains('spec-group-chip--toggle')) return;
+  const container = chip.parentElement;
+  container.querySelectorAll('.spec-group-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+});
+
+// ── 骨架屏 → 內容 Demo ──
+const demoSkeletonBtn = document.getElementById('demoSkeleton');
+if (demoSkeletonBtn) {
+  demoSkeletonBtn.addEventListener('click', () => {
+    const page = document.getElementById('desktopPage');
+    if (!page) return;
+    // 儲存原始內容
+    const original = page.innerHTML;
+    // 顯示骨架屏
+    page.innerHTML = `
+      <div class="dash-header"><h2>Dashboard：最便宜商品</h2></div>
+      <div class="skeleton-tabs"><div class="shimmer ds-tab"></div><div class="shimmer ds-tab"></div><div class="shimmer ds-tab"></div><div class="shimmer ds-tab"></div><div class="shimmer ds-tab"></div></div>
+      <div class="skeleton-list"><div class="shimmer ds-card"></div><div class="shimmer ds-card"></div><div class="shimmer ds-card"></div><div class="shimmer ds-card"></div><div class="shimmer ds-card"></div><div class="shimmer ds-card"></div></div>
+    `;
+    // 1.5 秒後淡出骨架屏，顯示內容
+    setTimeout(() => {
+      page.style.opacity = '0';
+      page.style.transition = 'opacity 0.2s ease';
+      setTimeout(() => {
+        page.innerHTML = original;
+        page.style.opacity = '1';
+        // 重新綁定 Tab 事件
+        rebindTabs();
+      }, 200);
+    }, 1500);
+  });
+}
+
+// ── Chips 切換 Demo ──
+const demoChipsBtn = document.getElementById('demoChips');
+if (demoChipsBtn) {
+  demoChipsBtn.addEventListener('click', () => {
+    // 切換到記憶體分類並選取 DDR5 16GB
+    const ramTab = document.querySelector('.dash-tab[data-cat="ram"]');
+    if (ramTab && desktopTabs) {
+      desktopTabs.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+      ramTab.classList.add('active');
+      desktopChips.style.display = 'flex';
+      desktopChips.innerHTML = `
+        <button class="spec-group-chip" data-group="all">全部<span class="sgc-cnt">203</span></button>
+        <button class="spec-group-chip active" data-group="ddr5-16">DDR5 16GB<span class="sgc-cnt">38</span></button>
+        <button class="spec-group-chip" data-group="ddr5-32">DDR5 32GB<span class="sgc-cnt">45</span></button>
+        <button class="spec-group-chip" data-group="ddr4-32">DDR4 32GB<span class="sgc-cnt">32</span></button>
+        <button class="spec-group-chip" data-group="ddr4-16">DDR4 16GB<span class="sgc-cnt">41</span></button>
+        <button class="spec-group-chip" data-group="ddr4-8">DDR4 8GB<span class="sgc-cnt">28</span></button>
+        <button class="spec-group-chip" data-group="ddr3-8">DDR3 8GB<span class="sgc-cnt">19</span></button>
+      `;
+    }
+  });
+}
+
+function rebindTabs() {
+  // Tab 切換已透過事件委託在 document 上處理，無需重新綁定
+}
+
+</script>
+</body>
+</html>
