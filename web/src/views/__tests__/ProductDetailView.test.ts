@@ -156,7 +156,7 @@ describe("就緒狀態內容（happy path）", () => {
     expect(w.find(".ps-updated").text()).toContain("2026-08-15 14:00")
   })
 
-  it("圖表收到完整趨勢 history／targetPrice／yMin／yMax props；WatchActions 收到 itemId", async () => {
+  it("圖表收到完整趨勢 history／targetPrice／yMin／yMax props；WatchlistButton/CompareToggle 收到正確 props", async () => {
     state().items.value = [i5()]
     trendState().history.value = I5_TREND
     const { w } = await mountView("3f9a1c2b8e4d5f6a")
@@ -165,7 +165,12 @@ describe("就緒狀態內容（happy path）", () => {
     expect(chart.props("targetPrice")).toBeNull()
     expect(chart.props("yMin")).toBeCloseTo(9990 * 0.98)
     expect(chart.props("yMax")).toBeCloseTo(11500 * 1.02)
-    expect(w.findComponent({ name: "WatchActions" }).props("itemId")).toBe("3f9a1c2b8e4d5f6a")
+    const watchBtn = w.findComponent({ name: "WatchlistButton" })
+    expect(watchBtn.exists()).toBe(true)
+    expect(watchBtn.props("id")).toBe("3f9a1c2b8e4d5f6a")
+    const compareBtn = w.findComponent({ name: "CompareToggle" })
+    expect(compareBtn.exists()).toBe(true)
+    expect(compareBtn.props("id")).toBe("3f9a1c2b8e4d5f6a")
   })
 
   it("history 空（E4）→ 目前價「—」＋尚無歷史資料＋不渲染圖表", async () => {

@@ -7,7 +7,8 @@ import { computed, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import SpecTable from "@/components/SpecTable.vue"
 import PriceTrendChart from "@/components/PriceTrendChart.vue"
-import WatchActions from "@/components/WatchActions.vue"
+import WatchlistButton from "@/components/WatchlistButton.vue"
+import CompareToggle from "@/components/CompareToggle.vue"
 import ErrorState from "@/components/ErrorState.vue"
 import { useItems, useTrend } from "@/composables/useItems"
 import { usePriceHistory, formatTrendLabel } from "@/composables/usePriceHistory"
@@ -250,8 +251,13 @@ const trendClass = computed(() =>
         </template>
       </section>
 
-      <!-- 005 預留：追蹤／比價動作區 -->
-      <WatchActions :item-id="item.id" />
+      <!-- 追蹤／比價動作區（005） -->
+      <section class="watch-actions" aria-label="追蹤與比價">
+        <div class="wa-buttons">
+          <WatchlistButton :id="item.id" :price="stats.current" />
+          <CompareToggle :id="item.id" :category="itemCategoryName" variant="button" />
+        </div>
+      </section>
     </template>
   </div>
 </template>
