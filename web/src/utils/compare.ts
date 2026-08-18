@@ -8,7 +8,7 @@ export interface CompareItem {
   category: string
   price: number | null          // gone → null
   status: 'in_stock' | 'gone'
-  spec: Record<string, string | number | null>
+  spec: Record<string, string | number | null | undefined>
 }
 
 export interface CompareRow {

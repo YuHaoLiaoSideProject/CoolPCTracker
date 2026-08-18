@@ -3,7 +3,6 @@ import {
   isStorageAvailable,
   readVersioned,
   writeVersioned,
-  quarantineCorrupt,
 } from '@/utils/storage'
 import type { WatchlistItem, StorageError, WatchlistStorageV1 } from '@/types/watchlist'
 
@@ -57,7 +56,7 @@ function createWatchlistState() {
     }
 
     // version check (future migration placeholder)
-    if ((data as Record<string, unknown>).version !== STORAGE_VERSION) {
+    if (data.version !== STORAGE_VERSION) {
       items.value = []
       return
     }
@@ -113,7 +112,6 @@ function createWatchlistState() {
   }
 
   function remove(id: string): void {
-    const before = items.value
     items.value = items.value.filter(item => item.id !== id)
 
     const storagePayload: WatchlistStorageV1 = { version: STORAGE_VERSION, items: items.value }

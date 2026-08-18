@@ -39,7 +39,7 @@ describe("Sparkline", () => {
     const poly = w.find("polyline")
     expect(poly.exists()).toBe(true)
     // 兩個座標點：以空格分隔
-    const coords = poly.attributes("points").trim().split(/\s+/)
+    const coords = poly.attributes("points")!.trim().split(/\s+/)
     expect(coords).toHaveLength(2)
     expect(coords[0]).toMatch(/^\d+(\.\d+)?,\d+(\.\d+)?$/)
     expect(coords[1]).toMatch(/^\d+(\.\d+)?,\d+(\.\d+)?$/)
@@ -57,7 +57,7 @@ describe("Sparkline", () => {
     })
     const poly = w.find("polyline")
     expect(poly.exists()).toBe(true)
-    const coords = poly.attributes("points").trim().split(/\s+/)
+    const coords = poly.attributes("points")!.trim().split(/\s+/)
     expect(coords).toHaveLength(3)
   })
 
@@ -68,7 +68,7 @@ describe("Sparkline", () => {
     const w = mount(Sparkline, { props: { points } })
     const poly = w.find("polyline")
     expect(poly.exists()).toBe(true)
-    const coords = poly.attributes("points").trim().split(/\s+/)
+    const coords = poly.attributes("points")!.trim().split(/\s+/)
     expect(coords).toHaveLength(10)
   })
 })

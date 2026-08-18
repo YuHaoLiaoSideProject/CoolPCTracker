@@ -11,13 +11,11 @@ import {
   isStorageAvailable,
   readVersioned,
   writeVersioned,
-  quarantineCorrupt,
 } from '@/utils/storage'
 
 const mockIsStorageAvailable = vi.mocked(isStorageAvailable)
 const mockReadVersioned = vi.mocked(readVersioned)
 const mockWriteVersioned = vi.mocked(writeVersioned)
-const mockQuarantineCorrupt = vi.mocked(quarantineCorrupt)
 
 // Reset module singleton between tests
 async function importFresh() {
