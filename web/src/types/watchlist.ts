@@ -2,6 +2,7 @@
 
 export interface WatchlistItem {
   id: string
+  name: string                  // 商品名稱（加入時快照）
   addedAt: string               // ISO 8601
   lastPriceSnapshot: number     // 上次查看價格快照（價差基準）
   priceSnapshotAt: string       // ISO 8601

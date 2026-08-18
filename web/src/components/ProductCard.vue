@@ -57,8 +57,8 @@ const cardLabel = computed(() => {
       <span class="pc-current">{{ currentPrice != null ? formatPrice(currentPrice) : "價格未知" }}</span>
       <span class="pc-delta" :class="deltaClass">{{ deltaText }}</span>
     </div>
-    <div class="pc-actions">
-      <WatchlistButton :id="item.id" :price="currentPrice" />
+    <div class="pc-actions" @click.stop>
+      <WatchlistButton :id="item.id" :name="item.name" :price="currentPrice" />
       <CompareToggle :id="item.id" :category="categoryName ?? ''" variant="button" />
     </div>
   </article>

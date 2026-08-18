@@ -254,7 +254,7 @@ const trendClass = computed(() =>
       <!-- 追蹤／比價動作區（005） -->
       <section class="watch-actions" aria-label="追蹤與比價">
         <div class="wa-buttons">
-          <WatchlistButton :id="item.id" :price="stats.current" />
+          <WatchlistButton :id="item.id" :name="item.name" :price="stats.current" />
           <CompareToggle :id="item.id" :category="itemCategoryName" variant="button" />
         </div>
       </section>

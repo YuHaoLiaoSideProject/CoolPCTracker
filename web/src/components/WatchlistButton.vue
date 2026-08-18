@@ -4,6 +4,7 @@ import { useWatchlist } from '@/composables/useWatchlist'
 
 const props = defineProps<{
   id: string
+  name: string
   price: number | null
   variant?: 'button' | 'icon'
 }>()
@@ -35,7 +36,7 @@ function handleClick() {
     return
   }
 
-  const result = add(props.id, props.price)
+  const result = add(props.id, props.name, props.price)
   if (!result.ok) {
     switch (result.reason) {
       case 'already-tracked':

@@ -61,9 +61,11 @@ function createWatchlistState() {
       return
     }
 
-    //逐筆 shape 驗證
+    //逐筆 shape 驗證（舊版無 name 欄位時補空字串）
     if (Array.isArray(data.items)) {
-      items.value = data.items.filter(isValidShape)
+      items.value = data.items
+        .filter(isValidShape)
+        .map(item => ({ ...item, name: typeof item.name === 'string' ? item.name : '' }))
     } else {
       items.value = []
     }
@@ -77,7 +79,7 @@ function createWatchlistState() {
     return items.value.some(item => item.id === id)
   }
 
-  function add(id: string, currentPrice: number): AddResult {
+  function add(id: string, name: string, currentPrice: number): AddResult {
     if (isTracked(id)) {
       return { ok: false, reason: 'already-tracked' }
     }
@@ -89,6 +91,7 @@ function createWatchlistState() {
     const now = new Date().toISOString()
     const newItem: WatchlistItem = {
       id,
+      name,
       addedAt: now,
       lastPriceSnapshot: currentPrice,
       priceSnapshotAt: now,

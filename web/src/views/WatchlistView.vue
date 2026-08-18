@@ -34,7 +34,7 @@ const rows = computed<WatchRow[]>(() => {
     if (!product) {
       return {
         id: watchItem.id,
-        name: watchItem.id, // 找不到時顯示 id
+        name: watchItem.name || watchItem.id, // 使用快照名稱，fallback 到 id
         price: null,
         diff: null,
         history: [],
@@ -129,7 +129,12 @@ function onRemove(id: string) {
 
 <template>
   <div class="watchlist-page">
-    <h1>我的追蹤</h1>
+    <header class="watchlist-header">
+      <h1>我的追蹤</h1>
+      <span v-if="rows.length > 0" class="watchlist-count" aria-live="polite">
+        {{ rows.length }} 項商品
+      </span>
+    </header>
 
     <!-- 載入失敗 -->
     <ErrorState v-if="loadError" :kind="loadError" @retry="retry" />
@@ -153,14 +158,30 @@ function onRemove(id: string) {
         @dragover.prevent
         @drop="onDrop($event, row.id)"
       >
-        <span class="drag-handle" aria-hidden="true">⠿</span>
-        <span class="item-name">{{ row.name }}</span>
-        <span class="item-price">{{ row.price != null ? formatPrice(row.price) : '—' }}</span>
-        <span class="item-diff" :class="diffClass(row.diff)">
-          {{ row.diff != null ? formatDiff(row.diff) : '' }}
-        </span>
-        <Sparkline :points="row.history" />
-        <button class="remove-btn" @click="onRemove(row.id)">移除</button>
+        <div class="card-left">
+          <span class="drag-handle" aria-hidden="true">⠿</span>
+          <div class="card-info">
+            <span class="item-name">{{ row.name }}</span>
+            <span v-if="row.status === 'gone'" class="gone-badge">已下架</span>
+          </div>
+        </div>
+
+        <div class="card-right">
+          <div class="card-price-group">
+            <span class="item-price">{{ row.price != null ? formatPrice(row.price) : '—' }}</span>
+            <span class="item-diff" :class="diffClass(row.diff)">
+              {{ row.diff != null ? formatDiff(row.diff) : '' }}
+            </span>
+          </div>
+          <Sparkline :points="row.history" class="card-sparkline" />
+        </div>
+
+        <button class="remove-btn" @click="onRemove(row.id)" aria-label="移除追蹤">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -168,109 +189,205 @@ function onRemove(id: string) {
 
 <style scoped>
 .watchlist-page {
-  max-width: 720px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 24px 16px;
 }
 
-.watchlist-page h1 {
+.watchlist-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.watchlist-header h1 {
   font-size: 1.4rem;
   font-weight: 700;
-  margin-bottom: 20px;
   color: var(--text);
+}
+
+.watchlist-count {
+  font-size: 0.85rem;
+  color: var(--text-dim);
 }
 
 .watchlist-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .watchlist-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--border);
-  transition: opacity var(--transition), background-color var(--transition);
+  box-shadow: var(--shadow);
+  transition: opacity var(--transition), background-color var(--transition), border-color var(--transition);
 }
 
 .watchlist-card:hover {
-  background: var(--surface-hover, var(--surface));
+  border-color: var(--brand);
 }
 
 .watchlist-card.is-gone {
   opacity: 0.5;
 }
 
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
 .drag-handle {
   cursor: grab;
   color: var(--text-dim);
-  font-size: 1.1rem;
+  font-size: 1rem;
   user-select: none;
   flex-shrink: 0;
+  padding: 4px;
 }
 
 .drag-handle:active {
   cursor: grabbing;
 }
 
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .item-name {
-  flex: 1;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 0;
+}
+
+.gone-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  width: fit-content;
+}
+
+.card-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.card-price-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .item-price {
-  flex-shrink: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .item-diff {
-  flex-shrink: 0;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
-  min-width: 64px;
-  text-align: right;
 }
 
 .price-up {
-  color: var(--danger, #e53935);
+  color: var(--price-up);
 }
 
 .price-down {
-  color: var(--success, #43a047);
+  color: var(--price-down);
 }
 
 .price-flat {
-  color: var(--text-dim, #999);
+  color: var(--price-flat);
+}
+
+.card-sparkline {
+  flex-shrink: 0;
 }
 
 .remove-btn {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   border: none;
   background: none;
-  color: var(--text-dim, #999);
-  font-size: 0.82rem;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
+  color: var(--text-dim);
+  border-radius: var(--radius-sm);
   transition: color var(--transition), background-color var(--transition);
 }
 
 .remove-btn:hover {
-  color: var(--danger, #e53935);
-  background: var(--danger-soft, rgba(229, 57, 53, 0.08));
+  color: var(--danger);
+  background: rgba(197, 34, 31, 0.08);
+}
+
+.remove-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+@media (max-width: 639px) {
+  .watchlist-page {
+    padding: 16px 12px;
+  }
+
+  .watchlist-card {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .card-left {
+    flex: 1 1 100%;
+  }
+
+  .card-right {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .card-sparkline {
+    display: none;
+  }
+
+  .remove-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+
+  .watchlist-card {
+    position: relative;
+  }
 }
 </style>

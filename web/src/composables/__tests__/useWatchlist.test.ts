@@ -37,7 +37,7 @@ describe('useWatchlist', () => {
     const { useWatchlist } = await importFresh()
     const wl = useWatchlist()
 
-    const result = wl.add('item-aaa', 12990)
+    const result = wl.add('item-aaa', 'RTX 4070 顯示卡', 12990)
     expect(result).toEqual({ ok: true })
     expect(wl.items.value).toHaveLength(1)
     expect(wl.items.value[0].id).toBe('item-aaa')
@@ -51,7 +51,7 @@ describe('useWatchlist', () => {
     const wl = useWatchlist()
 
     expect(wl.isTracked('item-aaa')).toBe(false)
-    wl.add('item-aaa', 9990)
+    wl.add('item-aaa', 'RTX 4070 顯示卡', 9990)
     expect(wl.isTracked('item-aaa')).toBe(true)
     expect(wl.isTracked('item-bbb')).toBe(false)
   })
@@ -60,8 +60,8 @@ describe('useWatchlist', () => {
     const { useWatchlist } = await importFresh()
     const wl = useWatchlist()
 
-    wl.add('item-aaa', 9990)
-    const result = wl.add('item-aaa', 10990)
+    wl.add('item-aaa', 'RTX 4070 顯示卡', 9990)
+    const result = wl.add('item-aaa', 'RTX 4070 顯示卡', 10990)
     expect(result).toEqual({ ok: false, reason: 'already-tracked' })
     expect(wl.items.value).toHaveLength(1)
     expect(mockWriteVersioned).toHaveBeenCalledTimes(1) // only the first add
@@ -72,7 +72,7 @@ describe('useWatchlist', () => {
     const { useWatchlist } = await importFresh()
     const wl = useWatchlist()
 
-    const result = wl.add('item-aaa', 9990)
+    const result = wl.add('item-aaa', 'RTX 4070 顯示卡', 9990)
     expect(result).toEqual({ ok: false, reason: 'storage-unavailable' })
     expect(wl.items.value).toHaveLength(0)
   })
@@ -85,7 +85,7 @@ describe('useWatchlist', () => {
     const { useWatchlist } = await importFresh()
     const wl = useWatchlist()
 
-    const result = wl.add('item-aaa', 9990)
+    const result = wl.add('item-aaa', 'RTX 4070 顯示卡', 9990)
     expect(result).toEqual({ ok: false, reason: 'quota-exceeded' })
     expect(wl.items.value).toHaveLength(0) // rolled back
   })
@@ -94,8 +94,8 @@ describe('useWatchlist', () => {
     const { useWatchlist } = await importFresh()
     const wl = useWatchlist()
 
-    wl.add('item-aaa', 9990)
-    wl.add('item-bbb', 15990)
+    wl.add('item-aaa', 'RTX 4070 顯示卡', 9990)
+    wl.add('item-bbb', 'RTX 4080 顯示卡', 15990)
     expect(wl.items.value).toHaveLength(2)
 
     wl.remove('item-aaa')
@@ -116,9 +116,9 @@ describe('useWatchlist', () => {
     const { useWatchlist } = await importFresh()
     const wl = useWatchlist()
 
-    wl.add('item-a', 100)
-    wl.add('item-b', 200)
-    wl.add('item-c', 300)
+    wl.add('item-a', '商品 A', 100)
+    wl.add('item-b', '商品 B', 200)
+    wl.add('item-c', '商品 C', 300)
 
     wl.reorder(['item-c', 'item-a', 'item-b'])
     expect(wl.items.value.map(i => i.id)).toEqual(['item-c', 'item-a', 'item-b'])
@@ -129,7 +129,7 @@ describe('useWatchlist', () => {
     const { useWatchlist } = await importFresh()
     const wl = useWatchlist()
 
-    wl.add('item-aaa', 9990)
+    wl.add('item-aaa', 'RTX 4070 顯示卡', 9990)
     const before = wl.items.value[0].priceSnapshotAt
 
     // Small delay to ensure different timestamp
@@ -147,6 +147,7 @@ describe('useWatchlist', () => {
       items: [
         {
           id: 'existing-item',
+          name: 'existing product',
           addedAt: '2026-01-01T00:00:00.000Z',
           lastPriceSnapshot: 5990,
           priceSnapshotAt: '2026-01-01T00:00:00.000Z',
