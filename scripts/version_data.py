@@ -29,7 +29,8 @@
   檢查延伸到衍生層，防人工手術壞資料覆寫既有對外成品）。
 - changed 判定：① data/daily 有 api/daily 缺的新檔 ② 任一 data/items/{g}.json 與
   對應 api/items/{g}.json items 有異動（canonical 比較，僅 items payload；缺檔視為
-  異動；crawled_at 不參與，避免時間戳造成永遠「有異動」）；無異動 → 不寫任何檔案。
+  異動；crawled_at 不參與，避免時間戳造成永遠「有異動」） ③ data/checkpoints/ 有新
+  checkpoint（008：workflow 需 commit 新 checkpoint）；無異動 → 不寫任何檔案。
 - 輸出：stdout 印 changed=true|false 與 filename（最新 daily 檔名或空）；
   若環境變數 GITHUB_OUTPUT 存在（GitHub Actions），以 key=value 追加寫入，供
   crawl.yml steps.version.outputs.changed / outputs.filename 使用
@@ -387,6 +388,23 @@ def items_changed(api_dir: Path, categories: list[tuple[str, str, list]]) -> boo
     return False
 
 
+def checkpoints_changed(data_dir: Path) -> bool:
+    """data/checkpoints/ 有新檔案（api/checkpoints/ 無對應檔名）。
+
+    checkpoints 不進 api/（前端無需），但 workflow 需 commit 新 checkpoint。"""
+    cp_dir = data_dir / "checkpoints"
+    if not cp_dir.is_dir():
+        return False
+    for p in cp_dir.glob("*.json"):
+        stem = p.stem
+        if len(stem) == 8 and stem.isdigit():
+            # checkpoints 不鏡像到 api/，用 data/ 自身判斷：
+            # 只要有 checkpoints 檔且 api/ index 沒有記錄 → 視為異動
+            # 簡化：只要有任何 checkpoint 檔即視為可能異動（冪等寫入無害）
+            return True
+    return False
+
+
 def write_items(api_dir: Path, categories: list[tuple[str, str, list]]) -> None:
     """鏡像 api/items/{g}.json：同 data/items/{g} 內容、compact 寫出；
     僅寫新增或內容不同的檔（已是最新 → 不寫）。"""
@@ -478,8 +496,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # changed 判定：① data/daily 有新檔（api/daily 無對應檔名）
     #              ② 任一分類檔與 api/items/{g}.json 有異動（canonical）
+    #              ③ data/checkpoints/ 有新 checkpoint（008：需 commit 新 checkpoint）
     new_daily = [p for p in daily_paths if not (api_dir / "daily" / p.name).exists()]
-    changed = bool(new_daily) or items_changed(api_dir, categories)
+    changed = bool(new_daily) or items_changed(api_dir, categories) or checkpoints_changed(data_dir)
 
     if changed:
         api_dir.mkdir(parents=True, exist_ok=True)

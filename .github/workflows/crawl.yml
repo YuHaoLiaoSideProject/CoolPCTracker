@@ -72,9 +72,13 @@ jobs:
         run: |
           git config user.name "coolpc-tracker[bot]"
           git config user.email "coolpc-tracker[bot]@users.noreply.github.com"
-          git add data/    # data/ 為唯一真相（items/{g} + daily/ + meta.json + telegram.json）；api/ 不進版控，由 deploy 時重建
-          git commit -m "chore(data): 更新商品資料 ${{ steps.version.outputs.filename }}"
-          # filename = 最新 daily 檔名（如 20260816.json），version_data 輸出（steps.version.outputs.filename）
+          git add data/    # data/ 為唯一真相（items/{g} + daily/ + checkpoints/ + meta.json + telegram.json）；api/ 不進版控，由 deploy 時重建
+          # filename 可能為空（僅 checkpoint 或 items 異動），fallback 用日期
+          FILENAME="${{ steps.version.outputs.filename }}"
+          if [ -z "$FILENAME" ]; then
+            FILENAME="$(date -u +%Y%m%d)"
+          fi
+          git commit -m "chore(data): 更新商品資料 ${FILENAME}"
           git pull --rebase        # 併入並發期間 main 上其他人類 commit；實質衝突 → step 失敗
           git push
         # push 失敗（權限不足/衝突）→ step 失敗 → run 失敗、異動停留工作目錄
