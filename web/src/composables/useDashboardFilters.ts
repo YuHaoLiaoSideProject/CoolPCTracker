@@ -17,6 +17,29 @@ function extractBrand(item: Item): string | null {
   return typeof b === "string" && b.trim() !== "" ? b : null
 }
 
+/** 從 spec 取得容量（string type guard） */
+function extractCapacity(item: Item): string | null {
+  const c = item.spec.capacity
+  return typeof c === "string" && c.trim() !== "" ? c : null
+}
+
+/** 從 spec 取得轉速（number → string，用於篩選 chip） */
+function extractRpm(item: Item): string | null {
+  const r = item.spec.rpm
+  return typeof r === "number" ? `${r}RPM` : null
+}
+
+/** 將容量字串轉為 GB 數值（用於排序）：64GB→64, 1TB→1024 */
+function parseCapacityToGB(capacity: string): number {
+  const match = capacity.match(/^(\d+(\.\d+)?)\s*(TB|GB|MB)$/i)
+  if (!match) return 0
+  const num = parseFloat(match[1])
+  const unit = match[3].toUpperCase()
+  if (unit === "TB") return num * 1024
+  if (unit === "MB") return num / 1024
+  return num
+}
+
 /**
  * Dashboard 篩選 + 排序 composable
  * @param items — 已按分類過濾的商品（由上游傳入）
@@ -26,6 +49,8 @@ export function useDashboardFilters(items: Ref<Item[]>) {
   const priceMin = ref<number | null>(null)
   const priceMax = ref<number | null>(null)
   const selectedBrands = ref<Set<string>>(new Set())
+  const selectedCapacities = ref<Set<string>>(new Set())
+  const selectedRpms = ref<Set<string>>(new Set())
 
   // ── auto-swap min/max ──────────────────────────────
   watch([priceMin, priceMax], ([min, max]) => {
@@ -47,6 +72,36 @@ export function useDashboardFilters(items: Ref<Item[]>) {
     return [...set].sort((a, b) => a.localeCompare(b, "zh-Hant"))
   })
 
+  /** 從商品列表中提取唯一容量（已排序，按數值升冪） */
+  const availableCapacities = computed<string[]>(() => {
+    const set = new Set<string>()
+    for (const item of items.value) {
+      const capacity = extractCapacity(item)
+      if (capacity) set.add(capacity)
+    }
+    // 按數值排序：64GB, 128GB, 256GB, 512GB, 1TB
+    return [...set].sort((a, b) => {
+      const numA = parseCapacityToGB(a)
+      const numB = parseCapacityToGB(b)
+      return numA - numB
+    })
+  })
+
+  /** 從商品列表中提取唯一轉速（已排序，按數值升冪） */
+  const availableRpms = computed<string[]>(() => {
+    const set = new Set<string>()
+    for (const item of items.value) {
+      const rpm = extractRpm(item)
+      if (rpm) set.add(rpm)
+    }
+    // 按數值排序：5400RPM, 7200RPM, 10000RPM
+    return [...set].sort((a, b) => {
+      const numA = parseInt(a)
+      const numB = parseInt(b)
+      return numA - numB
+    })
+  })
+
   /** 價格 + 品牌篩選（不含排序） */
   const filteredItems = computed<Item[]>(() => {
     const min = priceMin.value
@@ -63,6 +118,18 @@ export function useDashboardFilters(items: Ref<Item[]>) {
       if (brands.size > 0) {
         const brand = extractBrand(item)
         if (!brand || !brands.has(brand)) return false
+      }
+
+      // 容量篩選（取聯集）
+      if (selectedCapacities.value.size > 0) {
+        const capacity = extractCapacity(item)
+        if (!capacity || !selectedCapacities.value.has(capacity)) return false
+      }
+
+      // 轉速篩選（取聯集）
+      if (selectedRpms.value.size > 0) {
+        const rpm = extractRpm(item)
+        if (!rpm || !selectedRpms.value.has(rpm)) return false
       }
 
       return true
@@ -98,7 +165,9 @@ export function useDashboardFilters(items: Ref<Item[]>) {
     () =>
       priceMin.value != null ||
       priceMax.value != null ||
-      selectedBrands.value.size > 0,
+      selectedBrands.value.size > 0 ||
+      selectedCapacities.value.size > 0 ||
+      selectedRpms.value.size > 0,
   )
 
   // ── actions ────────────────────────────────────────
@@ -125,11 +194,33 @@ export function useDashboardFilters(items: Ref<Item[]>) {
     selectedBrands.value = next
   }
 
+  function toggleCapacity(capacity: string) {
+    const next = new Set(selectedCapacities.value)
+    if (next.has(capacity)) {
+      next.delete(capacity)
+    } else {
+      next.add(capacity)
+    }
+    selectedCapacities.value = next
+  }
+
+  function toggleRpm(rpm: string) {
+    const next = new Set(selectedRpms.value)
+    if (next.has(rpm)) {
+      next.delete(rpm)
+    } else {
+      next.add(rpm)
+    }
+    selectedRpms.value = next
+  }
+
   /** 清除篩選（保留排序） */
   function clearFilters() {
     priceMin.value = null
     priceMax.value = null
     selectedBrands.value = new Set()
+    selectedCapacities.value = new Set()
+    selectedRpms.value = new Set()
   }
 
   /** 重置全部（含排序） */
@@ -144,8 +235,12 @@ export function useDashboardFilters(items: Ref<Item[]>) {
     priceMin,
     priceMax,
     selectedBrands,
+    selectedCapacities,
+    selectedRpms,
     // derived
     availableBrands,
+    availableCapacities,
+    availableRpms,
     filteredItems,
     sortedItems,
     hasActiveFilter,
@@ -154,6 +249,8 @@ export function useDashboardFilters(items: Ref<Item[]>) {
     setPriceMin,
     setPriceMax,
     toggleBrand,
+    toggleCapacity,
+    toggleRpm,
     clearFilters,
     resetAll,
   }

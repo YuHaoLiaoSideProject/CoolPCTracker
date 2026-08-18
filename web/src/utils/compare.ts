@@ -53,13 +53,13 @@ const SPEC_COLUMNS: Record<string, SpecColumn[]> = {
   SSD: [
     { key: 'brand', label: '品牌' },
     { key: 'model', label: '型號' },
-    { key: 'capacity_gb', label: '容量 (GB)' },
+    { key: 'capacity', label: '容量' },
     { key: 'interface', label: '介面' },
   ],
   HDD: [
     { key: 'brand', label: '品牌' },
     { key: 'model', label: '型號' },
-    { key: 'capacity_gb', label: '容量 (GB)' },
+    { key: 'capacity', label: '容量' },
     { key: 'interface', label: '介面' },
     { key: 'rpm', label: '轉速 (RPM)' },
   ],

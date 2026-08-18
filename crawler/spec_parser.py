@@ -6,8 +6,9 @@
 - brand/model 為 Spec 通用欄位；深度分類的結構化欄位一律置於 extra dict（依分類不同）。
 - 深度解析以「品牌 token 比對」為錨點：品牌無法辨識 → 回傳最少欄位 Spec
   （brand=None, model=None）。不得因單一欄位缺失而丟棄商品（規格 §1.6）。
-- 深度分類容量統一為整數 GB（1TB = 1024）：記憶體寫入 ram_gb、SSD/HDD 寫入
-  capacity_gb（儲存容量）；輕量分類保留原始字串 token（記憶卡 capacity = "128GB"）。
+- 深度分類容量：記憶體寫入 ram_gb（整數 GB）；SSD/HDD 寫入 capacity（原始字串 token：
+  ≥1TB 用 TB 單位如 "2TB"、<1TB 用 GB 單位如 "512GB"）；輕量分類保留原始字串 token
+  （記憶卡 capacity = "128GB"）。
 - 未知分類回傳空 Spec；任何解析例外由 parse_spec 捕捉 → 最少欄位 Spec，不中斷管道。
 """
 from __future__ import annotations
@@ -66,13 +67,18 @@ def _trim_suffix(text: str, suffixes: tuple[str, ...]) -> str:
     return t
 
 
-def _capacity_gb(name: str) -> int | None:
-    """容量 → 整數 GB（1TB = 1024、2TB = 2048、500GB = 500）。取首個 TB/GB 出現處。"""
+def _capacity_token(name: str) -> str | None:
+    """容量 → 原始單位字串（≥1TB 用 TB、<1TB 用 GB）。取首個 TB/GB 出現處。"""
     m = re.search(r"(\d+(?:\.\d+)?)\s*(TB|GB)\b", name, re.IGNORECASE)
     if not m:
         return None
     num = float(m.group(1))
-    return int(num * 1024) if m.group(2).upper() == "TB" else int(num)
+    unit = m.group(2).upper()
+    if unit == "TB":
+        # ≥1TB 保留 TB 單位（1TB, 2TB, 4TB）
+        return f"{int(num)}TB" if num == int(num) else f"{num}TB"
+    # GB：≥1TB 應不會走到此分支，但以防萬一仍保留 GB
+    return f"{int(num)}GB" if num == int(num) else f"{num}GB"
 
 
 # ── CPU 深度 ─────────────────────────────────────────────────────────────
@@ -197,7 +203,7 @@ def _ram_capacity_gb(name: str) -> int | None:
 def _parse_ram(name: str) -> Spec:
     """記憶體深度解析：品牌/型號 + extra{ram_gb, spec, clock_mhz}。
 
-    容量寫入 ram_gb（記憶體容量），與 SSD/HDD 的 capacity_gb（儲存容量）分離，
+    容量寫入 ram_gb（記憶體容量），與 SSD/HDD 的 capacity（儲存容量）分離，
     避免前端「記憶體 ≥ N」篩選誤用儲存容量欄位造成空結果。
     """
     rest, brand = _strip_brand(name, _RAM_BRANDS)
@@ -259,9 +265,9 @@ def _parse_ssd(name: str) -> Spec:
     if brand is None:
         return Spec()
     extra: dict[str, Any] = {}
-    cap = _capacity_gb(rest)
+    cap = _capacity_token(rest)
     if cap is not None:
-        extra["capacity_gb"] = cap
+        extra["capacity"] = cap
     iface = _ssd_interface(rest)
     if iface:
         extra["interface"] = iface
@@ -298,9 +304,9 @@ def _parse_hdd(name: str) -> Spec:
     if brand is None:
         return Spec()
     extra: dict[str, Any] = {}
-    cap = _capacity_gb(rest)
+    cap = _capacity_token(rest)
     if cap is not None:
-        extra["capacity_gb"] = cap
+        extra["capacity"] = cap
     m = _RE_RPM.search(rest)
     if m:
         extra["rpm"] = int(m.group(1))
@@ -386,7 +392,7 @@ def _parse_memory_card(name: str) -> Spec:
     extra: dict[str, Any] = {}
     m = _RE_CARD_CAPACITY.search(rest)
     if m:
-        # 輕量分類保留原始字串 token（與深度分類 capacity_gb 型別不同，屬刻意決策）
+        # 輕量分類保留原始字串 token（與深度分類 capacity 型別一致，皆為字串）
         extra["capacity"] = re.sub(r"\s+", "", m.group(1)).upper()
     spec = _card_spec(rest)
     if spec:
@@ -460,8 +466,8 @@ _DEEP_PARSERS: dict[str, Callable[[str], Spec]] = {
     "CPU": _parse_cpu,        # cores/threads/base_ghz/turbo_ghz/tdp_w/socket
     "顯示卡": _parse_gpu,     # chip/vram_gb/interface/length_mm
     "記憶體": _parse_ram,     # ram_gb/spec/clock_mhz
-    "SSD": _parse_ssd,        # capacity_gb/interface/format
-    "HDD": _parse_hdd,        # capacity_gb/rpm/interface
+    "SSD": _parse_ssd,        # capacity/interface/format
+    "HDD": _parse_hdd,        # capacity/rpm/interface
     "主機板": _parse_mobo,    # chipset/socket/form_factor
 }
 # 輕量解析器：僅品牌/型號 + 內容摘要

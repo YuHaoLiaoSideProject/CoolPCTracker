@@ -35,15 +35,14 @@ export function specChipTexts(spec: ItemSpec, category: string): string[] {
     push("", spec.ram_gb != null ? `${spec.ram_gb}GB` : undefined)
     push("", spec.clock_mhz != null ? `${spec.clock_mhz}MHz` : undefined)
   } else if (category === "SSD" || category === "HDD") {
-    push("", spec.capacity_gb != null ? `${spec.capacity_gb}GB` : undefined)
+    push("", spec.capacity) // ≥1TB 用 TB、<1TB 用 GB（如 "2TB"、"512GB"）
     push("", spec.interface)
     push("", spec.rpm != null ? `${spec.rpm}RPM` : undefined)
   } else if (category === "主機板") {
     push("", spec.socket)
     push("", spec.chipset)
   } else if (category === "記憶卡") {
-    push("", spec.capacity_gb != null ? `${spec.capacity_gb}GB` : undefined)
-    push("", spec.capacity) // 真資料 spec_parser 產出為字串 token（如 "128GB"）
+    push("", spec.capacity) // 輕量分類保留原始字串 token（如 "128GB"）
   } else if (category === "套裝/準系統") {
     push("", spec.brand)
     push("", spec.wattage_w != null ? `${spec.wattage_w}W` : undefined)

@@ -279,4 +279,70 @@ describe("useDashboardFilters", () => {
       expect(ids).not.toContain("d") // 500, 三星
     })
   })
+
+  describe("容量篩選", () => {
+    function makeCapacityItems(): Item[] {
+      return [
+        { id: "a", name: "64GB SD", spec: { capacity: "64GB" }, status: "in_stock", first_seen: "2026-08-01", last_seen: "2026-08-17", history: [{ d: "2026-08-17", p: 300 }] },
+        { id: "b", name: "128GB SD", spec: { capacity: "128GB" }, status: "in_stock", first_seen: "2026-08-01", last_seen: "2026-08-17", history: [{ d: "2026-08-17", p: 500 }] },
+        { id: "c", name: "256GB SD", spec: { capacity: "256GB" }, status: "in_stock", first_seen: "2026-08-01", last_seen: "2026-08-17", history: [{ d: "2026-08-17", p: 800 }] },
+        { id: "d", name: "512GB SD", spec: { capacity: "512GB" }, status: "in_stock", first_seen: "2026-08-01", last_seen: "2026-08-17", history: [{ d: "2026-08-17", p: 1500 }] },
+      ]
+    }
+
+    it("toggleCapacity 勾選單一容量", () => {
+      const capacityItems = ref(makeCapacityItems())
+      const { sortedItems, toggleCapacity } = useDashboardFilters(capacityItems)
+      toggleCapacity("128GB")
+      const ids = sortedItems.value.map((i) => i.id)
+      expect(ids).toContain("b") // 128GB
+      expect(ids).not.toContain("a") // 64GB
+      expect(ids).not.toContain("c") // 256GB
+    })
+
+    it("多容量篩選取聯集", () => {
+      const capacityItems = ref(makeCapacityItems())
+      const { sortedItems, toggleCapacity } = useDashboardFilters(capacityItems)
+      toggleCapacity("64GB")
+      toggleCapacity("256GB")
+      const ids = sortedItems.value.map((i) => i.id)
+      expect(ids).toContain("a") // 64GB
+      expect(ids).toContain("c") // 256GB
+      expect(ids).not.toContain("b") // 128GB
+      expect(ids).not.toContain("d") // 512GB
+    })
+
+    it("取消容量篩選恢復全部", () => {
+      const capacityItems = ref(makeCapacityItems())
+      const { sortedItems, toggleCapacity } = useDashboardFilters(capacityItems)
+      toggleCapacity("128GB")
+      toggleCapacity("128GB") // 取消
+      const ids = sortedItems.value.map((i) => i.id)
+      expect(ids).toContain("a")
+      expect(ids).toContain("b")
+      expect(ids).toContain("c")
+      expect(ids).toContain("d")
+    })
+
+    it("availableCapacities 從商品中提取唯一容量並排序", () => {
+      const capacityItems = ref(makeCapacityItems())
+      const { availableCapacities } = useDashboardFilters(capacityItems)
+      expect(availableCapacities.value).toEqual(["64GB", "128GB", "256GB", "512GB"])
+    })
+
+    it("勾選容量後 hasActiveFilter 為 true", () => {
+      const capacityItems = ref(makeCapacityItems())
+      const { hasActiveFilter, toggleCapacity } = useDashboardFilters(capacityItems)
+      toggleCapacity("128GB")
+      expect(hasActiveFilter.value).toBe(true)
+    })
+
+    it("clearFilters 清除容量篩選", () => {
+      const capacityItems = ref(makeCapacityItems())
+      const { hasActiveFilter, toggleCapacity, clearFilters } = useDashboardFilters(capacityItems)
+      toggleCapacity("128GB")
+      clearFilters()
+      expect(hasActiveFilter.value).toBe(false)
+    })
+  })
 })

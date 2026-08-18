@@ -67,16 +67,17 @@ describe("specChipTexts（規格 chips 依分類白名單）", () => {
     expect(chips).toEqual(["VRAM 12G", "RTX 4070", "200W"])
   })
 
-  it("記憶體：容量讀 ram_gb（不再讀 capacity_gb，防回歸）", () => {
+  it("記憶體：容量讀 ram_gb（不再讀 capacity，防回歸）", () => {
     const chips = specChipTexts({ ram_gb: 16, clock_mhz: 5600 }, "記憶體")
     expect(chips).toEqual(["16GB", "5600MHz"])
-    // 僅有 capacity_gb（儲存容量）的記憶體不應顯示容量 chip
-    expect(specChipTexts({ capacity_gb: 32 }, "記憶體")).toEqual([])
+    // 僅有 capacity（儲存容量）的記憶體不應顯示容量 chip
+    expect(specChipTexts({ capacity: "32GB" }, "記憶體")).toEqual([])
   })
 
-  it("SSD/HDD：儲存容量讀 capacity_gb", () => {
-    expect(specChipTexts({ capacity_gb: 1024, interface: "M.2" }, "SSD")).toEqual(["1024GB", "M.2"])
-    expect(specChipTexts({ capacity_gb: 2048, rpm: 7200 }, "HDD")).toEqual(["2048GB", "7200RPM"])
+  it("SSD/HDD：儲存容量讀 capacity（≥1TB 用 TB、<1TB 用 GB）", () => {
+    expect(specChipTexts({ capacity: "1TB", interface: "M.2" }, "SSD")).toEqual(["1TB", "M.2"])
+    expect(specChipTexts({ capacity: "512GB", interface: "SATA" }, "SSD")).toEqual(["512GB", "SATA"])
+    expect(specChipTexts({ capacity: "2TB", rpm: 7200 }, "HDD")).toEqual(["2TB", "7200RPM"])
   })
 
   it("無規格欄位 → 空陣列（不顯示 chips）", () => {

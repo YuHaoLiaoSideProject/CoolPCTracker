@@ -37,14 +37,14 @@ describe('specColumnsFor', () => {
   it('returns SSD columns', () => {
     const cols = specColumnsFor('SSD')
     expect(cols.map((c) => c.key)).toEqual([
-      'brand', 'model', 'capacity_gb', 'interface',
+      'brand', 'model', 'capacity', 'interface',
     ])
   })
 
   it('returns HDD columns including rpm', () => {
     const cols = specColumnsFor('HDD')
     expect(cols.map((c) => c.key)).toEqual([
-      'brand', 'model', 'capacity_gb', 'interface', 'rpm',
+      'brand', 'model', 'capacity', 'interface', 'rpm',
     ])
   })
 

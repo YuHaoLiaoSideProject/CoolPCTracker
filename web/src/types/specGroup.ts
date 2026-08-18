@@ -51,21 +51,19 @@ export const GROUP_STRATEGY: Record<string, GroupStrategy> = {
     },
   },
   SSD: {
-    fields: ["capacity_gb", "interface"],
+    fields: ["capacity", "interface"],
     formatKey: (s) => {
-      const cap = s.capacity_gb != null ? `${s.capacity_gb}GB` : ""
+      const cap = typeof s.capacity === "string" ? s.capacity : ""
       const iface = s.interface ?? ""
       const key = `${cap} ${iface}`.trim()
       return key || null
     },
   },
   HDD: {
-    fields: ["capacity_gb", "rpm"],
+    fields: ["capacity"],
     formatKey: (s) => {
-      const cap = s.capacity_gb != null ? `${s.capacity_gb}GB` : ""
-      const rpm = s.rpm != null ? `${s.rpm}RPM` : ""
-      const key = `${cap} ${rpm}`.trim()
-      return key || null
+      const cap = typeof s.capacity === "string" ? s.capacity : ""
+      return cap || null
     },
   },
   CPU: {

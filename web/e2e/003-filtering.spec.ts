@@ -212,7 +212,7 @@ test.describe("003 規格篩選 E2E（真資料 oracle）", () => {
   })
 })
 
-test.describe("003 記憶體篩選回歸（ram_gb vs capacity_gb）", () => {
+test.describe("003 記憶體篩選回歸（ram_gb vs capacity）", () => {
   test("搜尋記憶體商品名稱命中（16GB/GB/DDR5）；「>1GB」為 literal 空結果", async ({ page }) => {
     await gotoListing(page)
     const ramItems = ITEMS.filter(it => it.category === "記憶體")
@@ -261,17 +261,4 @@ test.describe("003 記憶體篩選回歸（ram_gb vs capacity_gb）", () => {
     expect(await renderedNames(page)).toEqual(sortedNames(oracle))
   })
 
-  test("規格篩選 儲存容量≥500GB（capacity_gb）：僅命中 SSD/HDD", async ({ page }) => {
-    await gotoListing(page)
-    const oracle = applyConditions(ITEMS, [{ field: "capacity_gb", threshold: 500 }])
-    expect(oracle.length).toBeGreaterThan(0)
-
-    // capacity_gb（儲存容量）僅 SSD/HDD 擁有；不得含記憶體（其 ram_gb 已分離）
-    expect(oracle.filter(it => it.category !== "SSD" && it.category !== "HDD")).toEqual([])
-
-    await applyFilter(page, "capacity_gb", 500)
-    await expect(page.locator(".cond-chips .fchip", { hasText: "儲存容量≥500GB" })).toBeVisible()
-    await expect(page.locator(".pl-count b")).toHaveText(String(oracle.length))
-    expect(await renderedNames(page)).toEqual(sortedNames(oracle))
-  })
 })

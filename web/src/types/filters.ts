@@ -4,7 +4,6 @@
 
 export type SpecField =
   | "vram_gb" | "cores" | "wattage_w" // P1 三條件（BDD 需求）
-  | "capacity_gb" // P2：儲存容量（SSD/HDD）
   | "ram_gb" // P2：記憶體容量
   | "tdp_w" // P2：TDP
   | (string & {}) // 保留擴充

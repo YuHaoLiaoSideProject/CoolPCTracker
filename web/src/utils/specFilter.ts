@@ -14,7 +14,6 @@ export const SPEC_FIELD_LABELS: Record<string, { label: string; unit: string }> 
   vram_gb: { label: "VRAM", unit: "G" },
   cores: { label: "CPU核數", unit: "核" },
   wattage_w: { label: "瓦數", unit: "W" },
-  capacity_gb: { label: "儲存容量", unit: "GB" }, // 僅適用 SSD/HDD（勿與記憶體 ram_gb 混用）
   ram_gb: { label: "記憶體", unit: "GB" },
   tdp_w: { label: "TDP", unit: "W" },
 }
@@ -42,7 +41,7 @@ export function matchesCondition(it: Item, c: SpecCondition): boolean {
 
 /** 所有可篩選欄位（SpecFilterPanel 下拉選項，P1 三欄位優先置頂） */
 export const FILTERABLE_FIELDS: { field: SpecField; label: string; unit: string }[] =
-  (["vram_gb", "cores", "wattage_w", "capacity_gb", "ram_gb", "tdp_w"] as SpecField[]).map(f => ({
+  (["vram_gb", "cores", "wattage_w", "ram_gb", "tdp_w"] as SpecField[]).map(f => ({
     field: f,
     label: SPEC_FIELD_LABELS[f].label,
     unit: SPEC_FIELD_LABELS[f].unit,

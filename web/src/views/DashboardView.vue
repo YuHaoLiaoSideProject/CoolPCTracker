@@ -148,6 +148,11 @@ watch(
         :price-max="dashboardFilters.priceMax.value"
         :available-brands="dashboardFilters.availableBrands.value"
         :selected-brands="dashboardFilters.selectedBrands.value"
+        :available-capacities="dashboardFilters.availableCapacities.value"
+        :selected-capacities="dashboardFilters.selectedCapacities.value"
+        :available-rpms="dashboardFilters.availableRpms.value"
+        :selected-rpms="dashboardFilters.selectedRpms.value"
+        :category-name="categoryName"
         :result-count="displayItems.length"
         :total-count="categoryItems.length"
         :has-active-filter="dashboardFilters.hasActiveFilter.value"
@@ -155,6 +160,8 @@ watch(
         @update:price-min="dashboardFilters.setPriceMin"
         @update:price-max="dashboardFilters.setPriceMax"
         @update:brands="dashboardFilters.toggleBrand"
+        @update:capacities="dashboardFilters.toggleCapacity"
+        @update:rpms="dashboardFilters.toggleRpm"
         @clear="handleFilterClear"
       />
 

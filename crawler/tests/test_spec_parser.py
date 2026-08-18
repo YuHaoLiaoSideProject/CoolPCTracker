@@ -5,7 +5,7 @@
 - 輕量解析：記憶卡、套裝/準系統、劈發價組合區
 - 容錯：無法解析的名稱回傳最少欄位 Spec（brand/model=None）不拋例外、
   未知分類回傳空 Spec、partial 解析不丟商品
-- 範圍：Spec.extra 僅含該分類相關欄位（如 CPU 無 vram_gb / capacity_gb）
+- 範圍：Spec.extra 僅含該分類相關欄位（如 CPU 無 vram_gb / capacity）
 """
 from __future__ import annotations
 
@@ -126,11 +126,11 @@ class TestRamDeepParse:
         spec = parse_spec("記憶體", "Kingston 8GB*2 DDR4-3200 桌上型記憶體")
         assert spec.extra["ram_gb"] == 16
 
-    def test_ram_writes_ram_gb_not_capacity_gb(self) -> None:
-        # 根因修正：記憶體容量欄位為 ram_gb，與 SSD/HDD 的 capacity_gb（儲存）分離
+    def test_ram_writes_ram_gb_not_capacity(self) -> None:
+        # 根因修正：記憶體容量欄位為 ram_gb，與 SSD/HDD 的 capacity（儲存）分離
         spec = parse_spec("記憶體", "美光 Crucial DDR5-5600 16GB(8G*2) 桌上型記憶體")
         assert spec.extra["ram_gb"] == 16
-        assert "capacity_gb" not in spec.extra
+        assert "capacity" not in spec.extra
 
     @pytest.mark.parametrize(
         ("name", "brand", "ram_gb", "spec", "clock_mhz", "model_fragment"),
@@ -173,7 +173,7 @@ class TestRamDeepParse:
         assert parsed.extra["ram_gb"] == ram_gb
         assert parsed.extra["spec"] == spec
         assert parsed.extra["clock_mhz"] == clock_mhz
-        assert "capacity_gb" not in parsed.extra
+        assert "capacity" not in parsed.extra
 
 
 # ── SSD 深度 ─────────────────────────────────────────────────────────────
@@ -182,14 +182,14 @@ class TestSsdDeepParse:
     def test_wd_nvme(self) -> None:
         spec = parse_spec("SSD", "WD 藍標 SN580 1TB M.2 PCIe 4.0 SSD")
         assert spec.brand == "WD"
-        assert spec.extra["capacity_gb"] == 1024   # 1TB 統一轉整數 GB
+        assert spec.extra["capacity"] == "1TB"    # ≥1TB 保留 TB 單位
         assert spec.extra["interface"] == "M.2"
         assert spec.extra["format"] == "NVMe"
 
     def test_samsung_sata(self) -> None:
         spec = parse_spec("SSD", 'Samsung 870 EVO 500GB 2.5" SATAIII SSD')
         assert spec.brand == "Samsung"
-        assert spec.extra["capacity_gb"] == 500
+        assert spec.extra["capacity"] == "500GB"  # <1TB 用 GB 單位
         assert spec.extra["interface"] == "SATA"
         assert spec.extra["format"] == "SATA"
 
@@ -200,14 +200,14 @@ class TestHddDeepParse:
     def test_seagate_7200rpm(self) -> None:
         spec = parse_spec("HDD", "Seagate 新梭魚 2TB 256M/7200轉/3年保")
         assert spec.brand == "Seagate"
-        assert spec.extra["capacity_gb"] == 2048   # 2TB → 2048
+        assert spec.extra["capacity"] == "2TB"     # ≥1TB 保留 TB 單位
         assert spec.extra["rpm"] == 7200
         assert spec.extra.get("interface") is None  # 名稱未含介面字樣
 
     def test_wd_5400rpm(self) -> None:
         spec = parse_spec("HDD", "WD 藍標 1TB 5400轉 桌上型硬碟")
         assert spec.brand == "WD"
-        assert spec.extra["capacity_gb"] == 1024
+        assert spec.extra["capacity"] == "1TB"
         assert spec.extra["rpm"] == 5400
 
 
@@ -311,9 +311,9 @@ class TestExtraScope:
             ("記憶體", "美光 Crucial DDR5-5600 16GB(8G*2) 桌上型記憶體",
              {"ram_gb", "spec", "clock_mhz"}),
             ("SSD", "WD 藍標 SN580 1TB M.2 PCIe 4.0 SSD",
-             {"capacity_gb", "interface", "format", "rpm"}),
+             {"capacity", "interface", "format", "rpm"}),
             ("HDD", "Seagate 新梭魚 2TB 256M/7200轉/3年保",
-             {"capacity_gb", "interface", "format", "rpm"}),
+             {"capacity", "interface", "format", "rpm"}),
             ("主機板", "技嘉 B760M GAMING X AX DDR4 主機板",
              {"chipset", "socket", "form_factor"}),
             ("記憶卡", "SanDisk 128GB MicroSDXC U3 A2 記憶卡",
@@ -336,5 +336,5 @@ class TestExtraScope:
     def test_cpu_extra_has_no_gpu_or_storage_fields(self) -> None:
         spec = parse_spec("CPU", "Intel i5-13600K【14核/20緒】3.5GHz(↑5.1G)/20M/UHD770/125W【代理盒裝】")
         assert "vram_gb" not in spec.extra
-        assert "capacity_gb" not in spec.extra
+        assert "capacity" not in spec.extra
         assert "rpm" not in spec.extra

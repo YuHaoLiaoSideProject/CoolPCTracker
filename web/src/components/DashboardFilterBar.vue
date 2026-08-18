@@ -9,6 +9,11 @@ defineProps<{
   priceMax: number | null
   availableBrands: string[]
   selectedBrands: Set<string>
+  availableCapacities: string[]
+  selectedCapacities: Set<string>
+  availableRpms: string[]
+  selectedRpms: Set<string>
+  categoryName: string | null
   resultCount: number
   totalCount: number
   hasActiveFilter: boolean
@@ -19,6 +24,8 @@ const emit = defineEmits<{
   "update:price-min": [value: number | null]
   "update:price-max": [value: number | null]
   "update:brands": [brand: string]
+  "update:capacities": [capacity: string]
+  "update:rpms": [rpm: string]
   clear: []
 }>()
 
@@ -80,8 +87,46 @@ function onPriceMaxChange(e: Event) {
       />
     </div>
 
-    <!-- 品牌篩選 -->
-    <div v-if="availableBrands.length > 0" class="filter-bar__brands">
+    <!-- 容量篩選（記憶卡 / HDD 專用） -->
+    <div v-if="(categoryName === '記憶卡' || categoryName === 'HDD') && availableCapacities.length > 0" class="filter-bar__capacities">
+      <label>容量</label>
+      <div class="capacity-list">
+        <label
+          v-for="capacity in availableCapacities"
+          :key="capacity"
+          class="capacity-item"
+        >
+          <input
+            type="checkbox"
+            :checked="selectedCapacities.has(capacity)"
+            @change="emit('update:capacities', capacity)"
+          />
+          <span>{{ capacity }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 轉速篩選（HDD 專用） -->
+    <div v-if="categoryName === 'HDD' && availableRpms.length > 0" class="filter-bar__rpms">
+      <label>轉速</label>
+      <div class="rpm-list">
+        <label
+          v-for="rpm in availableRpms"
+          :key="rpm"
+          class="rpm-item"
+        >
+          <input
+            type="checkbox"
+            :checked="selectedRpms.has(rpm)"
+            @change="emit('update:rpms', rpm)"
+          />
+          <span>{{ rpm }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 品牌篩選（非記憶卡/HDD 分類） -->
+    <div v-if="categoryName !== '記憶卡' && categoryName !== 'HDD' && availableBrands.length > 0" class="filter-bar__brands">
       <label>品牌</label>
       <div class="brand-list">
         <label
@@ -164,53 +209,68 @@ function onPriceMaxChange(e: Event) {
   border-radius: 6px;
   background: var(--surface);
   color: var(--text);
-  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+.price-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.6;
 }
 
 .price-sep {
   color: var(--text-dim);
-  flex-shrink: 0;
 }
 
-.filter-bar__brands {
+.filter-bar__brands,
+.filter-bar__capacities,
+.filter-bar__rpms {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.filter-bar__brands > label {
+.filter-bar__brands label,
+.filter-bar__capacities label,
+.filter-bar__rpms label {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-dim);
-  flex-shrink: 0;
-  padding-top: 4px;
 }
 
-.brand-list {
+.brand-list,
+.capacity-list,
+.rpm-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  max-height: 80px;
-  overflow-y: auto;
+  gap: 8px;
 }
 
-.brand-item {
-  display: inline-flex;
+.brand-item,
+.capacity-item,
+.rpm-item {
+  display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  color: var(--text);
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.brand-item input[type="checkbox"] {
+.brand-item input,
+.capacity-item input,
+.rpm-item input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--primary);
   cursor: pointer;
 }
 
 .filter-bar__footer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 .result-count {
@@ -219,31 +279,18 @@ function onPriceMaxChange(e: Event) {
 }
 
 .clear-btn {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 12px;
-  background: transparent;
-  color: var(--brand);
+  padding: 6px 12px;
   font-size: 0.82rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 
 .clear-btn:hover {
-  background: var(--brand-soft);
-}
-
-/* ── RWD ────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .price-input {
-    width: 80px;
-  }
-}
-
-@media (max-width: 639px) {
-  .filter-bar__sort,
-  .filter-bar__price {
-    flex-wrap: wrap;
-  }
+  background: var(--primary);
+  color: white;
 }
 </style>

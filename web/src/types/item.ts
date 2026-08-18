@@ -24,7 +24,7 @@ export interface ItemSpec {
   socket?: string // 腳位，如 LGA1700
   vram_gb?: number // 顯示卡 VRAM（G）（篩選條件：VRAM≥12G）
   wattage_w?: number // 電源瓦數（篩選條件：瓦數≥750W）
-  capacity_gb?: number // 儲存容量（SSD/HDD）
+  capacity?: string // 儲存容量（SSD/HDD）：≥1TB 用 TB（如 "2TB"）、<1TB 用 GB（如 "512GB"）
   ram_gb?: number // 記憶體容量
   chip?: string // 顯示卡晶片（如 RTX 4070）
   interface?: string // PCIe 介面

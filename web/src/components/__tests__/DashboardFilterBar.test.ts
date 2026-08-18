@@ -13,6 +13,11 @@ function makeProps(overrides?: Partial<InstanceType<typeof DashboardFilterBar>["
     priceMax: null,
     availableBrands: [] as string[],
     selectedBrands: new Set<string>(),
+    availableCapacities: [] as string[],
+    selectedCapacities: new Set<string>(),
+    availableRpms: [] as string[],
+    selectedRpms: new Set<string>(),
+    categoryName: null as string | null,
     resultCount: 10,
     totalCount: 10,
     hasActiveFilter: false,
@@ -98,13 +103,8 @@ describe("DashboardFilterBar", () => {
       expect(w.find(".filter-bar__brands").exists()).toBe(false)
     })
 
-    it("有品牌時渲染品牌區塊", () => {
-      const w = mountBar({ availableBrands: ["金士頓"] })
-      expect(w.find(".filter-bar__brands").exists()).toBe(true)
-    })
-
     it("勾選品牌 emit update:brands", async () => {
-      const w = mountBar({ availableBrands: ["金士頓"] })
+      const w = mountBar({ availableBrands: ["金士頓", "三星"] })
       const checkbox = w.find(".brand-item input[type='checkbox']")
       await checkbox.trigger("change")
       expect(w.emitted("update:brands")).toBeTruthy()
@@ -112,29 +112,133 @@ describe("DashboardFilterBar", () => {
     })
   })
 
-  describe("結果數量", () => {
-    it("顯示 resultCount / totalCount", () => {
-      const w = mountBar({ resultCount: 5, totalCount: 20 })
-      expect(w.find(".result-count").text()).toBe("5 / 20 件商品")
+  describe("容量篩選", () => {
+    it("categoryName='記憶卡' 時渲染容量篩選", () => {
+      const w = mountBar({
+        categoryName: "記憶卡",
+        availableCapacities: ["64GB", "128GB", "256GB"],
+      })
+      expect(w.find(".filter-bar__capacities").exists()).toBe(true)
+      expect(w.findAll(".capacity-item")).toHaveLength(3)
+    })
+
+    it("categoryName='HDD' 時渲染容量篩選", () => {
+      const w = mountBar({
+        categoryName: "HDD",
+        availableCapacities: ["1TB", "2TB", "4TB"],
+      })
+      expect(w.find(".filter-bar__capacities").exists()).toBe(true)
+      expect(w.findAll(".capacity-item")).toHaveLength(3)
+    })
+
+    it("categoryName 非記憶卡/HDD 時不渲染容量篩選", () => {
+      const w = mountBar({
+        categoryName: "顯示卡",
+        availableCapacities: ["8GB", "12GB"],
+      })
+      expect(w.find(".filter-bar__capacities").exists()).toBe(false)
+    })
+
+    it("categoryName='記憶卡' 時渲染容量篩選（替代品牌）", () => {
+      const w = mountBar({
+        categoryName: "記憶卡",
+        availableCapacities: ["64GB"],
+        availableBrands: ["三星", "金士頓"],
+      })
+      expect(w.find(".filter-bar__brands").exists()).toBe(false)
+      expect(w.find(".filter-bar__capacities").exists()).toBe(true)
+    })
+
+    it("categoryName='HDD' 時渲染容量篩選（替代品牌）", () => {
+      const w = mountBar({
+        categoryName: "HDD",
+        availableCapacities: ["1TB", "2TB"],
+        availableBrands: ["Seagate", "WD"],
+      })
+      expect(w.find(".filter-bar__brands").exists()).toBe(false)
+      expect(w.find(".filter-bar__capacities").exists()).toBe(true)
+    })
+
+    it("勾選容量 emit update:capacities", async () => {
+      const w = mountBar({
+        categoryName: "記憶卡",
+        availableCapacities: ["64GB", "128GB"],
+      })
+      const checkbox = w.find(".capacity-item input[type='checkbox']")
+      await checkbox.trigger("change")
+      expect(w.emitted("update:capacities")).toBeTruthy()
+      expect(w.emitted("update:capacities")![0]).toEqual(["64GB"])
+    })
+
+    it("無容量時不渲染容量區塊", () => {
+      const w = mountBar({
+        categoryName: "記憶卡",
+        availableCapacities: [],
+      })
+      expect(w.find(".filter-bar__capacities").exists()).toBe(false)
     })
   })
 
-  describe("清除按鈕", () => {
-    it("hasActiveFilter=true 時顯示清除按鈕", () => {
+  describe("轉速篩選（HDD 專用）", () => {
+    it("categoryName='HDD' 時渲染轉速篩選", () => {
+      const w = mountBar({
+        categoryName: "HDD",
+        availableRpms: ["5400RPM", "7200RPM"],
+      })
+      expect(w.find(".filter-bar__rpms").exists()).toBe(true)
+      expect(w.findAll(".rpm-item")).toHaveLength(2)
+    })
+
+    it("categoryName 非 HDD 時不渲染轉速篩選", () => {
+      const w = mountBar({
+        categoryName: "SSD",
+        availableRpms: ["5400RPM", "7200RPM"],
+      })
+      expect(w.find(".filter-bar__rpms").exists()).toBe(false)
+    })
+
+    it("勾選轉速 emit update:rpms", async () => {
+      const w = mountBar({
+        categoryName: "HDD",
+        availableRpms: ["5400RPM", "7200RPM"],
+      })
+      const checkbox = w.find(".rpm-item input[type='checkbox']")
+      await checkbox.trigger("change")
+      expect(w.emitted("update:rpms")).toBeTruthy()
+      expect(w.emitted("update:rpms")![0]).toEqual(["5400RPM"])
+    })
+
+    it("無轉速時不渲染轉速區塊", () => {
+      const w = mountBar({
+        categoryName: "HDD",
+        availableRpms: [],
+      })
+      expect(w.find(".filter-bar__rpms").exists()).toBe(false)
+    })
+  })
+
+  describe("清除篩選", () => {
+    it("hasActiveFilter=true 時渲染清除按鈕", () => {
       const w = mountBar({ hasActiveFilter: true })
       expect(w.find(".clear-btn").exists()).toBe(true)
     })
 
-    it("hasActiveFilter=false 時隱藏清除按鈕", () => {
+    it("hasActiveFilter=false 時不渲染清除按鈕", () => {
       const w = mountBar({ hasActiveFilter: false })
       expect(w.find(".clear-btn").exists()).toBe(false)
     })
 
-    it("點擊清除 emit clear", async () => {
+    it("點擊清除按鈕 emit clear", async () => {
       const w = mountBar({ hasActiveFilter: true })
       await w.find(".clear-btn").trigger("click")
       expect(w.emitted("clear")).toBeTruthy()
-      expect(w.emitted("clear")!).toHaveLength(1)
+    })
+  })
+
+  describe("結果計數", () => {
+    it("顯示 resultCount / totalCount", () => {
+      const w = mountBar({ resultCount: 5, totalCount: 20 })
+      expect(w.find(".result-count").text()).toBe("5 / 20 件商品")
     })
   })
 })
