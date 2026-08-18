@@ -49,6 +49,7 @@ export function parseIndex(raw: unknown): ParsedIndex {
       name: typeof c.name === "string" ? c.name : "",
       file,
       count: typeof c.count === "number" ? c.count : 0,
+      dashboardVisible: typeof c.dashboard_visible === "boolean" ? c.dashboard_visible : undefined,
     }
   })
   return {

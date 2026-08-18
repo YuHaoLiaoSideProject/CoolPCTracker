@@ -32,6 +32,15 @@ export const GROUP_STRATEGY: Record<string, GroupStrategy> = {
       return key || null
     },
   },
+  記憶卡: {
+    fields: ["spec", "capacity"],
+    formatKey: (s) => {
+      const cardType = typeof s.spec === "string" ? s.spec : ""
+      const cap = typeof s.capacity === "string" ? s.capacity : ""
+      const key = `${cardType} ${cap}`.trim()
+      return key || null
+    },
+  },
   顯示卡: {
     fields: ["vram_gb", "chip"],
     formatKey: (s) => {

@@ -61,6 +61,7 @@ export interface CategoryMeta {
   name: string // 分類中文標籤（卡片 chips／詳情麵包屑顯示用）
   file: string // api/items/{file} 檔名（如 "g4.json"）
   count: number // 該分類商品數（側欄顯示；來自 index 當日統計）
+  dashboardVisible?: boolean // 是否出現在 Dashboard（true = 顯示在首頁分類 tabs）
 }
 
 /** parseItemsFile 輸出容器（舊 001/002 形狀 {meta, items} 亦相容）：

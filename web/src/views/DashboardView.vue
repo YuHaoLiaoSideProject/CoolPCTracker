@@ -27,6 +27,11 @@ const {
   isLoadingCategory,
 } = useItems()
 
+// —— Dashboard 分類篩選：僅顯示 dashboardVisible=true 的分類 ——
+const dashboardCategories = computed(() =>
+  categories.value.filter((c) => c.dashboardVisible !== false),
+)
+
 // —— 分類過濾 ——
 const categoryItems = computed(() => {
   const id = activeCategoryId.value
@@ -98,7 +103,7 @@ function handleFilterClear() {
 
 // —— 預設選取第一個分類 ——
 watch(
-  categories,
+  dashboardCategories,
   (cats) => {
     if (cats.length > 0 && activeCategoryId.value == null) {
       loadCategory(cats[0].id)
@@ -120,8 +125,8 @@ watch(
     <template v-else>
       <!-- 分類 Tab 列表（019：CategoryTabs） -->
       <CategoryTabs
-        v-if="categories.length > 0"
-        :categories="categories"
+        v-if="dashboardCategories.length > 0"
+        :categories="dashboardCategories"
         :active-id="activeCategoryId"
         :loading-ids="loadingIds"
         @select="switchCategory"

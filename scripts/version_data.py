@@ -70,6 +70,9 @@ G_NAME_MAP: dict[str, str] = {
 }
 NAME_TO_G: dict[str, str] = {name: g for g, name in G_NAME_MAP.items()}
 
+# Dashboard 顯示白名單：僅容量/規格可比較的分類出現在首頁 tabs
+DASHBOARD_VISIBLE_G: frozenset[str] = frozenset({"6", "7", "8", "9"})  # 記憶體/SSD/HDD/記憶卡
+
 
 def canonical(obj: Any) -> str:
     """canonical JSON：dict key 排序 + 不跳脫非 ASCII（僅供比較，無關寫檔格式）。"""
@@ -428,7 +431,13 @@ def build_index(data_dir: Path, meta: dict,
         for path, records in _daily_records(data_dir)
     ]
     cat_meta = [
-        {"id": g, "name": name, "file": f"api/items/{g}.json", "count": len(items)}
+        {
+            "id": g,
+            "name": name,
+            "file": f"api/items/{g}.json",
+            "count": len(items),
+            "dashboard_visible": g in DASHBOARD_VISIBLE_G,
+        }
         for g, name, items in categories
     ]
     return {

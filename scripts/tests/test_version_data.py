@@ -294,8 +294,8 @@ class TestIndex:
         assert index["source"] == SOURCE
         assert index["description"] == version_data.DESCRIPTION
         assert index["categories"] == [
-            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 1},
-            {"id": "g12", "name": "顯示卡", "file": "api/items/g12.json", "count": 1},
+            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 1, "dashboard_visible": False},
+            {"id": "g12", "name": "顯示卡", "file": "api/items/g12.json", "count": 1, "dashboard_visible": False},
         ]
         assert index["daily_files"] == [
             {"file": "20260815.json", "url": "api/daily/20260815.json", "records": 2},
@@ -312,7 +312,7 @@ class TestIndex:
 
         index = json.loads((tmp_path / "api" / "index.json").read_text(encoding="utf-8"))
         assert index["categories"] == [
-            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 2}]
+            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 2, "dashboard_visible": False}]
 
     def test_unknown_g_stem_falls_back_to_stem_name(self, tmp_path, capsys):
         """檔名非已知 G 索引（G→name 對照查無）→ name 直接取檔名 stem。"""
@@ -322,7 +322,7 @@ class TestIndex:
 
         index = json.loads((tmp_path / "api" / "index.json").read_text(encoding="utf-8"))
         assert index["categories"] == [
-            {"id": "自訂區", "name": "自訂區", "file": "api/items/自訂區.json", "count": 1}]
+            {"id": "自訂區", "name": "自訂區", "file": "api/items/自訂區.json", "count": 1, "dashboard_visible": False}]
 
 
 # ── 不再產生單一 api/latest.json ───────────────────────────────────────────
@@ -520,8 +520,8 @@ class TestMigration:
 
         index = json.loads((tmp_path / "api" / "index.json").read_text(encoding="utf-8"))
         assert index["categories"] == [
-            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 1},
-            {"id": "g5", "name": "主機板", "file": "api/items/g5.json", "count": 1},
+            {"id": "g4", "name": "CPU", "file": "api/items/g4.json", "count": 1, "dashboard_visible": False},
+            {"id": "g5", "name": "主機板", "file": "api/items/g5.json", "count": 1, "dashboard_visible": False},
         ]
 
     def test_legacy_unknown_category_uses_safe_g(self, tmp_path, capsys):
@@ -538,7 +538,7 @@ class TestMigration:
         index = json.loads((tmp_path / "api" / "index.json").read_text(encoding="utf-8"))
         assert index["categories"] == [
             {"id": "g新分類-X", "name": "g新分類-X", "file": "api/items/g新分類-X.json",
-             "count": 1}]
+             "count": 1, "dashboard_visible": False}]
 
     def test_migration_skipped_when_items_dir_exists(self, tmp_path, capsys):
         """data/items/ 已存在（契約 v2 真相層）→ 不遷移、不印警告，以分類檔為準
