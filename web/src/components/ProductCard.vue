@@ -5,6 +5,7 @@
 import { computed } from "vue"
 import type { Item } from "@/types/item"
 import { usePriceDelta, specChipTexts } from "@/composables/usePriceDelta"
+import { computePriceChange } from "@/lib/priceChange"
 import Sparkline from "./Sparkline.vue"
 import WatchlistButton from "./WatchlistButton.vue"
 import CompareToggle from "./CompareToggle.vue"
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 
 const { currentPrice, deltaClass, deltaText } = usePriceDelta(props.item)
 const sparkPoints = computed(() => props.item.history.slice(-30)) // 卡片取最近 30 點
+const sparkTrend = computed(() => computePriceChange(props.item.history).trend)
 const specChips = computed(() => specChipTexts(props.item.spec, props.categoryName ?? ""))
 
 function onKeydown(e: KeyboardEvent) {
@@ -52,7 +54,7 @@ const cardLabel = computed(() => {
     <div v-if="specChips.length" class="pc-specs">
       <span v-for="chip in specChips" :key="chip" class="chip">{{ chip }}</span>
     </div>
-    <Sparkline :points="sparkPoints" />
+    <Sparkline :points="sparkPoints" :trend="sparkTrend" />
     <div class="pc-price">
       <span class="pc-current">{{ currentPrice != null ? formatPrice(currentPrice) : "價格未知" }}</span>
       <span class="pc-delta" :class="deltaClass">{{ deltaText }}</span>

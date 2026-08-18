@@ -5,7 +5,10 @@ import { computed } from "vue"
 import { useRouter } from "vue-router"
 import type { Item } from "@/types/item"
 import { usePriceDelta, specChipTexts } from "@/composables/usePriceDelta"
+import { computePriceChange } from "@/lib/priceChange"
 import { formatPrice } from "@/utils/format"
+import Sparkline from "./Sparkline.vue"
+import WatchlistButton from "./WatchlistButton.vue"
 
 const props = defineProps<{
   item: Item
@@ -17,6 +20,8 @@ const props = defineProps<{
 const router = useRouter()
 const { currentPrice } = usePriceDelta(props.item)
 const specChips = computed(() => specChipTexts(props.item.spec, props.categoryName))
+const sparkPoints = computed(() => props.item.history.slice(-30))
+const sparkTrend = computed(() => computePriceChange(props.item.history).trend)
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Enter" || e.key === " ") {
@@ -42,8 +47,15 @@ const cardLabel = computed(() => {
   >
     <div class="dc-top">
       <div class="dc-name">{{ item.name }}</div>
-      <div v-if="item.status === 'gone'" class="dc-gone">已下架</div>
-      <span v-else-if="isLowest" class="dc-lowest" title="歷史新低" aria-label="歷史新低">🥇</span>
+      <div class="dc-right">
+        <div v-if="item.status === 'gone'" class="dc-gone">已下架</div>
+        <template v-else>
+          <span v-if="isLowest" class="dc-lowest" title="歷史新低" aria-label="歷史新低">🥇</span>
+          <span @click.stop>
+            <WatchlistButton :id="item.id" :name="item.name" :price="currentPrice" />
+          </span>
+        </template>
+      </div>
     </div>
     <div v-if="specChips.length" class="dc-specs">
       <span v-for="chip in specChips" :key="chip" class="chip">{{ chip }}</span>
@@ -54,6 +66,7 @@ const cardLabel = computed(() => {
       </template>
       <template v-else>
         <span class="dc-current">{{ currentPrice != null ? formatPrice(currentPrice) : '—' }}</span>
+        <Sparkline :points="sparkPoints" :trend="sparkTrend" :enable-tooltip="true" />
         <span v-if="lowestPrice != null && lowestPrice !== currentPrice" class="dc-history-low">
           歷史最低 {{ formatPrice(lowestPrice) }}
         </span>
@@ -86,6 +99,13 @@ const cardLabel = computed(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+}
+
+.dc-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
 .dc-name {

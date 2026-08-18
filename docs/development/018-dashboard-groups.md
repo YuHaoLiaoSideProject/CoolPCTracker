@@ -3,7 +3,7 @@
 > **Tech Decision**：`docs/tech-decisions/018-dashboard-groups.md`
 > **操作流程**：`docs/interaction-flows/018-dashboard-groups.md`
 > **BDD**：`docs/bdds/018-dashboard-groups.feature`
-> **狀態**：設計完成，待開發
+> **狀態**：✅ 已完成
 
 ---
 

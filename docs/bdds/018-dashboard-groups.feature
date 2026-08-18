@@ -16,8 +16,8 @@ Feature: Dashboard — 依規格分組比較商品
   Scenario: 系統自動依規格產生分組 Chips
     Given 該分類下有多種規格商品（DDR5 32GB、DDR4 16GB、DDR4 8GB）
     When  分組載入完成
-    Then  顯示分組 Chips 包含「DDR5 32GB」「DDR4 16GB」「DDR4 8GB」
-    And   預設選取第一個分組 Chip
+    Then  顯示分組 Chips 包含「全部」「DDR5 32GB」「DDR4 16GB」「DDR4 8GB」
+    And   預設選取「全部」分組 Chip
 
   @happy-path
   Scenario: 預設顯示最便宜商品標示 🥇
@@ -66,10 +66,12 @@ Feature: Dashboard — 依規格分組比較商品
     And   「全部」分組包含 5 件商品（含 2 件無規格商品）
 
   @business-rules
-  Scenario: 「其他」分組內的商品亦按價格排序
-    Given 「其他」分組下有 3 件商品，價格分別為 500、300、800
-    When  使用者切換至「其他」分組
-    Then  商品列表按價格由低到高排序（300、500、800）
+  Scenario: 無規格商品在「全部」分組中按價格排序
+    Given 該分類下有 3 件無規格商品，價格分別為 500、300、800
+    And   有 2 件有規格商品（DDR5 32GB）
+    When  使用者在「全部」分組
+    Then  商品列表包含全部 5 件商品，按價格由低到高排序
+    And   無規格商品（300、500、800）亦正確排序
 
   @business-rules
   Scenario: 每次切換分組最便宜者重新標示 🥇
@@ -92,39 +94,38 @@ Feature: Dashboard — 依規格分組比較商品
 
   @edge-case
   Scenario: 分組 Chips 數量超過 8 個時折疊顯示
-    Given 該分類有 12 種不同規格組合
+    Given 該分類有 12 種不同規格組合（加上「全部」共 13 個 Chip）
     When  分組 Chips 載入完成
-    Then  僅顯示前 8 個分組 Chip
-    And   顯示「更多 ▼」按鈕
+    Then  僅顯示前 7 個分組 Chip + 「更多 (6) ▼」按鈕
+    And   被折疊的分組不可見
 
   @edge-case
   Scenario: 使用者點擊「更多 ▼」展開所有分組 Chips
-    Given 分組 Chips 有 12 個，目前僅顯示前 8 個
-    And   第 9～12 個分組被折疊在「更多 ▼」按鈕後
+    Given 分組 Chips 有 13 個（含「全部」），目前僅顯示前 7 個 + 「更多 (6) ▼」
     When  使用者點擊「更多 ▼」按鈕
-    Then  顯示全部 12 個分組 Chip
-    And   「更多 ▼」按鈕變為「收起 ▲」
+    Then  顯示全部 13 個分組 Chip
+    And   「更多 (6) ▼」按鈕變為「收起 ▲」
 
   @edge-case
   Scenario: 使用者點擊「收起 ▲」重新折疊分組 Chips
-    Given 分組 Chips 全部展開（共 12 個）
+    Given 分組 Chips 全部展開（共 13 個，含「全部」）
     When  使用者點擊「收起 ▲」按鈕
-    Then  僅顯示前 8 個分組 Chip
-    And   按鈕恢復為「更多 ▼」
+    Then  僅顯示前 7 個分組 Chip + 「更多 (6) ▼」按鈕
+    And   按鈕恢復為「更多 (6) ▼」
 
   @edge-case
   Scenario: 所有分組 Chips 數量 ≤ 8 時不顯示折疊按鈕
-    Given 該分類有 5 種不同規格組合
+    Given 該分類有 5 種不同規格組合（加上「全部」共 6 個 Chip）
     When  分組 Chips 載入完成
-    Then  顯示全部 5 個分組 Chip
+    Then  顯示全部 6 個分組 Chip
     And   不顯示「更多 ▼」按鈕
 
   @edge-case
   Scenario: 該分類僅有一種規格組合
     Given 該分類下所有商品均為相同規格
     When  分組 Chips 載入完成
-    Then  僅顯示 1 個分組 Chip
-    And   預設選取該分組
+    Then  顯示 2 個分組 Chip（「全部」+ 該規格）
+    And   預設選取「全部」
     And   商品列表正確顯示該規格所有商品
 
   @edge-case

@@ -25,6 +25,22 @@ vi.mock("@/utils/format", () => ({
   formatPrice: (n: number | null) => (n != null ? `NT$ ${n.toLocaleString()}` : "—"),
 }))
 
+vi.mock("@/components/Sparkline.vue", () => ({
+  default: {
+    name: "Sparkline",
+    template: '<div class="sparkline-mock" />',
+    props: ["points", "trend", "enableTooltip"],
+  },
+}))
+
+vi.mock("@/components/WatchlistButton.vue", () => ({
+  default: {
+    name: "WatchlistButton",
+    template: '<button class="watchlist-btn-mock">追蹤</button>',
+    props: ["id", "name", "price"],
+  },
+}))
+
 function makeItem(overrides: Partial<Item> = {}): Item {
   return {
     id: "test-item-1",
@@ -171,5 +187,34 @@ describe("DashboardCard", () => {
     const w = mountCard({})
     await w.find(".dashboard-card").trigger("keydown", { key: " " })
     expect(w.emitted()).toBeDefined()
+  })
+
+  // ── Sparkline 整合 ──
+
+  it("非已下架商品顯示 Sparkline", () => {
+    const w = mountCard({})
+    expect(w.find(".sparkline-mock").exists()).toBe(true)
+  })
+
+  it("已下架商品不顯示 Sparkline", () => {
+    const w = mountCard({ item: makeItem({ status: "gone" }) })
+    expect(w.find(".sparkline-mock").exists()).toBe(false)
+  })
+
+  // ── WatchlistButton 整合 ──
+
+  it("非已下架商品顯示 WatchlistButton", () => {
+    const w = mountCard({})
+    expect(w.find(".watchlist-btn-mock").exists()).toBe(true)
+  })
+
+  it("已下架商品不顯示 WatchlistButton", () => {
+    const w = mountCard({ item: makeItem({ status: "gone" }) })
+    expect(w.find(".watchlist-btn-mock").exists()).toBe(false)
+  })
+
+  it("dc-right wrapper 存在", () => {
+    const w = mountCard({})
+    expect(w.find(".dc-right").exists()).toBe(true)
   })
 })
