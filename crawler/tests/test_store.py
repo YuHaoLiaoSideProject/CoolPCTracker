@@ -739,11 +739,11 @@ class TestWriteDaily:
         assert (tmp_path / "daily" / "20260816.json").read_text(encoding="utf-8") == original
         assert sorted(p.name for p in (tmp_path / "daily").iterdir()) == ["20260816.json"]
 
-    def test_empty_price_map_writes_empty_object(self, tmp_path):
-        """當日無價格商品 → 仍寫出空物件檔（成功 run 的 daily 檔一律存在）。"""
+    def test_empty_price_map_skips_writing(self, tmp_path):
+        """平價日（空 price_map）→ 不產生 daily 檔（008 D3：零 git 變動）。"""
         store = Store(tmp_path)
         store.write_daily(date(2026, 8, 16), {})
-        assert json.loads((tmp_path / "daily" / "20260816.json").read_text(encoding="utf-8")) == {}
+        assert not (tmp_path / "daily" / "20260816.json").exists()
 
 
 # ── write_meta ──────────────────────────────────────────────────────────────
@@ -804,3 +804,121 @@ class TestWriteMeta:
         with pytest.raises(ValueError):
             store.write_meta(crawled_at="x", counts={}, total=0, changed=0,
                              failed_categories=[], status="aborted")
+
+
+# ── 008 checkpoint ──────────────────────────────────────────────────────────
+
+class TestWriteCheckpoint:
+    def test_writes_checkpoint_file(self, tmp_path):
+        """write_checkpoint 寫入 data/checkpoints/{YYYYMMDD}.json 全量快照。"""
+        store = Store(tmp_path)
+        store.write_checkpoint(date(2026, 8, 15), {"a": 100, "b": 200})
+        cp_path = tmp_path / "checkpoints" / "20260815.json"
+        assert cp_path.exists()
+        data = json.loads(cp_path.read_text(encoding="utf-8"))
+        assert data == {"a": 100, "b": 200}
+
+    def test_checkpoint_is_compact_json(self, tmp_path):
+        """checkpoint 以 compact JSON 寫出（trailing newline 正常）。"""
+        store = Store(tmp_path)
+        store.write_checkpoint(date(2026, 8, 15), {"a": 100})
+        raw = (tmp_path / "checkpoints" / "20260815.json").read_text()
+        # compact JSON：無多餘空白，僅尾部換行
+        lines = raw.strip().split("\n")
+        assert len(lines) == 1  # compact = 單行（不含尾部換行）
+        assert " ", "" not in lines[0]  # compact: no spaces after separators
+
+
+class TestLatestCheckpoint:
+    def test_returns_newest_checkpoint(self, tmp_path):
+        """latest_checkpoint 取日期最大的 checkpoint。"""
+        cp_dir = tmp_path / "checkpoints"
+        cp_dir.mkdir()
+        (cp_dir / "20260801.json").write_text(json.dumps({"a": 100}))
+        (cp_dir / "20260815.json").write_text(json.dumps({"a": 110}))
+        (cp_dir / "20260810.json").write_text(json.dumps({"a": 105}))
+        store = Store(tmp_path)
+        result = store.latest_checkpoint()
+        assert result is not None
+        assert result[0] == date(2026, 8, 15)
+        assert result[1] == {"a": 110}
+
+    def test_returns_none_when_no_checkpoints(self, tmp_path):
+        """無 checkpoint → None。"""
+        store = Store(tmp_path)
+        assert store.latest_checkpoint() is None
+
+    def test_skips_corrupted_checkpoint(self, tmp_path):
+        """損壞的 checkpoint 跳過。"""
+        cp_dir = tmp_path / "checkpoints"
+        cp_dir.mkdir()
+        (cp_dir / "20260801.json").write_text("not json!!!")
+        (cp_dir / "20260815.json").write_text(json.dumps({"a": 110}))
+        store = Store(tmp_path)
+        result = store.latest_checkpoint()
+        assert result is not None
+        assert result[0] == date(2026, 8, 15)
+
+    def test_skips_non_object_checkpoint(self, tmp_path):
+        """非 object checkpoint 跳過。"""
+        cp_dir = tmp_path / "checkpoints"
+        cp_dir.mkdir()
+        (cp_dir / "20260801.json").write_text(json.dumps([1, 2, 3]))
+        store = Store(tmp_path)
+        assert store.latest_checkpoint() is None
+
+
+class TestEarliestDaily:
+    def test_returns_oldest_daily_date(self, tmp_path):
+        """earliest_daily 取日期最小的 daily 檔。"""
+        daily_dir = tmp_path / "daily"
+        daily_dir.mkdir()
+        (daily_dir / "20260801.json").write_text(json.dumps({"a": 100}))
+        (daily_dir / "20260815.json").write_text(json.dumps({"a": 110}))
+        store = Store(tmp_path)
+        assert store.earliest_daily() == date(2026, 8, 1)
+
+    def test_returns_none_when_no_daily(self, tmp_path):
+        """無 daily → None。"""
+        store = Store(tmp_path)
+        assert store.earliest_daily() is None
+
+    def test_skips_non_digit_daily(self, tmp_path):
+        """非 YYYYMMDD 檔名跳過。"""
+        daily_dir = tmp_path / "daily"
+        daily_dir.mkdir()
+        (daily_dir / "20260801.json").write_text(json.dumps({"a": 100}))
+        (daily_dir / "random.json").write_text(json.dumps({"a": 999}))
+        store = Store(tmp_path)
+        assert store.earliest_daily() == date(2026, 8, 1)
+
+
+class TestSaveD2Gating:
+    def test_rewrite_g_none_writes_all(self, tmp_path):
+        """rewrite_g=None → 照舊全部分類重寫。"""
+        store = Store(tmp_path)
+        items = [make_item(item_id="a1", category="CPU", price=100)]
+        meta = {"crawled_at": "x", "source": "x", "counts": {}, "total": 1,
+                "changed": 0, "failed_categories": [], "status": "ok"}
+        store.save(items, meta, rewrite_g=None)
+        # CPU 分類檔應存在
+        g = next(c.g_index for c in CATEGORIES if c.name == "CPU")
+        assert (tmp_path / "items" / f"g{g}.json").exists()
+
+    def test_rewrite_g_skips_unmentioned_categories(self, tmp_path):
+        """rewrite_g 給定 → 僅重寫指定分類。"""
+        store = Store(tmp_path)
+        items = [make_item(item_id="a1", category="CPU", price=100)]
+        meta = {"crawled_at": "x", "source": "x", "counts": {}, "total": 1,
+                "changed": 0, "failed_categories": [], "status": "ok"}
+        # 只重寫 CPU（g=4），不重寫其他分類
+        cpu_g = next(c.g_index for c in CATEGORIES if c.name == "CPU")
+        store.save(items, meta, rewrite_g={cpu_g})
+        # CPU 分類檔應存在
+        assert (tmp_path / "items" / f"g{cpu_g}.json").exists()
+
+    def test_empty_map_skips_writing(self, tmp_path):
+        """平價日（空 price_map）→ 不產生 daily 檔（008 D3：零 git 變動）。"""
+        store = Store(tmp_path)
+        store.write_daily(date(2026, 8, 16), {})
+        assert not (tmp_path / "daily" / "20260816.json").exists()

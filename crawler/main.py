@@ -40,7 +40,7 @@ from .categories import CATEGORIES, make_item_id
 from .fetcher import Fetcher
 from .parser import Parser, RawItem
 from .spec_parser import parse_spec
-from .store import STATUS_IN_STOCK, SOURCE_URL, DiffResult, Item, Store
+from .store import STATUS_IN_STOCK, SOURCE_URL, CHECKPOINT_INTERVAL_DAYS, DiffResult, Item, Store
 
 logger = logging.getLogger(__name__)
 
@@ -144,13 +144,39 @@ def run_crawler(data_dir: Path, today: date | None = None,
         "failed_categories": failed_categories,
         "status": status,
     })
-    store.save(items, meta)
+    # 5b. 008 稀疏異動價格清單：只取 changed+new 且價格存在者
+    sparse_prices: dict[str, int] = {}
+    for item in list(diff.changed_items) + list(diff.new_items):
+        if item.price is not None:            # 價格缺失（None）不寫入（BDD edge）
+            sparse_prices[item.id] = item.price
 
-    # 6b. O4 每日價格點檔：data/daily/{YYYYMMDD}.json = {id: price}
-    # 只含當日成功爬取且價格存在的商品（今日商品 = 去重後 unique_today，與 counts 一致）；
-    # 失敗分類（carryover）不在今日清單 → 不寫入當日檔。
-    store.write_daily(day, {item.id: item.price for item in unique_today
-                            if item.price is not None})
+    # 5c. D2 items gating：僅實質異動分類重寫
+    changed_g = _changed_categories(diff, previous_items)
+
+    # 6. meta + save（D2：僅實質異動分類重寫）
+    meta = dict(old_meta)  # 保留 007 擴充欄位（sources/anomaly/…）
+    meta.update({
+        "crawled_at": _utc_now(),
+        "source": SOURCE_URL,
+        "counts": counts,
+        "total": total,
+        "previous_total": total,
+        "changed": changed,
+        "failed_categories": failed_categories,
+        "status": status,
+    })
+    store.save(items, meta, rewrite_g=changed_g)
+
+    # 6b. 008 稀疏 daily：只寫 changed+new；空 → 不寫檔（平價日零 git 變動）
+    store.write_daily(day, sparse_prices)
+
+    # 6c. 008 checkpoint 調度：距上次 ≥ 7 天 / 無 checkpoint 且累積 ≥ 7 天 → 寫全量快照
+    latest_cp = store.latest_checkpoint()     # (date, prices) | None
+    cp_date = latest_cp[0] if latest_cp else None
+    if _decide_checkpoint(cp_date, day, store.earliest_daily()):
+        full_prices = {item.id: item.price for item in unique_today
+                       if item.price is not None}   # 當日全量（成功爬取 + 價格存在）
+        store.write_checkpoint(day, full_prices)
 
     # 7. 執行摘要 log（各分類商品數、異動數、失敗分類）
     logger.info(
@@ -200,6 +226,48 @@ def _exclude_failed_from_gone(diff: DiffResult, failed_categories: list[str],
                       gone_ids=gone_ids,
                       unchanged_ids=set(diff.unchanged_ids),
                       carryover_ids=set(diff.carryover_ids) | failed_ids)
+
+
+def _decide_checkpoint(latest_cp_date: date | None, today: date,
+                       earliest_daily: date | None) -> bool:
+    """今天是否為 checkpoint 日（008 調度核心，純函數可單測）：
+
+    - 有 checkpoint：today - latest_cp_date ≥ CHECKPOINT_INTERVAL_DAYS（≥7 天）→ True
+      （邊界：恰 7 天 → True；3/6 天 → False；12 天 → True）
+    - 無 checkpoint 且無任何 daily（純新增首次 run）→ False（無全量基準可依，不寫）
+    - 無 checkpoint 但已有 daily（遷移未跑或純新增累積期）：
+      距最早 daily ≥ 7 天 → True（補首個錨點，之後正常每 7 天排程）；否則 False
+        （遷移腳本已 seed 時 latest_cp 存在 → 走第一條規則）
+    """
+    if latest_cp_date is not None:
+        return (today - latest_cp_date).days >= CHECKPOINT_INTERVAL_DAYS
+    if earliest_daily is None:
+        return False
+    return (today - earliest_daily).days >= CHECKPOINT_INTERVAL_DAYS
+
+
+def _changed_categories(diff: DiffResult,
+                        previous_items: dict[str, Item] | None = None) -> set[int]:
+    """本 run 有「實質異動」的分類 g 集合（D2 gating 基準）：
+
+    new_items / changed_items / refreshed_items（refresh 傳播到 items 檔，不得凍結）
+    / gone_ids（標記 gone 須落盤）——任一命中該分類即需重寫；
+    純 unchanged / carryover 分類不重寫。回傳 g 索引集合。"""
+    from .categories import CATEGORIES
+    g_map = {c.name: c.g_index for c in CATEGORIES}
+    result: set[int] = set()
+    for item in diff.new_items + diff.changed_items + diff.refreshed_items:
+        g = g_map.get(item.category)
+        if g is not None:
+            result.add(g)
+    if previous_items:
+        for iid in diff.gone_ids:
+            item = previous_items.get(iid)
+            if item:
+                g = g_map.get(item.category)
+                if g is not None:
+                    result.add(g)
+    return result
 
 
 def _to_item(raw: RawItem, day: str) -> Item:

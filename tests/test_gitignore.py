@@ -42,6 +42,7 @@ def test_data_truth_files_not_ignored() -> None:
         "data/daily/20260816.json",   # 每日價格點（歷史真相序列）
         "data/meta.json",             # crawled_at/計數
         "data/telegram.json",         # 006 通知狀態（與資料一併 commit）
+        "data/checkpoints/20260801.json",  # 008 全量快照（自癒錨點）
     ]:
         assert not _git_check_ignore(path), f"{path} 應不再被 .gitignore 忽略"
 

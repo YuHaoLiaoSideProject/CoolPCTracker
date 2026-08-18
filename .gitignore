@@ -29,6 +29,8 @@ data/*
 !data/daily/**
 !data/meta.json
 !data/telegram.json
+!data/checkpoints/
+!data/checkpoints/**
 
 # Env / secrets
 .env

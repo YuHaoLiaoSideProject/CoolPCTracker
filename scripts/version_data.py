@@ -226,21 +226,122 @@ def _migrate_legacy_single_file(data_dir: Path) -> None:
 # ── api/ 組裝 ──────────────────────────────────────────────────────────────
 
 def build_trends(data_dir: Path) -> dict[str, list[list]]:
-    """聚合所有 data/daily 檔 → {item_id: [[d, p], ...]}（依日期升冪）。
+    """{item_id: [[d, p], ...]}，依日期升冪、每日一點、冪等。008 核心：
 
-    每個 daily 檔的 {id: price} 併入對應 item 的 history；檔序即日期序，
-    逐檔 append 即得升冪序列。同檔重複鍵（JSON 不可能）防禦去重。"""
+    有 checkpoint（C1<C2<...<Cn 日）：
+      - 從最早 checkpoint C1 日期開始，遍歷每個日曆日至資料最晚日：
+        - 當日有 checkpoint → carrier = checkpoint 全量覆寫（重置）
+        - 當日有 daily → carrier[商品] = daily 值（更新異動者）
+        - 無檔案日（平價/遺失）→ carrier 不變（carry forward）
+        - 每日輸出 carrier 中所有 alive 商品一點
+      - 遷移相容：舊全量 daily 在 checkpoint 錨點之間仍以「每日全量覆寫」語意更新 carrier
+    無 checkpoint：
+      - legacy 全量回放（現行行為）：所有 daily 依序全量聚合；涵蓋純新增累積期
+    損壞 / 遺失的 daily → 跳過不中斷（該日 carrier 不變 = carry forward）；
+    回傳前每 bucket 依日期升冪、同日去重。"""
+    daily = _daily_records_sorted(data_dir)
+    checkpoints = _checkpoint_records_sorted(data_dir)
+    if not checkpoints:
+        return _replay_full_all(daily)
+
+    # 統一時間軸重建：chain 所有 checkpoint + daily + carry forward 每天
+    events: dict[str, list] = {}  # day → [("cp", full_prices) | ("delta", prices)]
+    for d, prices in checkpoints:
+        events.setdefault(d, []).append(("cp", prices))
+    for d, prices in daily:
+        events.setdefault(d, []).append(("delta", prices))
+    # 所有有事件的日期
+    all_days_set = set(events.keys())
+    # 補上 checkpoint 之間的空檔日（carry forward 需要）
+    cp_days = sorted(d for d, _ in checkpoints)
+    if cp_days:
+        from datetime import date as _date, timedelta
+        for i in range(len(cp_days) - 1):
+            d = cp_days[i]
+            while d < cp_days[i + 1]:
+                all_days_set.add(d)
+                y, m, day_n = int(d[:4]), int(d[5:7]), int(d[8:10])
+                d = (_date(y, m, day_n) + timedelta(days=1)).isoformat()
+    all_days = sorted(all_days_set)
+    earliest = all_days[0]
+    latest = all_days[-1]
+
+    carrier: dict[str, int] = {}  # item_id → last known price
     trends: dict[str, list[list]] = {}
-    for path in _daily_paths(data_dir):
-        date_str = _daily_date(path.stem)
-        prices = _read_daily_prices(path)
-        if prices is None:
+    day = earliest
+    while day <= latest:
+        # checkpoint 先處理（全量重置），再處理 delta（更新異動者）
+        for kind, prices in events.get(day, []):
+            if kind == "cp":
+                carrier = dict(prices)       # checkpoint 全量重置
+        for kind, prices in events.get(day, []):
+            if kind != "cp":
+                carrier.update(prices)       # 異動者更新；未異動者保持
+        # 輸出 carrier 中所有 alive 商品當日一點（含平價/遺失日 = carry forward）
+        for iid, price in carrier.items():
+            bucket = trends.setdefault(iid, [])
+            if not bucket or bucket[-1][0] != day:
+                bucket.append([day, price])
+        day = _next_day(day)
+    return _dedupe_by_date(trends)
+
+
+def _next_day(d: str) -> str:
+    """YYYY-MM-DD → 下一日 YYYY-MM-DD（用 datetime.date 遞增）。"""
+    from datetime import date as _date, timedelta
+    y, m, day = int(d[:4]), int(d[5:7]), int(d[8:10])
+    nxt = _date(y, m, day) + timedelta(days=1)
+    return nxt.isoformat()
+
+
+def _checkpoint_records_sorted(data_dir: Path) -> list[tuple[str, dict]]:
+    """data/checkpoints/*.json → [(YYYY-MM-DD, {id: price})] 依日期升冪；壞檔跳過。"""
+    cp_dir = data_dir / "checkpoints"
+    if not cp_dir.is_dir():
+        return []
+    entries: list[tuple[str, dict]] = []
+    for p in sorted(cp_dir.glob("*.json")):
+        stem = p.stem
+        if not (len(stem) == 8 and stem.isdigit()):
             continue
+        prices = _read_daily_prices(p)
+        if prices is not None:
+            entries.append((_daily_date(stem), prices))
+    return sorted(entries, key=lambda e: e[0])
+
+
+def _replay_full_all(daily: list[tuple[str, dict]]) -> dict[str, list[list]]:
+    """legacy 全量回放：每個 daily 檔當天全量覆寫該商品該日值（現行 build_trends 語意）。"""
+    trends: dict[str, list[list]] = {}
+    for date_str, prices in daily:
         for iid, price in prices.items():
             key = str(iid)
             bucket = trends.setdefault(key, [])
             if not bucket or bucket[-1][0] != date_str:
                 bucket.append([date_str, price])
+    return trends
+
+
+def _daily_records_sorted(data_dir: Path) -> list[tuple[str, dict]]:
+    """data/daily/*.json → [(YYYY-MM-DD, {id: price})] 依日期升冪；壞檔（不可解析/非 object）跳過。"""
+    out: list[tuple[str, dict]] = []
+    for path in _daily_paths(data_dir):
+        prices = _read_daily_prices(path)
+        if prices is not None:
+            out.append((_daily_date(path.stem), prices))
+    return sorted(out, key=lambda e: e[0])
+
+
+def _dedupe_by_date(trends: dict[str, list[list]]) -> dict[str, list[list]]:
+    """每 bucket 依日期升冪排序、同日期只留一點（防回放重複點）。"""
+    for bucket in trends.values():
+        bucket.sort(key=lambda p: p[0])
+        deduped: list[list] = []
+        for point in bucket:
+            if not deduped or deduped[-1][0] != point[0]:
+                deduped.append(point)
+        bucket.clear()
+        bucket.extend(deduped)
     return trends
 
 

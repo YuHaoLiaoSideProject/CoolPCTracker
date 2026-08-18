@@ -190,7 +190,7 @@ class TestFullPipeline:
             assert "meta" not in raw_doc
             assert all("category" not in e for e in raw_doc)  # 序列化不含 category
         assert not (tmp_path / "items.json").exists()  # data/items.json 已不存在
-        # O4：Day1 每日價格點檔 = 全部今日商品 {id: price}
+        # 008：Day1 稀疏 daily = 全部今日商品（全部為 new_items，皆異動）
         daily1 = load_daily(tmp_path, D1)
         assert set(daily1) == {i["id"] for i in doc1}
         assert len(daily1) == TOTAL_ITEMS
@@ -220,12 +220,14 @@ class TestFullPipeline:
         # O4：history 截到最近 2 點（漲跌徽章只需前後兩點）
         assert all(len(i["history"]) <= 2 for i in doc2)
 
-        # O4：Day2 每日價格點檔 = 當日成功爬取商品 {id: price}（含改價後新價）
+        # 008：Day2 稀疏 daily = 僅異動商品（CPU 改價），不含平價商品
         daily2 = load_daily(tmp_path, D2)
-        assert set(daily2) == {i["id"] for i in doc2}
-        assert daily2[item_by_name(doc2, CPU_13600K)["id"]] == 8990
-        assert daily2[item_by_name(doc2, AMD_7600)["id"]] == 6990
-        assert len(daily2) == TOTAL_ITEMS
+        cpu_id = item_by_name(doc2, CPU_13600K)["id"]
+        assert cpu_id in daily2
+        assert daily2[cpu_id] == 8990
+        # AMD 未改價 → 不在稀疏 daily 中
+        amd_id = item_by_name(doc2, AMD_7600)["id"]
+        assert amd_id not in daily2
 
         meta2 = load_meta(tmp_path)
         assert meta2["status"] == "ok"
@@ -254,9 +256,10 @@ class TestSameDayIdempotent:
         assert all(len(i["history"]) == 1 for i in doc2)
         assert meta2["changed"] == 0
         assert meta2["crawled_at"] != meta1["crawled_at"]  # crawled_at 更新
-        # O4：daily 檔同日覆寫（內容不變、無重複檔）
-        assert load_daily(tmp_path, D2) == daily_before
-        assert len(daily_before) == TOTAL_ITEMS
+        # 008：daily 檔同日無異動 → 不覆寫（平價日零 git 變動），舊檔內容不變
+        daily_rerun = load_daily(tmp_path, D2)
+        assert daily_rerun == daily_before  # 內容不變（file 未被覆寫）
+        assert len(daily_before) == TOTAL_ITEMS  # 首跑寫入全部商品（全部為 new）
         assert sorted(p.name for p in (tmp_path / "daily").iterdir()) == ["20260816.json"]
         # V2：分類檔數量不變（同為 9 檔，無重複/殘留）
         assert items_files(tmp_path) == sorted(f"g{c.g_index}.json" for c in CATEGORIES)
@@ -354,11 +357,12 @@ class TestPartialFailure:
         # CPU 異動照常更新
         cpu = item_by_name(doc2, CPU_13600K)
         assert cpu["history"] == [["2026-08-15", 9790], ["2026-08-16", 8990]]
-        # O4：partial 仍寫 daily，但只含當日成功爬取分類（26 筆，不含主機板）
+        # 008：sparse daily 只含異動商品（CPU 改價），不含主機板、不含平價商品
         daily2 = load_daily(tmp_path, D2)
-        assert len(daily2) == TOTAL_ITEMS - 2
+        cpu_id = item_by_name(doc2, CPU_13600K)["id"]
+        assert cpu_id in daily2
+        assert daily2[cpu_id] == 8990
         assert not any(iid in daily2 for iid in mobo_before)
-        assert daily2[item_by_name(doc2, CPU_13600K)["id"]] == 8990
 
 
 # ── 驟降邊界：恰等於 80% 不判異常（007 §6.1） ────────────────────────────────
@@ -388,10 +392,13 @@ class TestDropBoundary:
         assert meta["previous_total"] == 36  # 上次有效總數 = 本次成功 run 總數（下次基準）
         doc2 = load_items(tmp_path)
         assert len(doc2) == 45  # 36 現存 + 9 個消失標記 gone
-        # O4：daily 檔 = 當日成功爬取商品（36 筆，gone 不寫入）
-        daily2 = load_daily(tmp_path, D2)
-        assert len(daily2) == 36
-        assert set(daily2) == {i["id"] for i in doc2 if i["status"] == "in_stock"}
+        # 008：sparse daily 只含異動商品（無異動 → 不寫 daily）
+        daily_path = tmp_path / "daily" / "20260816.json"
+        if daily_path.exists():
+            daily2 = load_daily(tmp_path, D2)
+            assert len(daily2) == 0  # 無價格異動 → sparse 為空
+        else:
+            pass  # 平價日不寫 daily 檔（D3）
 
 
 # ── 去重計數：counts/total 以 unique id 計（與 store.diff 覆蓋一致） ──────────────
@@ -495,3 +502,44 @@ class TestMetaComplete:
         raw_meta = (tmp_path / "meta.json").read_text(encoding="utf-8")
         assert raw_meta.count("\n") == 1
         assert raw_meta == json.dumps(meta, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+# ── 008 _decide_checkpoint ──────────────────────────────────────────────────
+
+from crawler.main import _decide_checkpoint
+
+
+class TestDecideCheckpoint:
+    """_decide_checkpoint 邊界判定（BDD Scenario Outline S6：3/6/7/12 天）。"""
+
+    def test_3_days_ago_false(self):
+        """距上次 checkpoint 3 天 → 不寫。"""
+        assert _decide_checkpoint(date(2026, 8, 1), date(2026, 8, 4), None) is False
+
+    def test_6_days_ago_false(self):
+        """距上次 checkpoint 6 天 → 不寫。"""
+        assert _decide_checkpoint(date(2026, 8, 1), date(2026, 8, 7), None) is False
+
+    def test_7_days_ago_true(self):
+        """距上次 checkpoint 7 天（邊界）→ 寫。"""
+        assert _decide_checkpoint(date(2026, 8, 1), date(2026, 8, 8), None) is True
+
+    def test_12_days_ago_true(self):
+        """距上次 checkpoint 12 天 → 寫。"""
+        assert _decide_checkpoint(date(2026, 8, 1), date(2026, 8, 13), None) is True
+
+    def test_no_checkpoint_no_daily_false(self):
+        """無 checkpoint 無 daily → 不寫（純新增首次）。"""
+        assert _decide_checkpoint(None, date(2026, 8, 15), None) is False
+
+    def test_no_checkpoint_7_days_from_earliest_true(self):
+        """無 checkpoint 但距最早 daily ≥7 天 → 補首個錨點。"""
+        assert _decide_checkpoint(None, date(2026, 8, 8), date(2026, 8, 1)) is True
+
+    def test_no_checkpoint_6_days_from_earliest_false(self):
+        """無 checkpoint 距最早 daily 6 天 → 不寫。"""
+        assert _decide_checkpoint(None, date(2026, 8, 7), date(2026, 8, 1)) is False
+
+    def test_exactly_7_days_boundary(self):
+        """邊界：恰 7 天 → 寫（>=7 為 True）。"""
+        assert _decide_checkpoint(date(2026, 8, 1), date(2026, 8, 8), None) is True

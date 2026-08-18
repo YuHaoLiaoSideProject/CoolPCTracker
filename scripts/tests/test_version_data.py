@@ -665,3 +665,171 @@ class TestCliAndOutput:
         files = {p.name for p in tmp_path.iterdir()}
         assert "github_output.txt" not in files
         assert "changed=true" in capsys.readouterr().out
+
+
+# ── 008 build_trends checkpoint chain + carry-forward ───────────────────────
+
+def _write_daily(data_dir: Path, filename: str, prices: dict) -> None:
+    daily_dir = data_dir / "daily"
+    daily_dir.mkdir(parents=True, exist_ok=True)
+    (daily_dir / f"{filename}.json").write_text(
+        json.dumps(prices, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8")
+
+
+def _write_checkpoint(data_dir: Path, filename: str, prices: dict) -> None:
+    cp_dir = data_dir / "checkpoints"
+    cp_dir.mkdir(parents=True, exist_ok=True)
+    (cp_dir / f"{filename}.json").write_text(
+        json.dumps(prices, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8")
+
+
+class TestBuildTrendsWithCheckpoints:
+    """008 build_trends：checkpoint chain + carry-forward。"""
+
+    def test_chain_checkpoint_carry_forward(self, tmp_path):
+        """有 checkpoint：chain 所有 checkpoint + delta carry forward。"""
+        # checkpoint C1: 全量 {a: 100, b: 200}
+        _write_checkpoint(tmp_path, "20260801", {"a": 100, "b": 200})
+        # daily C+1: a 改價
+        _write_daily(tmp_path, "20260802", {"a": 110})
+        # daily C+2: b 改價
+        _write_daily(tmp_path, "20260803", {"b": 210})
+
+        trends = version_data.build_trends(tmp_path)
+
+        # a: [C1:100, C+1:110, C+2:110(carry)]
+        assert trends["a"] == [["2026-08-01", 100], ["2026-08-02", 110], ["2026-08-03", 110]]
+        # b: [C1:200, C+1:200(carry), C+2:210]
+        assert trends["b"] == [["2026-08-01", 200], ["2026-08-02", 200], ["2026-08-03", 210]]
+
+    def test_multiple_checkpoints_chain(self, tmp_path):
+        """多個 checkpoint：各 checkpoint 全量重置 carrier。"""
+        _write_checkpoint(tmp_path, "20260801", {"a": 100})
+        _write_daily(tmp_path, "20260802", {"a": 110})
+        _write_checkpoint(tmp_path, "20260803", {"a": 999})  # 全量重置
+        _write_daily(tmp_path, "20260804", {"a": 1000})
+
+        trends = version_data.build_trends(tmp_path)
+        assert trends["a"] == [
+            ["2026-08-01", 100],
+            ["2026-08-02", 110],
+            ["2026-08-03", 999],  # checkpoint 重置
+            ["2026-08-04", 1000],
+        ]
+
+    def test_flat_day_carry_forward(self, tmp_path):
+        """平價日（無 daily）→ carry forward 補齊每一天。"""
+        _write_checkpoint(tmp_path, "20260801", {"a": 100})
+        # 20260802, 20260803 無 daily（平價日）
+        _write_daily(tmp_path, "20260804", {"a": 110})
+
+        trends = version_data.build_trends(tmp_path)
+        assert trends["a"] == [
+            ["2026-08-01", 100],
+            ["2026-08-02", 100],  # carry
+            ["2026-08-03", 100],  # carry
+            ["2026-08-04", 110],
+        ]
+
+    def test_legacy_full_replay_no_checkpoint(self, tmp_path):
+        """無 checkpoint → legacy 全量回放（現行行為）。"""
+        _write_daily(tmp_path, "20260801", {"a": 100, "b": 200})
+        _write_daily(tmp_path, "20260802", {"a": 110, "b": 200})
+        _write_daily(tmp_path, "20260803", {"a": 110, "b": 210})
+
+        trends = version_data.build_trends(tmp_path)
+        assert trends["a"] == [["2026-08-01", 100], ["2026-08-02", 110], ["2026-08-03", 110]]
+        assert trends["b"] == [["2026-08-01", 200], ["2026-08-02", 200], ["2026-08-03", 210]]
+
+    def test_corrupted_daily_skipped(self, tmp_path):
+        """損壞的 daily 跳過不崩潰（carry forward 補齊）。"""
+        _write_checkpoint(tmp_path, "20260801", {"a": 100})
+        (tmp_path / "daily").mkdir()
+        (tmp_path / "daily" / "20260802.json").write_text("bad json!!!")
+        _write_daily(tmp_path, "20260803", {"a": 110})
+
+        trends = version_data.build_trends(tmp_path)
+        # 20260802 跳過（壞檔），20260801 carrier carry 到 20260802（補齊），20260803 更新
+        assert trends["a"] == [
+            ["2026-08-01", 100],
+            ["2026-08-02", 100],  # carry forward（壞檔日）
+            ["2026-08-03", 110],
+        ]
+
+    def test_missing_daily_self_heal(self, tmp_path):
+        """遺失的 daily → carry forward 補齊（缺失 ≤7 天）。"""
+        _write_checkpoint(tmp_path, "20260801", {"a": 100})
+        # 20260802 遺失（無 daily 檔）
+        _write_daily(tmp_path, "20260803", {"a": 110})
+
+        trends = version_data.build_trends(tmp_path)
+        assert trends["a"] == [
+            ["2026-08-01", 100],
+            ["2026-08-02", 100],  # carry forward（遺失日）
+            ["2026-08-03", 110],
+        ]
+
+    def test_idempotent(self, tmp_path):
+        """冪等：同輸入 → 同輸出。"""
+        _write_checkpoint(tmp_path, "20260801", {"a": 100})
+        _write_daily(tmp_path, "20260802", {"a": 110})
+
+        t1 = version_data.build_trends(tmp_path)
+        t2 = version_data.build_trends(tmp_path)
+        assert t1 == t2
+
+    def test_empty_trends_when_no_data(self, tmp_path):
+        """無任何 daily/checkpoint → 空 dict。"""
+        assert version_data.build_trends(tmp_path) == {}
+
+    def test_pure_checkpoint_day_no_daily(self, tmp_path):
+        """checkpoint 日無 daily（純 checkpoint）→ checkpoint 點出現。"""
+        _write_checkpoint(tmp_path, "20260801", {"a": 100})
+        _write_checkpoint(tmp_path, "20260808", {"a": 200})
+        # 中間無 daily（平價）
+
+        trends = version_data.build_trends(tmp_path)
+        assert trends["a"] == [
+            ["2026-08-01", 100],
+            ["2026-08-02", 100],  # carry
+            ["2026-08-03", 100],
+            ["2026-08-04", 100],
+            ["2026-08-05", 100],
+            ["2026-08-06", 100],
+            ["2026-08-07", 100],
+            ["2026-08-08", 200],  # checkpoint 重置
+        ]
+
+    def test_legacy_and_checkpoint_coexist(self, tmp_path):
+        """遷移相容：checkpoint 之前的 legacy daily 以 delta 語意回放。"""
+        # 20260801, 20260802 為 legacy 全量 daily（無 checkpoint）
+        _write_daily(tmp_path, "20260801", {"a": 100})
+        _write_daily(tmp_path, "20260802", {"a": 110})
+        # 20260805 為 checkpoint（之後為稀疏 delta）
+        _write_checkpoint(tmp_path, "20260805", {"a": 200})
+        _write_daily(tmp_path, "20260806", {"a": 210})
+
+        trends = version_data.build_trends(tmp_path)
+        # legacy daily 為 delta（carrier.update）、checkpoint 為全量重置
+        # 20260803, 20260804 無事件 → carry forward
+        assert trends["a"] == [
+            ["2026-08-01", 100],  # delta
+            ["2026-08-02", 110],  # delta
+            ["2026-08-03", 110],  # carry forward
+            ["2026-08-04", 110],  # carry forward
+            ["2026-08-05", 200],  # checkpoint 重置
+            ["2026-08-06", 210],  # delta
+        ]
+
+    def test_date_dedup(self, tmp_path):
+        """同日去重。"""
+        _write_checkpoint(tmp_path, "20260801", {"a": 100})
+        _write_daily(tmp_path, "20260801", {"a": 110})  # 同日衝突
+
+        trends = version_data.build_trends(tmp_path)
+        # checkpoint 先執行（events 排序），delta 再更新 → 最終值 110
+        # 但同日只留一點（dedupe）
+        assert len(trends["a"]) == 1
+        assert trends["a"][0] == ["2026-08-01", 110]

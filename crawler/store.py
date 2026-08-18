@@ -35,6 +35,8 @@ from typing import Any
 
 from .categories import CATEGORIES, get_category
 
+CHECKPOINT_INTERVAL_DAYS = 7  # 距上次 checkpoint ≥ 7 天 → 寫全量快照（008，邊界恰 7 天為是）
+
 STATUS_IN_STOCK = "in_stock"
 STATUS_GONE = "gone"
 
@@ -88,6 +90,7 @@ class Store:
         self._items_dir = data_dir / "items"
         self._meta_path = data_dir / "meta.json"
         self._daily_dir = data_dir / "daily"
+        self._checkpoints_dir = data_dir / "checkpoints"   # 008 新增
 
     # ── load ────────────────────────────────────────────────────────────────
 
@@ -234,18 +237,16 @@ class Store:
 
     # ── save ────────────────────────────────────────────────────────────────
 
-    def save(self, items: list[Item], meta: dict[str, Any]) -> None:
+    def save(self, items: list[Item], meta: dict[str, Any],
+             rewrite_g: set[int] | None = None) -> None:
         """依分類分組，逐分類原子寫 data/items/{g}.json（頂層 array），並寫 meta.json。
 
-        V2 拆檔契約：
-        - 每分類一檔：檔名 g{index} = categories.py 的 G 頁索引（未知分類 → ValueError）；
-          檔內純 items array——無 meta 包裝、無 category 欄位（內部欄位不序列化）。
-        - 每個 item 的 history 在序列化層截到最近 2 點（不足 2 點原樣）；
-          load/diff/apply 仍以完整 history 運作（截斷不影響 diff 讀 history[-1]）。
-        - 不再寫任何內嵌 meta；meta 一律唯一檔 data/meta.json。
-        - 全部 tempfile + os.replace 原子寫入、compact JSON（separators=(",",":")）；
-          任一步失敗拋例外且不影響既有檔案。
-        - meta 不再含整數 version 欄位。"""
+        V2 拆檔契約不變；008 新增 D2 gating：
+        - rewrite_g=None → 照舊全部分類重寫（既有呼叫相容）
+        - rewrite_g 給定 → 僅重寫「本 run 有實質異動（new/changed/refreshed/gone/status 變化）
+          的分類 g；其他分類（純平價）跳過 → 平價日 items 檔零重寫、last_seen 不更新
+          （根除痛點 B，D2）
+        history 序列化仍截最近 2 點（D1 維持 ≤2 點，不因 checkpoint 改策略）。"""""
         meta = {k: v for k, v in meta.items() if k != "version"}
         grouped: dict[int, list[Item]] = {}
         for item in items:
@@ -257,6 +258,8 @@ class Store:
                 )
             grouped.setdefault(g, []).append(item)
         for g in sorted(grouped):
+            if rewrite_g is not None and g not in rewrite_g:
+                continue  # D2 gating：無實質異動的分類跳過重寫（平價日零重寫）
             payload = [dict(asdict(it), history=it.history[-2:]) for it in grouped[g]]
             for entry in payload:
                 entry.pop("category", None)  # 序列化不含 category（內部欄位）
@@ -264,13 +267,68 @@ class Store:
         self._write_json_atomic(self._meta_path, meta)
 
     def write_daily(self, day: date, price_map: dict[str, int]) -> None:
-        """原子寫入 data/daily/{YYYYMMDD}.json = {item_id: price}（O4 每日價格點檔）。
+        """原子寫入 data/daily/{YYYYMMDD}.json = {item_id: price}（008 語意：稀疏異動日誌）。
 
-        day 為執行日（date 物件，檔名以 YYYYMMDD 格式化）；price_map 只含當日
-        成功爬取且價格存在的商品。全檔 compact JSON（separators=(",",":")），
-        tempfile + os.replace 原子寫入；失敗拋例外且不影響既有檔案。"""
+        只收「當日真正異動的商品」——diff.changed_items + diff.new_items 且價格存在的
+        {id: price}；不含 unchanged（平價日不寫入，根除 git noise，D3）。
+        price_map 為空（純平價日）→ 不寫檔（平價日零 git 變動）。
+        維持 compact JSON + tempfile/os.replace 原子寫入；失敗拋例外且不影響既有檔案。
+        """
+        if not price_map:
+            return  # 平價日：不產生 daily 檔（D3）
         path = self._daily_dir / f"{day.strftime('%Y%m%d')}.json"
         self._write_json_atomic(path, price_map)
+
+    # ── checkpoint（008）────────────────────────────────────────────────────
+
+    def write_checkpoint(self, day: date, full_price_map: dict[str, int]) -> None:
+        """原子寫入 data/checkpoints/{YYYYMMDD}.json = 當日全量 {item_id: price}（008）。
+
+        等同舊 daily 全量格式——當日「所有成功爬取且價格存在」的商品 {id: price}；
+        作為 version_data 回放的自癒錨點（delta 遺失最多回放 7 天）。compact +
+        tempfile/os.replace 原子寫入。checkpoint 不進 api/（前端無需，D5）。"""
+        path = self._checkpoints_dir / f"{day.strftime('%Y%m%d')}.json"
+        self._write_json_atomic(path, full_price_map)
+
+    def latest_checkpoint(self) -> tuple[date, dict[str, int]] | None:
+        """data/checkpoints/ 中日期最大者 → (date, {id: price})；無任何 checkpoint → None。
+
+        檔名僅認 YYYYMMDD.json（8 位數字）；損壞（JSON 解析失敗）→ 跳過不採信；
+        排序誤差由「取最大」而非常見排序清單規避。由 main / version_data 共用。"""
+        if not self._checkpoints_dir.is_dir():
+            return None
+        best: tuple[date, dict[str, int]] | None = None
+        for p in self._checkpoints_dir.glob("*.json"):
+            stem = p.stem
+            if not (len(stem) == 8 and stem.isdigit()):
+                continue
+            try:
+                payload = json.loads(p.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                continue
+            if not isinstance(payload, dict):
+                continue
+            d = date(int(stem[:4]), int(stem[4:6]), int(stem[6:8]))
+            if best is None or d > best[0]:
+                best = (d, payload)
+        return best
+
+    def earliest_daily(self) -> date | None:
+        """data/daily/ 中日期最小者 → date（純新增模式首次 checkpoint 的判定基準）；無 → None。
+
+        檔名僅認 YYYYMMDD.json；損壞檔忽略。主要供 main._decide_checkpoint 在無 checkpoint
+        時以「距最早 daily ≥ 7 天」補首個錨點。"""
+        if not self._daily_dir.is_dir():
+            return None
+        best: date | None = None
+        for p in self._daily_dir.glob("*.json"):
+            stem = p.stem
+            if not (len(stem) == 8 and stem.isdigit()):
+                continue
+            d = date(int(stem[:4]), int(stem[4:6]), int(stem[6:8]))
+            if best is None or d < best:
+                best = d
+        return best
 
     def write_meta(self, *, crawled_at: str, counts: dict[str, int], total: int,
                    changed: int, failed_categories: list[str], status: str) -> None:
