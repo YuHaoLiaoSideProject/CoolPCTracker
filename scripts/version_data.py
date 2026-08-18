@@ -71,7 +71,7 @@ G_NAME_MAP: dict[str, str] = {
 NAME_TO_G: dict[str, str] = {name: g for g, name in G_NAME_MAP.items()}
 
 # Dashboard 顯示白名單：僅容量/規格可比較的分類出現在首頁 tabs
-DASHBOARD_VISIBLE_G: frozenset[str] = frozenset({"6", "7", "8", "9"})  # 記憶體/SSD/HDD/記憶卡
+DASHBOARD_VISIBLE_G: frozenset[str] = frozenset({"g6", "g7", "g8", "g9"})  # 記憶體/SSD/HDD/記憶卡
 
 
 def canonical(obj: Any) -> str:
