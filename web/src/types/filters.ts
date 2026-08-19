@@ -3,17 +3,28 @@
 // 規格 §2.6 的 'vram'/'wattage' 為展示 label；解析層以 SPEC_FIELD_LABELS 對照。
 
 export type SpecField =
-  | "vram_gb" | "cores" | "wattage_w" // P1 三條件（BDD 需求）
+  | "vram_gb" | "cores" | "capacity_gb" // P1 篩選條件
+  | "chip" // P1 顯示卡晶片（字串型）
   | "ram_gb" // P2：記憶體容量
   | "tdp_w" // P2：TDP
+  | "base_ghz" // P2：CPU 基礎時脈
+  | "turbo_ghz" // P2：CPU 超頻時脈
+  | "chipset" // P2：主機板晶片組（字串型）
+  | "form_factor" // P2：主機板版型（字串型）
+  | "clock_mhz" // P2：記憶體時脈
+  | "rpm" // P2：HDD 轉速
+  | "format" // P3：SSD 格式（字串型）
+  | "interface" // P3：SSD 介面（字串型）
   | (string & {}) // 保留擴充
 
 export interface SpecCondition {
   id: string // `${field}-${value}`，供 chip 移除
   label: string // 顯示文案，如「VRAM≥12G」
   field: SpecField // 對應 item.spec 欄位
-  op: ">=" // 本功能僅支援「大於等於」（tech decision 語意）
-  value: number
+  type: "number" | "string" // 決定比對方式
+  op: ">=" | "=" // 數值用 >=，字串用 =（exact match）
+  value: number // 數值型門檻
+  stringValue?: string // 字串型比對值（chip 等）
   unit: string // 顯示用單位：G / W / 核 …
 }
 

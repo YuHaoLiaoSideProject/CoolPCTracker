@@ -609,7 +609,7 @@ describe("parseItemsFile（v2 純函數）", () => {
     expect(parsed.items[0].spec.extra).toBeUndefined() // 巢狀 extra 鍵移除
     expect(parsed.items[1].spec).toEqual({}) // null 值剔除（最少欄位商品）
     expect(parsed.items[2].spec).toEqual({ brand: "UMAX", model: "單條32GB DDR5-4800/CL40", ram_gb: 32, spec: "DDR5", clock_mhz: 4800 })
-    expect(matchesCondition(parsed.items[0], { id: "vram_gb-12", field: "vram_gb", op: ">=", value: 12, label: "VRAM≥12G", unit: "G" })).toBe(true)
+    expect(matchesCondition(parsed.items[0], { id: "vram_gb-12", field: "vram_gb", type: "number", op: ">=", value: 12, label: "VRAM≥12G", unit: "G" })).toBe(true)
   })
 
   it("缺 history / spec 的舊資料補預設值（[] / {}），下游不崩潰", () => {

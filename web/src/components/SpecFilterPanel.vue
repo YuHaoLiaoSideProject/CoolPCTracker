@@ -2,9 +2,9 @@
 // web/src/components/SpecFilterPanel.vue — 規格篩選面板（開發規格 003 §2.9）
 // 數值門檻表單（欄位下拉 + ≥ + 數值 + 單位）、已套用條件 chips（可單獨移除）。
 // 每個欄位一次只能有一個條件（重複套用 → 取代，見 useFilters.addCondition）。
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import type { SpecCondition, SpecField } from "@/types/filters"
-import { FILTERABLE_FIELDS, parseCondition } from "@/utils/specFilter"
+import { FILTERABLE_FIELDS, parseCondition, parseStringCondition } from "@/utils/specFilter"
 
 const props = defineProps<{ conditions: SpecCondition[] }>()
 const emit = defineEmits<{
@@ -14,15 +14,45 @@ const emit = defineEmits<{
 
 const field = ref<SpecField>("vram_gb")
 const value = ref<number | null>(null)
+const stringValue = ref("")
 const error = ref("")
 
+const isStringField = computed(() => {
+  const meta = FILTERABLE_FIELDS.find(f => f.field === field.value)
+  return meta?.type === "string"
+})
+
 function apply() {
+  const meta = FILTERABLE_FIELDS.find(f => f.field === field.value)
+  if (!meta) {
+    error.value = "未知欄位"
+    return
+  }
+
+  if (meta.type === "string") {
+    // 字串型：精確比對
+    if (!stringValue.value.trim()) {
+      error.value = "請輸入比對值"
+      return
+    }
+    const c = parseStringCondition(field.value, stringValue.value)
+    if (!c) {
+      error.value = "請輸入有效比對值"
+      return
+    }
+    error.value = ""
+    stringValue.value = ""
+    emit("add", c)
+    return
+  }
+
+  // 數值型：≥ 比較
   if (value.value == null || Number.isNaN(value.value)) {
     error.value = "請輸入有效數值門檻（≥）"
     return
   }
-  const unit = FILTERABLE_FIELDS.find(f => f.field === field.value)?.unit ?? ""
-  const c = parseCondition(`${FILTERABLE_FIELDS.find(f => f.field === field.value)?.label ?? field.value}≥${value.value}${unit}`)
+  const unit = meta.unit
+  const c = parseCondition(`${meta.label}≥${value.value}${unit}`)
   if (!c) {
     error.value = "請輸入有效數值門檻（≥）"
     return
@@ -49,8 +79,17 @@ function apply() {
           {{ f.label }}
         </option>
       </select>
-      <span class="op">≥</span>
+      <span class="op">{{ isStringField ? "=" : "≥" }}</span>
       <input
+        v-if="isStringField"
+        v-model="stringValue"
+        type="text"
+        class="spec-value"
+        aria-label="比對值"
+        placeholder="如 RTX 4070"
+      />
+      <input
+        v-else
         v-model.number="value"
         type="number"
         class="spec-value"

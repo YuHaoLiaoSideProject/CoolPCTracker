@@ -142,7 +142,7 @@ function handleSelect(id: string): void {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .category-tabs {
     overflow-x: auto;
     flex-wrap: nowrap;

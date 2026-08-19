@@ -21,7 +21,7 @@ function fixtureSetup(): { items: Ref<Item[]>; map: Ref<Map<string, string>>; ca
   const items = ref<Item[]>([
     makeItem({ name: "MSI RTX 4070 12G OC", spec: { vram_gb: 12, wattage_w: 200, chip: "RTX 4070" } }),
     makeItem({ name: "某 8 核 CPU", spec: { cores: 8, tdp_w: 65, socket: "AM5" } }),
-    makeItem({ name: "某 12G 顯示卡", spec: { vram_gb: 12, wattage_w: 750 } }),
+    makeItem({ name: "某 12G 顯示卡", spec: { vram_gb: 12, wattage_w: 750, tdp_w: 75 } }),
     makeItem({ name: "某 750W 套裝主機", spec: { wattage_w: 750 } }),
     makeItem({ name: "XC-5500 隨機贈品主機", spec: {} }),
   ])
@@ -63,11 +63,11 @@ describe("useFilters（v2）", () => {
     expect(f.hasActiveFilter.value).toBe(true)
   })
 
-  it("規格條件 AND：VRAM≥12G + 瓦數≥750W 交集", () => {
+  it("規格條件 AND：VRAM≥12G + TDP≥65 交集", () => {
     const { items, map, categoryId } = fixtureSetup()
     const f = useFilters(items, map, categoryId)
     f.addCondition(parseCondition("VRAM≥12G")!)
-    f.addCondition(parseCondition("瓦數≥750W")!)
+    f.addCondition(parseCondition("TDP≥65")!)
     expect(f.filteredItems.value.map(i => i.name)).toEqual(["某 12G 顯示卡"])
   })
 
@@ -94,11 +94,11 @@ describe("useFilters（v2）", () => {
     const { items, map, categoryId } = fixtureSetup()
     const f = useFilters(items, map, categoryId)
     const c1 = parseCondition("VRAM≥12G")!
-    const c2 = parseCondition("瓦數≥750W")!
+    const c2 = parseCondition("TDP≥65")!
     f.addCondition(c1)
     f.addCondition(c2)
     f.removeCondition(c1.id)
-    expect(f.conditions.value.map(c => c.field)).toEqual(["wattage_w"])
+    expect(f.conditions.value.map(c => c.field)).toEqual(["tdp_w"])
   })
 
   it("clearAll 保留目前分類、清空搜尋與條件（BDD #8）", () => {

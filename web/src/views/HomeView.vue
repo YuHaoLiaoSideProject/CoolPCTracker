@@ -601,6 +601,11 @@ onMounted(() => {
   .home-view {
     padding: 14px;
   }
+
+  .toolbar-row--primary {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* RWD：手機 */
