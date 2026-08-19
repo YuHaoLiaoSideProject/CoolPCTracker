@@ -216,8 +216,11 @@ export function useDashboardFilters(items: Ref<Item[]>) {
 
     list.sort((a, b) => {
       if (mode === "recently_updated") {
-        // last_seen desc
         return b.last_seen.localeCompare(a.last_seen)
+      }
+      if (mode === "name_asc" || mode === "name_desc") {
+        const cmp = a.name.localeCompare(b.name)
+        return mode === "name_asc" ? cmp : -cmp
       }
 
       // price sort：null 置底

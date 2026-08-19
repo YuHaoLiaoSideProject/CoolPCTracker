@@ -1,11 +1,12 @@
 <!-- web/src/views/HomeView.vue — 統一首頁（重構自 ListingView + Dashboard 功能整合）-->
-<!-- 整合 CategoryTabs + SearchBar + SpecFilterPanel + 排序下拉 + ProductCard -->
+<!-- 整合 CategoryTabs + SearchBar + SpecFilterPanel + DashboardFilterBar checkbox 篩選 -->
 <!-- 設計規格：docs/uiux/024-home-integration-redesign.md -->
 <script setup lang="ts">
 import { computed, watch, ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useItems } from "@/composables/useItems"
 import { useFilters } from "@/composables/useFilters"
+import { useDashboardFilters } from "@/composables/useDashboardFilters"
 import { isCategoryKey, labelOf } from "@/data/categories"
 import { formatDateTime } from "@/utils/format"
 import type { Item } from "@/types/item"
@@ -26,62 +27,34 @@ const {
   categories, activeCategoryId, itemToCategory,
   loadCategory, loadAll, isLoadingCategory,
 } = useItems()
+
+// —— 搜尋 + 規格條件篩選（來自 ListingView）——
 const filters = useFilters(items, itemToCategory, activeCategoryId)
 const { keyword, conditions, filteredItems, addCondition, removeCondition, clearAll } = filters
 
-// —— 排序狀態 ——
-const sortMode = ref<SortMode>("price_asc")
+// —— Dashboard 風格 checkbox 篩選（價格 / 品牌 / 容量 / 轉速 / DDR / 介面）——
+const {
+  sortMode, priceMin, priceMax,
+  selectedBrands, selectedCapacities, selectedRpms,
+  selectedRamCapacities, selectedDdrTypes, selectedInterfaces,
+  availableBrands, availableCapacities, availableRpms,
+  availableRamCapacities, availableDdrTypes, availableInterfaces,
+  hasActiveFilter: hasDashboardFilter,
+  filteredItems: dashboardFilteredItems,
+  toggleBrand, toggleCapacity, toggleRpm,
+  toggleRamCapacity, toggleDdrType, toggleInterface,
+  setPriceMin, setPriceMax,
+  clearFilters: clearDashboardFilters,
+} = useDashboardFilters(filteredItems)
 
-// —— 進階篩選狀態 ——
+// —— 進階篩選折疊 ——
 const isExpanded = ref(window.innerWidth >= 1024)
-const priceMin = ref<string>("")
-const priceMax = ref<string>("")
-const selectedBrands = ref<Set<string>>(new Set())
 
-/** 從 items 提取所有不重複 brand（排除空值） */
-const allBrands = computed<string[]>(() => {
-  const set = new Set<string>()
-  for (const it of items.value) {
-    const b = it.spec?.brand
-    if (b) set.add(b)
-  }
-  return [...set].sort()
-})
-
-/** 取得 item 最新價格（最後一筆 history 的 p），無則 null */
-function latestPrice(it: Item): number | null {
-  if (it.history.length === 0) return null
-  return it.history[it.history.length - 1].p
-}
-
-/** 品牌切換 */
-function toggleBrand(brand: string) {
-  const s = new Set(selectedBrands.value)
-  if (s.has(brand)) s.delete(brand)
-  else s.add(brand)
-  selectedBrands.value = s
-}
-
-/** 進階篩選後的商品（價格 + 品牌） */
-const advancedFilteredItems = computed<Item[]>(() => {
-  let list = filteredItems.value
-  const min = priceMin.value !== "" ? Number(priceMin.value) : null
-  const max = priceMax.value !== "" ? Number(priceMax.value) : null
-  const brands = selectedBrands.value
-
-  if (min !== null || max !== null || brands.size > 0) {
-    list = list.filter(it => {
-      const p = latestPrice(it)
-      if (min !== null && (p === null || p < min)) return false
-      if (max !== null && (p === null || p > max)) return false
-      if (brands.size > 0) {
-        const b = it.spec?.brand ?? ""
-        if (!brands.has(b)) return false
-      }
-      return true
-    })
-  }
-  return list
+// —— 目前選中分類名稱（用於 conditional 顯示篩選群組）——
+const currentCategoryName = computed(() => {
+  if (!activeCategoryId.value) return null
+  const cat = categories.value.find(c => c.id === activeCategoryId.value)
+  return cat?.name ?? null
 })
 
 // —— 「全部」分類顯示計算 ——
@@ -96,9 +69,7 @@ const tabsCategories = computed(() => [
 /** CategoryTabs loading 狀態（含「全部」） */
 const loadingIds = computed(() => {
   const s = new Set<string>()
-  // 「全部」= activeCategoryId 為 null 時
   if (activeCategoryId.value === null && loading.value) s.add(ALL)
-  // 各分類
   for (const c of categories.value) {
     if (isLoadingCategory(c.id)) s.add(c.id)
   }
@@ -124,14 +95,13 @@ function applyUrlToState(): void {
   } else if (id) {
     void loadCategory(id)
   } else {
-    // 無參數 → 預設第一個分類
     const first = categories.value[0]?.id ?? null
     if (first) void loadCategory(first)
   }
 }
 watch(categories, applyUrlToState, { immediate: true })
 
-// —— 分類選擇（CategoryTabs 點擊） ——
+// —— 分類選擇（CategoryTabs 點擊）——
 function selectCategory(id: string) {
   if (id === ALL) {
     router.replace({ query: { category: ALL } })
@@ -154,10 +124,10 @@ watch(keyword, (k, prev) => {
   }
 })
 
-// —— 排序後的商品列表 ——
+// —— 最終排序後的商品列表 ——
 const sortedItems = computed<Item[]>(() => {
   const mode = sortMode.value
-  const list = [...advancedFilteredItems.value]
+  const list = [...dashboardFilteredItems.value]
 
   list.sort((a, b) => {
     if (mode === "recently_updated") {
@@ -184,18 +154,14 @@ const hasActiveFilters = computed(() => {
   return (
     keyword.value.trim() !== "" ||
     conditions.value.length > 0 ||
-    priceMin.value !== "" ||
-    priceMax.value !== "" ||
-    selectedBrands.value.size > 0
+    hasDashboardFilter.value
   )
 })
 
 /** 清除所有篩選條件（不含搜尋） */
 function clearFilters() {
   conditions.value.forEach(c => removeCondition(c.id))
-  priceMin.value = ""
-  priceMax.value = ""
-  selectedBrands.value = new Set()
+  clearDashboardFilters()
 }
 
 // —— 卡片需要分類名 ——
@@ -227,9 +193,7 @@ function onOpen(item: Item) {
 function onClearAll() {
   const wasCategoryEmpty = keyword.value.trim() === "" && conditions.value.length === 0
   clearAll()
-  priceMin.value = ""
-  priceMax.value = ""
-  selectedBrands.value = new Set()
+  clearDashboardFilters()
   if (wasCategoryEmpty) selectCategory(ALL)
 }
 
@@ -266,7 +230,7 @@ onMounted(() => {
       @select="selectCategory"
     />
 
-    <!-- 工具列：搜尋 + 規格篩選 + 排序 -->
+    <!-- 工具列：搜尋 + 篩選 + 排序 -->
     <div class="home-toolbar">
       <div class="toolbar-row toolbar-row--primary">
         <SearchBar v-model="keyword" />
@@ -288,11 +252,6 @@ onMounted(() => {
           </select>
         </div>
       </div>
-      <SpecFilterPanel
-        :conditions="conditions"
-        @add="addCondition"
-        @remove="removeCondition"
-      />
 
       <!-- 進階篩選 Toggle -->
       <button
@@ -312,36 +271,161 @@ onMounted(() => {
       >
         <!-- 價格範圍 -->
         <div class="filter-group">
-          <label>價格</label>
+          <label>價格範圍</label>
           <input
-            v-model="priceMin"
             type="number"
             class="price-input"
-            placeholder="最低"
+            placeholder="下限"
+            :value="priceMin ?? ''"
             min="0"
+            @change="setPriceMin(($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value))"
           />
           <span class="price-sep">–</span>
           <input
-            v-model="priceMax"
             type="number"
             class="price-input"
-            placeholder="最高"
+            placeholder="上限"
+            :value="priceMax ?? ''"
             min="0"
+            @change="setPriceMax(($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value))"
           />
         </div>
-        <!-- 品牌 Chips -->
-        <div v-if="allBrands.length > 0" class="filter-group">
+
+        <!-- 品牌篩選（所有分類） -->
+        <div v-if="availableBrands.length > 0" class="filter-group">
           <label>品牌</label>
-          <button
-            v-for="brand in allBrands"
-            :key="brand"
-            class="chip"
-            :class="{ active: selectedBrands.has(brand) }"
-            @click="toggleBrand(brand)"
-          >
-            {{ brand }}
-          </button>
+          <div class="chip-list">
+            <label
+              v-for="brand in availableBrands"
+              :key="brand"
+              class="chip-item"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedBrands.has(brand)"
+                @change="toggleBrand(brand)"
+              />
+              <span>{{ brand }}</span>
+            </label>
+          </div>
         </div>
+
+        <!-- 容量篩選（SSD / HDD / 記憶卡） -->
+        <div
+          v-if="(currentCategoryName === 'SSD' || currentCategoryName === 'HDD' || currentCategoryName === '記憶卡') && availableCapacities.length > 0"
+          class="filter-group"
+        >
+          <label>容量</label>
+          <div class="chip-list">
+            <label
+              v-for="capacity in availableCapacities"
+              :key="capacity"
+              class="chip-item"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedCapacities.has(capacity)"
+                @change="toggleCapacity(capacity)"
+              />
+              <span>{{ capacity }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 轉速篩選（HDD） -->
+        <div
+          v-if="currentCategoryName === 'HDD' && availableRpms.length > 0"
+          class="filter-group"
+        >
+          <label>轉速</label>
+          <div class="chip-list">
+            <label
+              v-for="rpm in availableRpms"
+              :key="rpm"
+              class="chip-item"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedRpms.has(rpm)"
+                @change="toggleRpm(rpm)"
+              />
+              <span>{{ rpm }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 記憶體容量篩選（記憶體） -->
+        <div
+          v-if="currentCategoryName === '記憶體' && availableRamCapacities.length > 0"
+          class="filter-group"
+        >
+          <label>容量</label>
+          <div class="chip-list">
+            <label
+              v-for="ramCap in availableRamCapacities"
+              :key="ramCap"
+              class="chip-item"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedRamCapacities.has(ramCap)"
+                @change="toggleRamCapacity(ramCap)"
+              />
+              <span>{{ ramCap }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- DDR 類型篩選（記憶體） -->
+        <div
+          v-if="currentCategoryName === '記憶體' && availableDdrTypes.length > 0"
+          class="filter-group"
+        >
+          <label>DDR 類型</label>
+          <div class="chip-list">
+            <label
+              v-for="ddr in availableDdrTypes"
+              :key="ddr"
+              class="chip-item"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedDdrTypes.has(ddr)"
+                @change="toggleDdrType(ddr)"
+              />
+              <span>{{ ddr }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- SSD 介面篩選（SSD） -->
+        <div
+          v-if="currentCategoryName === 'SSD' && availableInterfaces.length > 0"
+          class="filter-group"
+        >
+          <label>介面</label>
+          <div class="chip-list">
+            <label
+              v-for="iface in availableInterfaces"
+              :key="iface"
+              class="chip-item"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedInterfaces.has(iface)"
+                @change="toggleInterface(iface)"
+              />
+              <span>{{ iface }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 規格條件（VRAM / CPU核數 / TDP 等） -->
+        <SpecFilterPanel
+          :conditions="conditions"
+          @add="addCondition"
+          @remove="removeCondition"
+        />
       </div>
 
       <!-- 結果計數 + 清除篩選 -->
@@ -464,7 +548,7 @@ onMounted(() => {
   margin-top: 4px;
   overflow: hidden;
   transition: max-height 200ms ease, padding 200ms ease;
-  max-height: 300px;
+  max-height: 600px;
 }
 .filter-advanced.collapsed {
   max-height: 0;
@@ -472,9 +556,11 @@ onMounted(() => {
   border: none;
   margin-top: 0;
 }
+
+/* 篩選群組 */
 .filter-group {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   flex-wrap: wrap;
 }
@@ -483,7 +569,49 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text-dim);
   min-width: 50px;
+  padding-top: 4px;
 }
+
+/* Checkbox chip list（Dashboard 風格） */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.chip-item:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.chip-item:has(input:checked) {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.chip-item input[type="checkbox"] {
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+/* 價格輸入 */
 .price-input {
   width: 90px;
   height: 32px;
@@ -500,29 +628,6 @@ onMounted(() => {
 }
 .price-sep {
   color: var(--text-dim);
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-dim);
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: all var(--transition);
-  white-space: nowrap;
-}
-.chip:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-}
-.chip.active {
-  background: var(--brand);
-  border-color: var(--brand);
-  color: #fff;
 }
 
 /* 篩選結果列 */
@@ -583,7 +688,7 @@ onMounted(() => {
 }
 
 @keyframes shimmer {
-  to { background-position: -200% 0; }
+  to { background-position: -200% 100%; }
 }
 
 .fade-enter-active,
