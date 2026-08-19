@@ -14,6 +14,8 @@ import { formatPrice } from "@/utils/format"
 const props = defineProps<{
   item: Item
   categoryName?: string
+  isLowest?: boolean
+  lowestPrice?: number | null
 }>()
 
 const emit = defineEmits<{
@@ -34,7 +36,9 @@ function onKeydown(e: KeyboardEvent) {
 
 const cardLabel = computed(() => {
   const price = currentPrice.value != null ? formatPrice(currentPrice.value) : "價格未知"
-  return `${props.item.name}，目前價格 ${price}，${deltaText.value}`
+  const parts = [`${props.item.name}，目前價格 ${price}，${deltaText.value}`]
+  if (props.isLowest) parts.push("歷史新低")
+  return parts.join("，")
 })
 </script>
 
@@ -49,7 +53,12 @@ const cardLabel = computed(() => {
   >
     <div class="pc-top">
       <div class="pc-name">{{ item.name }}</div>
-      <div v-if="item.status === 'gone'" class="pc-gone" title="已下架">已下架</div>
+      <div class="pc-right">
+        <div v-if="item.status === 'gone'" class="pc-gone" title="已下架">已下架</div>
+        <template v-else>
+          <span v-if="isLowest" class="pc-lowest" title="歷史新低" aria-label="歷史新低">🥇</span>
+        </template>
+      </div>
     </div>
     <div v-if="specChips.length" class="pc-specs">
       <span v-for="chip in specChips" :key="chip" class="chip">{{ chip }}</span>
@@ -58,6 +67,9 @@ const cardLabel = computed(() => {
     <div class="pc-price">
       <span class="pc-current">{{ currentPrice != null ? formatPrice(currentPrice) : "價格未知" }}</span>
       <span class="pc-delta" :class="deltaClass">{{ deltaText }}</span>
+      <span v-if="lowestPrice != null && lowestPrice !== currentPrice" class="pc-history-low">
+        歷史最低 {{ formatPrice(lowestPrice) }}
+      </span>
     </div>
     <div class="pc-actions" @click.stop>
       <WatchlistButton :id="item.id" :name="item.name" :price="currentPrice" />
@@ -90,6 +102,18 @@ const cardLabel = computed(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+}
+
+.pc-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.pc-lowest {
+  font-size: 1.2rem;
+  flex: 0 0 auto;
 }
 
 .pc-name {
@@ -133,6 +157,7 @@ const cardLabel = computed(() => {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .pc-current {
@@ -167,6 +192,11 @@ const cardLabel = computed(() => {
   padding: 1px 8px;
   font-size: 0.72rem;
   line-height: 1.5;
+}
+
+.pc-history-low {
+  font-size: 0.78rem;
+  color: var(--text-dim);
 }
 
 .pc-actions {
@@ -205,6 +235,10 @@ const cardLabel = computed(() => {
 @media (max-width: 639px) {
   .pc-price {
     flex-wrap: wrap;
+  }
+
+  .pc-history-low {
+    flex-basis: 100%;
   }
 
   .pc-btn {
