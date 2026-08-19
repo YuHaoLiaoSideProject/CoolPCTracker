@@ -2,6 +2,7 @@
 // web/src/components/ProductList.vue — 列表容器（開發規格 003 §2.10）
 // 標題＋命中筆數（x / total）、空狀態分流（search/filter/category）、清除全部、
 // 渲染商品卡片。
+// 024：傳入 isLowest / lowestPrice 供 ProductCard 顯示 🥇 + 歷史最低價
 import { computed } from "vue"
 import ProductCard from "./ProductCard.vue"
 import EmptyState from "./EmptyState.vue"
@@ -33,6 +34,21 @@ const emptyKind = computed<"search" | "filter" | "category">(() => {
 })
 
 const conditionLabels = computed(() => props.conditions.map(c => c.label))
+
+// —— 024：歷史最低價 & 🥇 徽章計算 ——
+/** 取得商品歷史最低價（null = 無歷史） */
+function getLowestPrice(item: Item): number | null {
+  const prices = item.history.map(h => h.p).filter((p): p is number => p != null)
+  return prices.length > 0 ? Math.min(...prices) : null
+}
+
+/** 判斷目前價格是否為歷史新低（需至少 2 筆歷史，才稱得上「新」低） */
+function isItemLowest(item: Item): boolean {
+  const lowest = getLowestPrice(item)
+  if (lowest == null || item.history.length < 2) return false
+  const current = item.history[item.history.length - 1]?.p ?? null
+  return current === lowest
+}
 </script>
 
 <template>
@@ -58,6 +74,8 @@ const conditionLabels = computed(() => props.conditions.map(c => c.label))
         :key="it.id"
         :item="it"
         :category-name="categoryNames?.[it.id] ?? ''"
+        :is-lowest="isItemLowest(it)"
+        :lowest-price="getLowestPrice(it)"
         @open="emit('open', $event)"
       />
     </div>

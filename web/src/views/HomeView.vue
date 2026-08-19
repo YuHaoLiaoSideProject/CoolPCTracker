@@ -32,6 +32,58 @@ const { keyword, conditions, filteredItems, addCondition, removeCondition, clear
 // —— 排序狀態 ——
 const sortMode = ref<SortMode>("price_asc")
 
+// —— 進階篩選狀態 ——
+const isExpanded = ref(window.innerWidth >= 1024)
+const priceMin = ref<string>("")
+const priceMax = ref<string>("")
+const selectedBrands = ref<Set<string>>(new Set())
+
+/** 從 items 提取所有不重複 brand（排除空值） */
+const allBrands = computed<string[]>(() => {
+  const set = new Set<string>()
+  for (const it of items.value) {
+    const b = it.spec?.brand
+    if (b) set.add(b)
+  }
+  return [...set].sort()
+})
+
+/** 取得 item 最新價格（最後一筆 history 的 p），無則 null */
+function latestPrice(it: Item): number | null {
+  if (it.history.length === 0) return null
+  return it.history[it.history.length - 1].p
+}
+
+/** 品牌切換 */
+function toggleBrand(brand: string) {
+  const s = new Set(selectedBrands.value)
+  if (s.has(brand)) s.delete(brand)
+  else s.add(brand)
+  selectedBrands.value = s
+}
+
+/** 進階篩選後的商品（價格 + 品牌） */
+const advancedFilteredItems = computed<Item[]>(() => {
+  let list = filteredItems.value
+  const min = priceMin.value !== "" ? Number(priceMin.value) : null
+  const max = priceMax.value !== "" ? Number(priceMax.value) : null
+  const brands = selectedBrands.value
+
+  if (min !== null || max !== null || brands.size > 0) {
+    list = list.filter(it => {
+      const p = latestPrice(it)
+      if (min !== null && (p === null || p < min)) return false
+      if (max !== null && (p === null || p > max)) return false
+      if (brands.size > 0) {
+        const b = it.spec?.brand ?? ""
+        if (!brands.has(b)) return false
+      }
+      return true
+    })
+  }
+  return list
+})
+
 // —— 「全部」分類顯示計算 ——
 const allTotal = computed(() => categories.value.reduce((a, c) => a + c.count, 0))
 
@@ -105,11 +157,15 @@ watch(keyword, (k, prev) => {
 // —— 排序後的商品列表 ——
 const sortedItems = computed<Item[]>(() => {
   const mode = sortMode.value
-  const list = [...filteredItems.value]
+  const list = [...advancedFilteredItems.value]
 
   list.sort((a, b) => {
     if (mode === "recently_updated") {
       return b.last_seen.localeCompare(a.last_seen)
+    }
+    if (mode === "name_asc" || mode === "name_desc") {
+      const cmp = a.name.localeCompare(b.name)
+      return mode === "name_asc" ? cmp : -cmp
     }
     // price sort：null 置底
     const pa = a.history.length > 0 ? a.history[a.history.length - 1].p : null
@@ -122,6 +178,25 @@ const sortedItems = computed<Item[]>(() => {
 
   return list
 })
+
+// —— 是否有篩選條件 ——
+const hasActiveFilters = computed(() => {
+  return (
+    keyword.value.trim() !== "" ||
+    conditions.value.length > 0 ||
+    priceMin.value !== "" ||
+    priceMax.value !== "" ||
+    selectedBrands.value.size > 0
+  )
+})
+
+/** 清除所有篩選條件（不含搜尋） */
+function clearFilters() {
+  conditions.value.forEach(c => removeCondition(c.id))
+  priceMin.value = ""
+  priceMax.value = ""
+  selectedBrands.value = new Set()
+}
 
 // —— 卡片需要分類名 ——
 const categoryNames = computed<Record<string, string>>(() => {
@@ -152,6 +227,9 @@ function onOpen(item: Item) {
 function onClearAll() {
   const wasCategoryEmpty = keyword.value.trim() === "" && conditions.value.length === 0
   clearAll()
+  priceMin.value = ""
+  priceMax.value = ""
+  selectedBrands.value = new Set()
   if (wasCategoryEmpty) selectCategory(ALL)
 }
 
@@ -215,6 +293,62 @@ onMounted(() => {
         @add="addCondition"
         @remove="removeCondition"
       />
+
+      <!-- 進階篩選 Toggle -->
+      <button
+        class="filter-expand-btn"
+        @click="isExpanded = !isExpanded"
+        :aria-expanded="isExpanded"
+        aria-controls="filter-advanced"
+      >
+        {{ isExpanded ? '收起篩選 ▲' : '更多篩選 ▼' }}
+      </button>
+
+      <!-- 進階篩選區 -->
+      <div
+        id="filter-advanced"
+        class="filter-advanced"
+        :class="{ collapsed: !isExpanded }"
+      >
+        <!-- 價格範圍 -->
+        <div class="filter-group">
+          <label>價格</label>
+          <input
+            v-model="priceMin"
+            type="number"
+            class="price-input"
+            placeholder="最低"
+            min="0"
+          />
+          <span class="price-sep">–</span>
+          <input
+            v-model="priceMax"
+            type="number"
+            class="price-input"
+            placeholder="最高"
+            min="0"
+          />
+        </div>
+        <!-- 品牌 Chips -->
+        <div v-if="allBrands.length > 0" class="filter-group">
+          <label>品牌</label>
+          <button
+            v-for="brand in allBrands"
+            :key="brand"
+            class="chip"
+            :class="{ active: selectedBrands.has(brand) }"
+            @click="toggleBrand(brand)"
+          >
+            {{ brand }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 結果計數 + 清除篩選 -->
+      <div v-if="hasActiveFilters" class="filter-footer">
+        <span class="result-count">找到 <b>{{ sortedItems.length }}</b> 筆</span>
+        <button class="clear-btn" @click="clearFilters">清除篩選</button>
+      </div>
     </div>
 
     <!-- 骨架屏 -->
@@ -298,6 +432,128 @@ onMounted(() => {
   background: var(--surface);
   color: var(--text);
   font-size: 0.85rem;
+}
+
+/* 進階篩選 Toggle */
+.filter-expand-btn {
+  height: var(--h);
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: var(--brand);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.filter-expand-btn:hover {
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+}
+
+/* 進階篩選區 */
+.filter-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  overflow: hidden;
+  transition: max-height 200ms ease, padding 200ms ease;
+  max-height: 300px;
+}
+.filter-advanced.collapsed {
+  max-height: 0;
+  padding: 0;
+  border: none;
+  margin-top: 0;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  min-width: 50px;
+}
+.price-input {
+  width: 90px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.price-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+.price-sep {
+  color: var(--text-dim);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.chip:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.chip.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+/* 篩選結果列 */
+.filter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.result-count {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.result-count b {
+  color: var(--brand);
+}
+.clear-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--brand);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.clear-btn:hover {
+  background: var(--brand);
+  color: #fff;
 }
 
 /* 過期橫幅 */
