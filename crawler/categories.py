@@ -47,10 +47,12 @@ def get_category(g_index: int) -> Category:
 
 
 def normalize_name(name: str) -> str:
-    """名稱正規化：NFKC（全形→半形）→ casefold → 連續空白收縮 → strip。
-    ID 跨日穩定的關鍵；原價屋名稱細節改動不會使 ID 漂移（除非實質改名）。"""
+    """名稱正規化：NFKC（全形→半形）→ 移除花括號 → casefold → 連續空白收縮 → strip。
+    ID 跨日穩定的關鍵；原價屋名稱細節改動不會使 ID 漂移（除非實質改名）。
+    花括號（全形｛｝或半形{}）為原價屋 HTML 輔助標記，不影響商品識別。"""
     nfkc = unicodedata.normalize("NFKC", name)
-    return re.sub(r"\s+", " ", nfkc).casefold().strip()
+    no_braces = re.sub(r"[{}]", "", nfkc)  # 移除全形/半形花括號
+    return re.sub(r"\s+", " ", no_braces).casefold().strip()
 
 
 def make_item_id(category_name: str, name: str) -> str:

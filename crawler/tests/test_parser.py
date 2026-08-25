@@ -46,6 +46,30 @@ REAL_COUNTS = {1: 157, 3: 86, 4: 48, 5: 373, 6: 216, 7: 171, 8: 89, 9: 54, 12: 2
 # ── parse_page 基本：<th> 子分類 + <td> 商品列 ─────────────────────────────
 
 class TestParsePageBasics:
+    def test_curly_braces_stripped_from_name(self):
+        """花括號（全形｛｝或半形{}）自名稱剝離（原價屋 HTML 輔助標記）。"""
+        html = """
+        <table>
+        <thead><tr><th>桌上型記憶體 DDR3</th></tr></thead>
+        <tbody>
+        <tr><td>｛UMAX 8GB DDR3-1600｝(512*8)</td><td>$679</td></tr>
+        <tr><td>{UMAX 16GB DDR4-2666}(2048*8)CL19</td><td>$3500</td></tr>
+        <tr><td>UMAX 8GB DDR4-3200(1024*8)超頻CL16</td><td>$1990</td></tr>
+        </tbody>
+        </table>
+        """
+        result = Parser().parse_page(html, get_category(6))
+        names = [i.name for i in result.items]
+        assert "UMAX 8GB DDR3-1600(512*8)" in names
+        assert "UMAX 16GB DDR4-2666(2048*8)CL19" in names
+        assert "UMAX 8GB DDR4-3200(1024*8)超頻CL16" in names
+        # 確保花括號不出現在名稱中
+        for name in names:
+            assert "｛" not in name
+            assert "｝" not in name
+            assert "{" not in name
+            assert "}" not in name
+
     def test_th_becomes_subcategories_td_becomes_items(self):
         html = """
         <table>

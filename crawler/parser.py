@@ -158,6 +158,9 @@ class Parser:
             name = cell
             price = None
 
+        # 移除花括號（全形｛｝或半形{}）：原價屋 HTML 輔助標記，不影響商品識別
+        name = re.sub(r"[{}｛｝]", "", name)
+
         flags: dict[str, Any] = {}
         stripped = name
         for pattern, key in _FLAG_PATTERNS:
@@ -244,6 +247,8 @@ class Parser:
         flags 偵測與標記剝離共用同一輪 regex 掃描，確保兩者永遠一致
         （偵測到的標記一定被剝離，名稱不會污染 ID 正規化）。
         """
+        # 移除花括號（全形｛｝或半形{}）：原價屋 HTML 輔助標記，不影響商品識別
+        cell_text = re.sub(r"[{}｛｝]", "", cell_text)
         flags: dict[str, Any] = {}
         stripped = cell_text
         for pattern, key in _FLAG_PATTERNS:

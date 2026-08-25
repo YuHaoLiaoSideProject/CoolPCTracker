@@ -36,6 +36,18 @@ class TestNormalizeName:
     def test_tab_and_newline_treated_as_space(self):
         assert normalize_name("Intel\ti5-13600K\n(盒裝)") == "intel i5-13600k (盒裝)"
 
+    def test_curly_braces_removed(self):
+        # 全形花括號（｛｝）與半形花括號（{}）皆移除
+        assert normalize_name("｛UMAX 8GB DDR3-1600｝") == "umax 8gb ddr3-1600"
+        assert normalize_name("{UMAX 8GB DDR3-1600}") == "umax 8gb ddr3-1600"
+        assert normalize_name("UMAX 8GB DDR3-1600(512*8)") == "umax 8gb ddr3-1600(512*8)"
+
+    def test_curly_braces_stable_id(self):
+        # 含/不含花括號的商品名稱應產生相同 ID
+        id_with = make_item_id("記憶體", "｛UMAX 8GB DDR3-1600｝(512*8)")
+        id_without = make_item_id("記憶體", "UMAX 8GB DDR3-1600(512*8)")
+        assert id_with == id_without
+
 
 # ── make_item_id ────────────────────────────────────────────────────────────
 
