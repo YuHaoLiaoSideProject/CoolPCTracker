@@ -11,7 +11,7 @@
     （一條相容路徑，方便遷移；印警告至 stderr）。寫入後即以分類檔為真相。
 
 - 輸出（僅異動時寫，見「changed 判定」）：
-  - api/items/{g}.json：鏡像 data/items/{g}.json —— 同內容、compact；
+  - api/items/{g}.json：鏡像 data/items/{g}.json —— **過濾掉 status=gone 的已下架商品**、compact；
     g 由檔名繼承（分類檔名即對外 id）
   - api/daily/{同 data/daily 檔名}.json：鏡像 data/daily（byte 一致，有新增/更新才寫）
   - api/trends/{item_id}.json = {"id": ..., "history": [[d, p], ...]}：
@@ -374,8 +374,13 @@ def mirror_daily(data_dir: Path, api_dir: Path) -> None:
         shutil.copyfile(path, dest)
 
 
+def _filter_active_items(items: list) -> list:
+    """過濾掉 status=gone 的已下架商品（API 不暴露已下架商品）。"""
+    return [item for item in items if item.get("status") != "gone"]
+
+
 def items_changed(api_dir: Path, categories: list[tuple[str, str, list]]) -> bool:
-    """任一 data/items/{g}.json 與對應 api/items/{g}.json 有異動（canonical 比較）。
+    """任一 data/items/{g}.json（過濾後）與對應 api/items/{g}.json 有異動（canonical 比較）。
 
     缺檔（首次執行或新增分類）視為異動；對應檔不可解析 → 視為異動（重寫）。"""
     for g, _name, items in categories:
@@ -386,7 +391,8 @@ def items_changed(api_dir: Path, categories: list[tuple[str, str, list]]) -> boo
             existing = _load_json(path)
         except (ValueError, OSError):
             return True
-        if canonical(items) != canonical(existing):
+        active_items = _filter_active_items(items)
+        if canonical(active_items) != canonical(existing):
             return True
     return False
 
@@ -409,11 +415,12 @@ def checkpoints_changed(data_dir: Path) -> bool:
 
 
 def write_items(api_dir: Path, categories: list[tuple[str, str, list]]) -> None:
-    """鏡像 api/items/{g}.json：同 data/items/{g} 內容、compact 寫出；
+    """鏡像 api/items/{g}.json：過濾掉 status=gone 的已下架商品、compact 寫出；
     僅寫新增或內容不同的檔（已是最新 → 不寫）。"""
     for g, _name, items in categories:
         dest = api_dir / "items" / f"{g}.json"
-        text = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
+        active_items = _filter_active_items(items)
+        text = json.dumps(active_items, ensure_ascii=False, separators=(",", ":"))
         if dest.exists() and dest.read_text(encoding="utf-8") == text:
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -435,7 +442,7 @@ def build_index(data_dir: Path, meta: dict,
             "id": g,
             "name": name,
             "file": f"api/items/{g}.json",
-            "count": len(items),
+            "count": len(_filter_active_items(items)),
             "dashboard_visible": g in DASHBOARD_VISIBLE_G,
         }
         for g, name, items in categories
