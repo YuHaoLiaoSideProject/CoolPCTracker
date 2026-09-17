@@ -22,11 +22,33 @@ export interface PriceChange {
   diffPercent: number | null // diff / previous * 100
   trend: PriceTrend
   hasPrevious: boolean // 是否有前一筆可比較（≥2 點）
+  lastChangedDate: string | null // 上次價格不同於前一次的日期（往前找第一個 diff≠0）
+  daysSinceChange: number | null // 距今幾天（null = 找不到或無價格）
 }
 
 /** history（升冪、PricePoint[]）→ 漲跌摘要；空/單點回傳 null 欄位（不 throw）。 */
+/** 從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的日期；找不到回傳 null。 */
+export function findLastChangeDate(history: PricePoint[]): string | null {
+  for (let i = history.length - 1; i >= 1; i--) {
+    if (history[i].p !== history[i - 1].p) return history[i].d
+  }
+  // 全部相同（或僅 1 筆）→ 以第一筆日期為「起始日」
+  return history.length > 0 ? history[0].d : null
+}
+
+/** 計算距今天數（以 UTC 日期字串比較，不涉時區）。 */
+export function daysBetween(dateA: string, dateB: string): number {
+  const a = new Date(dateA + "T00:00:00Z")
+  const b = new Date(dateB + "T00:00:00Z")
+  return Math.round((b.getTime() - a.getTime()) / 86_400_000)
+}
+
 export function computePriceChange(history: PricePoint[]): PriceChange {
   const n = history.length
+  const lastChangedDate = findLastChangeDate(history)
+  const today = new Date().toISOString().slice(0, 10)
+  const daysSinceChange = lastChangedDate != null ? daysBetween(lastChangedDate, today) : null
+
   if (n === 0) {
     return {
       current: null,
@@ -37,6 +59,8 @@ export function computePriceChange(history: PricePoint[]): PriceChange {
       diffPercent: null,
       trend: null,
       hasPrevious: false,
+      lastChangedDate: null,
+      daysSinceChange: null,
     }
   }
   const current = history[n - 1].p
@@ -51,6 +75,8 @@ export function computePriceChange(history: PricePoint[]): PriceChange {
       diffPercent: null,
       trend: null,
       hasPrevious: false,
+      lastChangedDate,
+      daysSinceChange,
     }
   }
   const prev = history[n - 2]
@@ -64,6 +90,8 @@ export function computePriceChange(history: PricePoint[]): PriceChange {
     diffPercent: (diff / prev.p) * 100,
     trend: diff > 0 ? "up" : diff < 0 ? "down" : "flat",
     hasPrevious: true,
+    lastChangedDate,
+    daysSinceChange,
   }
 }
 
@@ -85,6 +113,37 @@ export function priceChangeBadgeClass(c: PriceChange): string {
   if (c.trend === "flat") return "price-flat"
   if (c.current != null) return "price-new"
   return ""
+}
+
+// ---- 卡片價格年齡 badge（上次變動距今）----
+
+/** 價格年齡文字：「今天」/「1天前」/「N天前」/「M/D」（>7天） */
+export function priceAgeText(c: PriceChange): string {
+  if (c.daysSinceChange == null) return ""
+  if (c.daysSinceChange <= 0) return "今天"
+  if (c.daysSinceChange === 1) return "昨天"
+  if (c.daysSinceChange <= 7) return `${c.daysSinceChange}天前`
+  // >7 天：顯示日期 M/D
+  if (c.lastChangedDate) {
+    const [, m, d] = c.lastChangedDate.split("-")
+    return `${parseInt(m)}/${parseInt(d)}`
+  }
+  return `${c.daysSinceChange}天前`
+}
+
+/** 價格年齡 class：今天=藍色（fresh）、>3天=淡色（stale） */
+export function priceAgeClass(c: PriceChange): string {
+  if (c.daysSinceChange == null) return ""
+  if (c.daysSinceChange <= 0) return "is-fresh"
+  if (c.daysSinceChange > 3) return "is-stale"
+  return ""
+}
+
+/** 價格年齡 tooltip 完整日期（2026 年 8 月 22 日） */
+export function priceAgeTooltip(c: PriceChange): string {
+  if (!c.lastChangedDate) return ""
+  const [y, m, d] = c.lastChangedDate.split("-")
+  return `${y} 年 ${parseInt(m)} 月 ${parseInt(d)} 日`
 }
 
 // ---- 詳情頁摘要（004 BDD E8：金額＋百分比）----

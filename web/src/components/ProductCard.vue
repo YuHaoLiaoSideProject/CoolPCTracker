@@ -22,7 +22,7 @@ const emit = defineEmits<{
   (e: "open", item: Item): void
 }>()
 
-const { currentPrice, deltaClass, deltaText } = usePriceDelta(props.item)
+const { currentPrice, deltaClass, deltaText, priceAge, priceAgeCls, priceAgeTip } = usePriceDelta(props.item)
 const sparkPoints = computed(() => props.item.history.slice(-30)) // 卡片取最近 30 點
 const sparkTrend = computed(() => computePriceChange(props.item.history).trend)
 const specChips = computed(() => specChipTexts(props.item.spec, props.categoryName ?? ""))
@@ -70,6 +70,11 @@ const cardLabel = computed(() => {
       <span v-if="lowestPrice != null && lowestPrice !== currentPrice" class="pc-history-low">
         歷史最低 {{ formatPrice(lowestPrice) }}
       </span>
+    </div>
+    <div v-if="priceAge" class="pc-price-age" :class="priceAgeCls">
+      <span class="age-icon">⏱</span>
+      上次變動 {{ priceAge }}
+      <span v-if="priceAgeTip" class="age-tooltip">{{ priceAgeTip }}</span>
     </div>
     <div class="pc-actions" @click.stop>
       <WatchlistButton :id="item.id" :name="item.name" :price="currentPrice" />
@@ -197,6 +202,66 @@ const cardLabel = computed(() => {
 .pc-history-low {
   font-size: 0.78rem;
   color: var(--text-dim);
+}
+
+.pc-price-age {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  line-height: 1.5;
+  white-space: nowrap;
+  position: relative;
+}
+
+.age-icon {
+  font-size: 0.68rem;
+}
+
+.pc-price-age.is-fresh {
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+
+.pc-price-age.is-stale {
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.age-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.age-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--text);
+}
+
+.pc-price-age:hover .age-tooltip {
+  display: block;
 }
 
 .pc-actions {

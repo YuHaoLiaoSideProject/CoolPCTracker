@@ -54,6 +54,21 @@ describe("usePriceDelta", () => {
     expect(deltaClass.value).toBe("")
     expect(deltaText.value).toBe("—")
   })
+
+  it("priceAge / priceAgeCls / priceAgeTip 帶入計算結果", () => {
+    const item = makeItem({ name: "有歷史", history: hist(10000, 10500) })
+    const { priceAge, priceAgeCls, priceAgeTip } = usePriceDelta(item)
+    expect(typeof priceAge.value).toBe("string")
+    expect(priceAge.value.length).toBeGreaterThan(0)
+    expect(typeof priceAgeCls.value).toBe("string")
+    expect(typeof priceAgeTip.value).toBe("string")
+  })
+
+  it("空 history → priceAge 空字串", () => {
+    const item = makeItem({ name: "空", history: [] })
+    const { priceAge } = usePriceDelta(item)
+    expect(priceAge.value).toBe("")
+  })
 })
 
 describe("specChipTexts（規格 chips 依分類白名單）", () => {

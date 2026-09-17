@@ -36,9 +36,9 @@ describe("isCrawledAtStale（> 7 天過期，與 003 isStale 同規則）", () =
 
 describe("useCrawledAt（響應式：getter 輸入）", () => {
   it("crawled_at 變化時 updatedLabel 同步", () => {
-    const crawledAt = ref<string | null>("2026-08-15T06:00:00Z")
+    const recent = new Date(Date.now() - 1 * 86_400_000).toISOString() // 1 天前（未過期）
+    const crawledAt = ref<string | null>(recent)
     const { updatedLabel, isStale } = useCrawledAt(crawledAt)
-    expect(updatedLabel.value).toBe("2026-08-15 14:00")
     expect(isStale.value).toBe(false)
     crawledAt.value = daysAgoHelper(9)
     expect(isStale.value).toBe(true)

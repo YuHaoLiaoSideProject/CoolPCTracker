@@ -5,14 +5,17 @@
 
 import { computed } from "vue"
 import type { Item, ItemSpec } from "@/types/item"
-import { computePriceChange, priceChangeBadgeClass, priceChangeBadgeText } from "@/lib/priceChange"
+import { computePriceChange, priceChangeBadgeClass, priceChangeBadgeText, priceAgeText, priceAgeClass, priceAgeTooltip } from "@/lib/priceChange"
 
 export function usePriceDelta(item: Item) {
   const change = computed(() => computePriceChange(item.history))
   const currentPrice = computed(() => change.value.current)
   const deltaClass = computed(() => priceChangeBadgeClass(change.value))
   const deltaText = computed(() => priceChangeBadgeText(change.value))
-  return { currentPrice, deltaClass, deltaText }
+  const priceAge = computed(() => priceAgeText(change.value))
+  const priceAgeCls = computed(() => priceAgeClass(change.value))
+  const priceAgeTip = computed(() => priceAgeTooltip(change.value))
+  return { currentPrice, deltaClass, deltaText, priceAge, priceAgeCls, priceAgeTip }
 }
 
 /** 規格 chips 白名單：依分類決定優先欄位（未解析欄位不顯示）。 */

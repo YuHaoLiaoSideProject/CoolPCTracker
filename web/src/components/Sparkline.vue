@@ -2,6 +2,7 @@
 // web/src/components/Sparkline.vue — SVG 迷你趨勢圖（開發規格 003 §2.10）
 // viewBox 0 0 100 28 polyline；history < 2 筆不畫線，顯示「資料不足」。
 // Phase 20：新增 trend 動態著色 + enableTooltip hover tooltip。
+// Phase 21：新增日期範圍標籤（sparkline-dates）。
 import { computed, ref } from "vue"
 import type { PricePoint } from "@/types/item"
 import type { PriceTrend } from "@/lib/priceChange"
@@ -57,6 +58,14 @@ const trendClass = computed(() => {
     default: return ""
   }
 })
+
+// ── 日期範圍標籤（M/D 格式）──
+const dateRange = computed(() => {
+  const pts = props.points
+  if (pts.length < 2) return null
+  const fmt = (d: string) => { const [, m, dd] = d.split("-"); return `${parseInt(m)}/${parseInt(dd)}` }
+  return { from: fmt(pts[0].d), to: fmt(pts[pts.length - 1].d) }
+})
 </script>
 
 <template>
@@ -73,6 +82,10 @@ const trendClass = computed(() => {
       <polyline :points="poly" />
     </svg>
     <span v-else class="sparkline--empty">資料不足</span>
+    <div v-if="dateRange" class="sparkline-dates">
+      <span>{{ dateRange.from }}</span>
+      <span>{{ dateRange.to }}</span>
+    </div>
     <SparklineTooltip
       v-if="enableTooltip && hoveredIndex !== null && points[hoveredIndex]"
       :point="points[hoveredIndex]"
@@ -120,5 +133,16 @@ const trendClass = computed(() => {
   line-height: 28px;
   color: var(--text-dim);
   font-size: 0.8rem;
+}
+
+.sparkline-dates {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  opacity: 0.6;
+  margin-top: 1px;
+  padding: 0 1px;
+  font-variant-numeric: tabular-nums;
 }
 </style>
