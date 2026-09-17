@@ -38,7 +38,7 @@ describe("useCrawledAt（響應式：getter 輸入）", () => {
   it("crawled_at 變化時 updatedLabel 同步", () => {
     const recent = new Date(Date.now() - 1 * 86_400_000).toISOString() // 1 天前（未過期）
     const crawledAt = ref<string | null>(recent)
-    const { updatedLabel, isStale } = useCrawledAt(crawledAt)
+    const { isStale } = useCrawledAt(crawledAt)
     expect(isStale.value).toBe(false)
     crawledAt.value = daysAgoHelper(9)
     expect(isStale.value).toBe(true)
