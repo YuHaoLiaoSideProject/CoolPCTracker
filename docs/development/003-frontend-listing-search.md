@@ -527,10 +527,17 @@ const emit = defineEmits<{
   (e: 'toggle-compare', item: Item): void  // 005：比價勾選切換
 }>()
 
-const { currentPrice, deltaClass, deltaText } = usePriceDelta(props.item)
+// Phase 21：usePriceDelta 新增 priceAge / priceAgeCls / priceAgeTip
+const { currentPrice, deltaClass, deltaText, priceAge, priceAgeCls, priceAgeTip } = usePriceDelta(props.item)
 const sparkPoints = computed(() => props.item.history.slice(-30))  // 卡片取最近 N 點；O4：列表快照 history 僅 ≤2 點，sparkline 以可取得之短歷史繪製（<2 點不畫線）
 const specChips = computed(() => chipTexts(props.item.spec))       // 如 ['14核','20緒','125W']
-// template: 見 §7 對應 class：pc-name / pc-specs / pc-price / pc-delta / pc-compare
+// template:
+//   ... pc-name / pc-specs / Sparkline / pc-price ...
+//   <div v-if="priceAge" class="pc-price-age" :class="priceAgeCls">
+//     <span class="age-icon">⏱</span>
+//     上次變動 {{ priceAge }}
+//     <span v-if="priceAgeTip" class="age-tooltip">{{ priceAgeTip }}</span>
+//   </div>
 </script>
 ```
 
@@ -539,7 +546,22 @@ const specChips = computed(() => chipTexts(props.item.spec))       // 如 ['14�
 // 語意：current = history 最後一點；previous = 倒數第二點 = 「上一筆有紀錄的日期」
 // （非連續日如 08-10 → 08-15 仍以最後兩點比較，不補中間日、不以日曆昨日猜測）。
 // 僅 1 筆 / 空 → previous/diff/trend 全 null（上游優雅降級）。
+// Phase 21：PriceChange 新增 lastChangedDate / daysSinceChange（上次價格變動距今）。
 export function computePriceChange(history: PricePoint[]): PriceChange
+
+/** 從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的日期；找不到回傳 null。 */
+export function findLastChangeDate(history: PricePoint[]): string | null
+
+/** 距今天數（UTC 日期字串比較，不涉時區）。 */
+export function daysBetween(dateA: string, dateB: string): number
+
+// ---- 卡片價格年齡 badge（上次變動距今）----
+/** 價格年齡文字：「今天」/「昨天」/「N天前」/「M/D」（>7天） */
+export function priceAgeText(c: PriceChange): string
+/** 價格年齡 class：今天=藍色（fresh）、>3天=淡色（stale） */
+export function priceAgeClass(c: PriceChange): string
+/** 價格年齡 tooltip 完整日期（2026 年 8 月 22 日） */
+export function priceAgeTooltip(c: PriceChange): string
 
 // web/src/composables/usePriceDelta.ts（卡片呈現；規格 chips 白名單 specChipTexts 亦於此檔）
 export function usePriceDelta(item: Item) {
@@ -549,24 +571,36 @@ export function usePriceDelta(item: Item) {
     currentPrice: computed(() => change.value.current),
     deltaClass: computed(() => priceChangeBadgeClass(change.value)),
     deltaText: computed(() => priceChangeBadgeText(change.value)),
+    priceAge: computed(() => priceAgeText(change.value)),      // Phase 21：「今天」/「3天前」/「8/22」
+    priceAgeCls: computed(() => priceAgeClass(change.value)),   // Phase 21：「is-fresh」/「is-stale」/「」
+    priceAgeTip: computed(() => priceAgeTooltip(change.value)), // Phase 21：完整日期 tooltip
   }
 }
 ```
 
-**Sparkline**（`components/Sparkline.vue`）：SVG `viewBox="0 0 100 28"` polyline，將 history 縮放至該座標系；**少於 2 筆不畫線**，顯示「—」（與 005 追蹤頁「資料不足」語意一致）：
+**Sparkline**（`components/Sparkline.vue`）：SVG `viewBox="0 0 100 28"` polyline，將 history 縮放至該座標系；**少於 2 筆不畫線**，顯示「資料不足」。折線右端加圓點標示最新價格位置；折線下方顯示日期範圍標籤（M/D ~ M/D）：
 
 ```vue
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PricePoint } from '@/types/item'
 
-const props = defineProps<{ points: PricePoint[] }>()
+const props = defineProps<{ points: PricePoint[]; trend?: PriceTrend | null }>()
 const poly = computed(() => sparklinePoints(props.points))  // "x1,y1 x2,y2 …"
+const dateRange = computed(() => {
+  if (props.points.length < 2) return null
+  const fmt = (d: string) => { const [, m, dd] = d.split('-'); return `${parseInt(m)}/${parseInt(dd)}` }
+  return { from: fmt(props.points[0].d), to: fmt(props.points[props.points.length - 1].d) }
+})
 // template:
 //   <svg v-if="props.points.length >= 2" class="sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">
 //     <polyline :points="poly" />
 //   </svg>
-//   <span v-else class="sparkline--empty">—</span>
+//   <span v-else class="sparkline--empty">資料不足</span>
+//   <div v-if="dateRange" class="sparkline-dates">
+//     <span>{{ dateRange.from }}</span>
+//     <span>{{ dateRange.to }}</span>
+//   </div>
 </script>
 ```
 
@@ -760,6 +794,7 @@ function onToggleCompare(item: Item) { /* TODO(005): store.toggle(item.id) */ }
 | 22 | 分類側欄僅顯示 9 大分類（@business-rules @p2） | §6.4 E15、§2.3 |
 | 23 | 搜尋範圍僅涵蓋名稱與規格欄位（@business-rules @p1） | §6.3 E11、§2.6 |
 | 24 | 結構化篩選僅對有對應欄位生效（@business-rules @p1） | §6.3 E9、§2.6 matchesCondition |
+| 25 | 卡片顯示上次價格變動距今天數（Phase 21） | §2.4 priceAgeText、§2.10 pc-price-age |
 
 ---
 
@@ -830,7 +865,45 @@ function onToggleCompare(item: Item) { /* TODO(005): store.toggle(item.id) */ }
   fill: none; stroke: var(--brand); stroke-width: 1.5;
   stroke-linejoin: round; stroke-linecap: round;
 }
+.sparkline--up polyline { stroke: var(--price-up); }
+.sparkline--down polyline { stroke: var(--price-down); }
+.sparkline--flat polyline { stroke: var(--price-flat); }
 .sparkline--empty { color: var(--text-dim); font-size: .8rem; }
+.sparkline-dates {
+  display: flex; justify-content: space-between;
+  font-size: .65rem; color: var(--text-dim); opacity: .6;
+  margin-top: 1px; padding: 0 1px; font-variant-numeric: tabular-nums;
+}
+```
+
+### 7.5.1 價格年齡標籤（Phase 21：上次變動距今）
+
+```css
+.pc-price-age {
+  font-size: .72rem; color: var(--text-dim);
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 1px 8px;
+  line-height: 1.5; white-space: nowrap; position: relative;
+}
+.age-icon { font-size: .68rem; }
+.pc-price-age.is-fresh {
+  color: var(--brand); background: var(--brand-soft); border-color: var(--brand);
+}
+.pc-price-age.is-stale { color: var(--text-dim); opacity: .7; }
+.age-tooltip {
+  display: none; position: absolute; bottom: calc(100% + 6px);
+  left: 50%; transform: translateX(-50%);
+  background: var(--text); color: var(--bg); font-size: .72rem;
+  padding: 4px 10px; border-radius: 6px;
+  white-space: nowrap; pointer-events: none; z-index: 5;
+}
+.age-tooltip::after {
+  content: ''; position: absolute; top: 100%; left: 50%;
+  transform: translateX(-50%); border: 4px solid transparent;
+  border-top-color: var(--text);
+}
+.pc-price-age:hover .age-tooltip { display: block; }
 ```
 
 ### 7.6 佈局與 RWD 斷點
