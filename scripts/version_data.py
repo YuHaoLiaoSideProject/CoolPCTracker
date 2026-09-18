@@ -379,9 +379,16 @@ def _filter_active_items(items: list) -> list:
     return [item for item in items if item.get("status") != "gone"]
 
 
+def _strip_computed_fields(items: list[dict]) -> list[dict]:
+    """移除 API 層計算欄位（lastChangedDate），僅比較 crawler 原始欄位。
+    深拷貝避免修改原始資料。"""
+    return [{k: v for k, v in item.items() if k != "lastChangedDate"} for item in items]
+
+
 def items_changed(api_dir: Path, categories: list[tuple[str, str, list]]) -> bool:
     """任一 data/items/{g}.json（過濾後）與對應 api/items/{g}.json 有異動（canonical 比較）。
 
+    API 層的 lastChangedDate 為計算欄位，比較時排除（只比 crawler 原始欄位）。
     缺檔（首次執行或新增分類）視為異動；對應檔不可解析 → 視為異動（重寫）。"""
     for g, _name, items in categories:
         path = api_dir / "items" / f"{g}.json"
@@ -392,7 +399,7 @@ def items_changed(api_dir: Path, categories: list[tuple[str, str, list]]) -> boo
         except (ValueError, OSError):
             return True
         active_items = _filter_active_items(items)
-        if canonical(active_items) != canonical(existing):
+        if canonical(active_items) != canonical(_strip_computed_fields(existing)):
             return True
     return False
 
@@ -414,12 +421,27 @@ def checkpoints_changed(data_dir: Path) -> bool:
     return False
 
 
-def write_items(api_dir: Path, categories: list[tuple[str, str, list]]) -> None:
+def find_last_change_date(history: list[list]) -> str | None:
+    """從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的日期；
+    全部相同（或僅 1 筆 / 空）→ 回傳第一筆日期或 None。
+    與前端 priceChange.findLastChangeDate 同邏輯（單一事實來源）。"""
+    for i in range(len(history) - 1, 0, -1):
+        if history[i][1] != history[i - 1][1]:
+            return history[i][0]
+    return history[0][0] if history else None
+
+
+def write_items(api_dir: Path, categories: list[tuple[str, str, list]],
+                trends: dict[str, list[list]] | None = None) -> None:
     """鏡像 api/items/{g}.json：過濾掉 status=gone 的已下架商品、compact 寫出；
-    僅寫新增或內容不同的檔（已是最新 → 不寫）。"""
+    僅寫新增或內容不同的檔（已是最新 → 不寫）。
+    有 trends 時，為每筆商品注入 lastChangedDate（從完整歷史計算，O4 修正）。"""
     for g, _name, items in categories:
         dest = api_dir / "items" / f"{g}.json"
         active_items = _filter_active_items(items)
+        if trends:
+            for item in active_items:
+                item["lastChangedDate"] = find_last_change_date(trends.get(item["id"], []))
         text = json.dumps(active_items, ensure_ascii=False, separators=(",", ":"))
         if dest.exists() and dest.read_text(encoding="utf-8") == text:
             continue
@@ -518,12 +540,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if changed:
         api_dir.mkdir(parents=True, exist_ok=True)
+        # 3) api/trends：全量重建（聚合所有 daily 檔，冪等）——先建 trends 再寫 items
+        #    （items 需注入 lastChangedDate，從 trends 完整歷史計算）
+        built_trends = build_trends(data_dir)
+        write_trends(api_dir, built_trends)
         # 1) api/items/{g}.json：鏡像 data/items/{g}（同內容、compact；g 由檔名繼承）
-        write_items(api_dir, categories)
+        #    注入 lastChangedDate（從 trends 完整歷史計算，O4 修正）
+        write_items(api_dir, categories, trends=built_trends)
         # 2) api/daily：鏡像 data/daily（有新增/更新才寫）
         mirror_daily(data_dir, api_dir)
-        # 3) api/trends：全量重建（聚合所有 daily 檔，冪等）
-        write_trends(api_dir, build_trends(data_dir))
         # 4) api/index.json：目錄入口（categories[] + daily_files[] + trends_prefix；
         #    不再含 latest/latest_file）
         write_index(api_dir, data_dir, meta, categories)

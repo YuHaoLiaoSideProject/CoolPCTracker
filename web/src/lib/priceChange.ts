@@ -43,9 +43,15 @@ export function daysBetween(dateA: string, dateB: string): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000)
 }
 
-export function computePriceChange(history: PricePoint[]): PriceChange {
+export function computePriceChange(
+  history: PricePoint[],
+  overrideLastChangedDate?: string | null,
+): PriceChange {
   const n = history.length
-  const lastChangedDate = findLastChangeDate(history)
+  // O4 修正：優先使用外部提供的 lastChangedDate（從完整歷史計算）；
+  // 未提供時退回原本的 findLastChangeDate（≤2 點快照，相容舊呼叫端）。
+  const lastChangedDate =
+    overrideLastChangedDate != null ? overrideLastChangedDate : findLastChangeDate(history)
   const today = new Date().toISOString().slice(0, 10)
   const daysSinceChange = lastChangedDate != null ? daysBetween(lastChangedDate, today) : null
 

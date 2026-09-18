@@ -51,6 +51,7 @@ export interface Item {
   first_seen: string
   last_seen: string
   history: PricePoint[] // 僅異動時 append；可能為空陣列或僅 1 筆
+  lastChangedDate?: string // O4：從完整歷史計算的上次價格變動日期（卡片 priceAge 用）
 }
 
 /** api/index.json categories[] 單一分類目錄（契約 v2）：
