@@ -86,7 +86,7 @@ describe("computePriceChange（最後兩筆計算漲跌幅）", () => {
 
   it("lastChangedDate / daysSinceChange 帶入計算結果", () => {
     const c = computePriceChange(mk([["2026-08-22", 10000], ["2026-08-25", 10500]]))
-    expect(c.lastChangedDate).toBe("2026-08-25")
+    expect(c.lastChangedDate).toBe("2026-08-22") // 變動前一天（舊價格最後一天）
     expect(typeof c.daysSinceChange).toBe("number")
   })
 })
@@ -122,14 +122,14 @@ describe("priceChangeBadgeClass（badge 配色 class）", () => {
 })
 
 describe("findLastChangeDate（往前找第一個 price[n]≠price[n-1] 的日期）", () => {
-  it("最後兩筆不同 → 回傳最後日期", () => {
-    expect(findLastChangeDate(mk([["2026-08-14", 10000], ["2026-08-15", 10500]]))).toBe("2026-08-15")
+  it("最後兩筆不同 → 回傳變動前一天（舊價格最後一天）", () => {
+    expect(findLastChangeDate(mk([["2026-08-14", 10000], ["2026-08-15", 10500]]))).toBe("2026-08-14")
   })
 
-  it("最後兩筆相同，往前找到不同 → 回傳該日期", () => {
+  it("最後兩筆相同，往前找到不同 → 回傳變動前一天（舊價格最後一天）", () => {
     expect(
       findLastChangeDate(mk([["2026-08-12", 9000], ["2026-08-13", 9500], ["2026-08-14", 9500], ["2026-08-15", 9500]]))
-    ).toBe("2026-08-13")
+    ).toBe("2026-08-12") // 9000 最後一天
   })
 
   it("全部相同 → 回傳第一筆日期（起始日）", () => {
@@ -177,9 +177,9 @@ describe("priceAgeClass（卡片價格年齡 class）", () => {
 })
 
 describe("priceAgeTooltip（完整日期提示）", () => {
-  it("帶日期 → 完整年月日", () => {
+  it("帶日期 → 完整年月日（變動前一天）", () => {
     const c = computePriceChange(mk([["2026-08-22", 10000], ["2026-08-25", 10500]]))
-    expect(priceAgeTooltip(c)).toBe("2026 年 8 月 25 日")
+    expect(priceAgeTooltip(c)).toBe("2026 年 8 月 22 日") // 變動前一天
   })
 
   it("空 history → 空字串", () => {

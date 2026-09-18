@@ -27,10 +27,12 @@ export interface PriceChange {
 }
 
 /** history（升冪、PricePoint[]）→ 漲跌摘要；空/單點回傳 null 欄位（不 throw）。 */
-/** 從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的日期；找不到回傳 null。 */
+/** 從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的「前一天」日期；
+ * 即舊價格最後存在的日子（使用者預期：上次變動 9/9，非 9/10）。
+ * 找不到回傳 null。 */
 export function findLastChangeDate(history: PricePoint[]): string | null {
   for (let i = history.length - 1; i >= 1; i--) {
-    if (history[i].p !== history[i - 1].p) return history[i].d
+    if (history[i].p !== history[i - 1].p) return history[i - 1].d
   }
   // 全部相同（或僅 1 筆）→ 以第一筆日期為「起始日」
   return history.length > 0 ? history[0].d : null

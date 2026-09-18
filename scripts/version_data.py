@@ -422,12 +422,13 @@ def checkpoints_changed(data_dir: Path) -> bool:
 
 
 def find_last_change_date(history: list[list]) -> str | None:
-    """從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的日期；
+    """從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的「前一天」日期；
+    即舊價格最後存在的日子（使用者預期：上次變動 9/9，非 9/10）。
     全部相同（或僅 1 筆 / 空）→ 回傳第一筆日期或 None。
     與前端 priceChange.findLastChangeDate 同邏輯（單一事實來源）。"""
     for i in range(len(history) - 1, 0, -1):
         if history[i][1] != history[i - 1][1]:
-            return history[i][0]
+            return history[i - 1][0]
     return history[0][0] if history else None
 
 
