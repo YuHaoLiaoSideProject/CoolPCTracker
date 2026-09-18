@@ -45,15 +45,27 @@ export function daysBetween(dateA: string, dateB: string): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000)
 }
 
+export interface ComputePriceChangeOptions {
+  /** O4：從完整歷史計算的變動前價格（卡片用，覆蓋 history 最後兩點計算） */
+  previousPrice?: number | null
+  /** O4：從完整歷史計算的上次變動日期（卡片用） */
+  lastChangedDate?: string | null
+}
+
 export function computePriceChange(
   history: PricePoint[],
-  overrideLastChangedDate?: string | null,
+  options?: ComputePriceChangeOptions | string | null,
 ): PriceChange {
+  // 相容舊呼叫：第二參數為 string 時視為 overrideLastChangedDate
+  const opts: ComputePriceChangeOptions =
+    typeof options === "string"
+      ? { lastChangedDate: options }
+      : options ?? {}
+
   const n = history.length
-  // O4 修正：優先使用外部提供的 lastChangedDate（從完整歷史計算）；
-  // 未提供時退回原本的 findLastChangeDate（≤2 點快照，相容舊呼叫端）。
+  // O4 修正：優先使用外部提供的 lastChangedDate；未提供時退回 findLastChangeDate
   const lastChangedDate =
-    overrideLastChangedDate != null ? overrideLastChangedDate : findLastChangeDate(history)
+    opts.lastChangedDate != null ? opts.lastChangedDate : findLastChangeDate(history)
   const today = new Date().toISOString().slice(0, 10)
   const daysSinceChange = lastChangedDate != null ? daysBetween(lastChangedDate, today) : null
 
@@ -73,7 +85,13 @@ export function computePriceChange(
   }
   const current = history[n - 1].p
   const currentDate = history[n - 1].d
-  if (n === 1) {
+
+  // O4：有 previousPrice 時直接使用（從完整歷史計算）；否則退回 history 最後兩點
+  const useOverride = opts.previousPrice != null
+  const prev = useOverride ? opts.previousPrice! : n >= 2 ? history[n - 2].p : null
+  const prevDate = useOverride ? lastChangedDate : n >= 2 ? history[n - 2].d : null
+
+  if (prev == null) {
     return {
       current,
       currentDate,
@@ -87,15 +105,15 @@ export function computePriceChange(
       daysSinceChange,
     }
   }
-  const prev = history[n - 2]
-  const diff = current - prev.p
+
+  const diff = current - prev
   return {
     current,
     currentDate,
-    previous: prev.p,
-    previousDate: prev.d,
+    previous: prev,
+    previousDate: prevDate,
     diff,
-    diffPercent: (diff / prev.p) * 100,
+    diffPercent: (diff / prev) * 100,
     trend: diff > 0 ? "up" : diff < 0 ? "down" : "flat",
     hasPrevious: true,
     lastChangedDate,

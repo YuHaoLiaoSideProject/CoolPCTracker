@@ -380,9 +380,9 @@ def _filter_active_items(items: list) -> list:
 
 
 def _strip_computed_fields(items: list[dict]) -> list[dict]:
-    """移除 API 層計算欄位（lastChangedDate），僅比較 crawler 原始欄位。
+    """移除 API 層計算欄位（lastChangedDate, previousPrice），僅比較 crawler 原始欄位。
     深拷貝避免修改原始資料。"""
-    return [{k: v for k, v in item.items() if k != "lastChangedDate"} for item in items]
+    return [{k: v for k, v in item.items() if k not in ("lastChangedDate", "previousPrice")} for item in items]
 
 
 def items_changed(api_dir: Path, categories: list[tuple[str, str, list]]) -> bool:
@@ -432,6 +432,15 @@ def find_last_change_date(history: list[list]) -> str | None:
     return history[0][0] if history else None
 
 
+def find_previous_price(history: list[list]) -> int | None:
+    """從 history 尾端往前找，回傳第一個 price[n] ≠ price[n-1] 的 price[n-1]；
+    即變動前的價格（卡片漲跌 badge 需要）。全部相同或空 → None。"""
+    for i in range(len(history) - 1, 0, -1):
+        if history[i][1] != history[i - 1][1]:
+            return history[i - 1][1]
+    return None
+
+
 def write_items(api_dir: Path, categories: list[tuple[str, str, list]],
                 trends: dict[str, list[list]] | None = None) -> None:
     """鏡像 api/items/{g}.json：過濾掉 status=gone 的已下架商品、compact 寫出；
@@ -442,7 +451,9 @@ def write_items(api_dir: Path, categories: list[tuple[str, str, list]],
         active_items = _filter_active_items(items)
         if trends:
             for item in active_items:
-                item["lastChangedDate"] = find_last_change_date(trends.get(item["id"], []))
+                t = trends.get(item["id"], [])
+                item["lastChangedDate"] = find_last_change_date(t)
+                item["previousPrice"] = find_previous_price(t)
         text = json.dumps(active_items, ensure_ascii=False, separators=(",", ":"))
         if dest.exists() and dest.read_text(encoding="utf-8") == text:
             continue

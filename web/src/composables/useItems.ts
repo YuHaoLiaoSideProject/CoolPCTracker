@@ -356,6 +356,7 @@ export function parseItemsFile(raw: unknown, opts: ParseItemsFileOptions = {}): 
       last_seen: typeof it.last_seen === "string" ? it.last_seen : "",
       history,
       lastChangedDate: typeof it.lastChangedDate === "string" ? it.lastChangedDate : undefined,
+      previousPrice: typeof it.previousPrice === "number" ? it.previousPrice : undefined,
     }
   })
 

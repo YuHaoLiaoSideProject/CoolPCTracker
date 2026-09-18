@@ -8,7 +8,12 @@ import type { Item, ItemSpec } from "@/types/item"
 import { computePriceChange, priceChangeBadgeClass, priceChangeBadgeText, priceAgeText, priceAgeClass, priceAgeTooltip } from "@/lib/priceChange"
 
 export function usePriceDelta(item: Item) {
-  const change = computed(() => computePriceChange(item.history, item.lastChangedDate ?? null))
+  const change = computed(() =>
+    computePriceChange(item.history, {
+      previousPrice: item.previousPrice ?? null,
+      lastChangedDate: item.lastChangedDate ?? null,
+    }),
+  )
   const currentPrice = computed(() => change.value.current)
   const deltaClass = computed(() => priceChangeBadgeClass(change.value))
   const deltaText = computed(() => priceChangeBadgeText(change.value))

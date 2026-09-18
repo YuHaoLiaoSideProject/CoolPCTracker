@@ -93,8 +93,8 @@ def write_data(data_dir: Path, *, crawled_at: str,
 
 
 def strip_computed(items: list[dict]) -> list[dict]:
-    """移除 API 層計算欄位（lastChangedDate），供測試比對 crawler 原始欄位。"""
-    return [{k: v for k, v in item.items() if k != "lastChangedDate"} for item in items]
+    """移除 API 層計算欄位（lastChangedDate, previousPrice），供測試比對 crawler 原始欄位。"""
+    return [{k: v for k, v in item.items() if k not in ("lastChangedDate", "previousPrice")} for item in items]
 
 
 def snapshot_all(data_dir: Path, api_dir: Path) -> dict[str, bytes]:
