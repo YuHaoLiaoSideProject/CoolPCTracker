@@ -68,8 +68,13 @@ def _trim_suffix(text: str, suffixes: tuple[str, ...]) -> str:
 
 
 def _capacity_token(name: str) -> str | None:
-    """容量 → 原始單位字串（≥1TB 用 TB、<1TB 用 GB）。取首個 TB/GB 出現處。"""
-    m = re.search(r"(\d+(?:\.\d+)?)\s*(TB|GB)\b", name, re.IGNORECASE)
+    """容量 → 原始單位字串（≥1TB 用 TB、<1TB 用 GB）。取首個 TB/GB 出現處。
+
+    不使用 \b 或 lookahead：原價屋名稱常見 "2TBPCIe"、"2TB含散熱片" 等
+    容量與後綴無空白分隔的寫法，\b / (?=[^a-zA-Z]) 會漏匹配。
+    實測 SSD/HDD/記憶卡商品名無 "NGBN" 誤配風險，直接匹配即可。
+    """
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(TB|GB)", name, re.IGNORECASE)
     if not m:
         return None
     num = float(m.group(1))
@@ -238,6 +243,7 @@ _SSD_BRANDS: tuple[str, ...] = (
     "東芝", "Seagate", "希捷", "Transcend", "創見", "Patriot", "博帝", "PNY",
     "TEAM", "十銓", "Gigabyte", "技嘉", "MSI", "微星", "SanDisk", "晟碟",
     "Silicon Power", "廣穎", "LiteOn", "Plextor", "Corsair", "海盜船",
+    "UMAX", "致態", "ZhiTai", "宏碁", "Acer", "Biwin", "佰維", "KLEVV",
 )
 
 

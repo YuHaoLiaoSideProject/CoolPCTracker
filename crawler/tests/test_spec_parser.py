@@ -193,6 +193,79 @@ class TestSsdDeepParse:
         assert spec.extra["interface"] == "SATA"
         assert spec.extra["format"] == "SATA"
 
+    @pytest.mark.parametrize(
+        ("name", "expected_brand", "expected_capacity"),
+        [
+            # 2TB 容量解析（≥1TB 保留 TB 單位）
+            ("WD 黑標 SN850X 2TB/Gen4 PCIe 4.0/讀7300/寫6600/TLC/電競級【五年保】",
+             "WD", "2TB"),
+            ("三星 Samsung 990 PRO 2TB/Gen4 PCIe 4.0/讀7450/寫6900/TLC【五年保】",
+             "三星", "2TB"),
+            ("美光 Micron Crucial T705 2TB Gen5 PCIe 5.0 讀14500/寫12700/TLC【五年保】",
+             "美光", "2TB"),
+            ("鎧俠 KIOXIA EXCERIA G3 2TB PCIe 5.0 讀10000/寫9600/QLC【五年保】",
+             "鎧俠", "2TB"),
+            ("威剛 XPG MARS 980Blade 2TB/Gen5/讀14000/寫13000/SM2508台積電6nm製程-五年",
+             "威剛", "2TB"),
+            ("金士頓 FURY Renegade G5 2TB/讀14700/寫14000/TLC/DRAM快取【五年保】",
+             "金士頓", "2TB"),
+            ("微星 SPATIUM M560 2TB/Gen5/讀10300/寫8700/TLC【五年保】",
+             "微星", "2TB"),
+            # 4TB 容量
+            ("WD 黑標 SN850X 4TB/Gen4 PCIe 4.0/讀7300/寫6600/TLC【五年保】",
+             "WD", "4TB"),
+            # 小容量 GB
+            ("WD 藍標 SN580 500GB M.2 PCIe 4.0 SSD",
+             "WD", "500GB"),
+            # 小數容量
+            ("WD 藍標 SN580 1.5TB M.2 PCIe 4.0 SSD",
+             "WD", "1.5TB"),
+        ],
+    )
+    def test_ssd_capacity_tb_and_gb(
+        self, name: str, expected_brand: str, expected_capacity: str
+    ) -> None:
+        spec = parse_spec("SSD", name)
+        assert spec.brand == expected_brand
+        assert spec.extra["capacity"] == expected_capacity
+
+    @pytest.mark.parametrize(
+        ("name", "expected_brand", "expected_model_fragment", "expected_capacity"),
+        [
+            # 新增品牌：UMAX
+            ("UMAX S330 240GB /2.5吋/讀520/寫450/3D NAND Flash【三年保】",
+             "UMAX", "S330", "240GB"),
+            ("UMAX S330 480GB /2.5吋/讀560/寫450/3D NAND Flash【三年保】",
+             "UMAX", "S330", "480GB"),
+            # 新增品牌：致態 / ZhiTai
+            ("致態 ZhiTai 致態小翼 S001 500GB/2.5吋/SATA 3/讀550/寫500【三年保】",
+             "致態", "ZhiTai", "500GB"),
+            # 新增品牌：宏碁 / Acer
+            ("宏碁 Acer RE100 256GB /2.5吋/讀562/寫528/TLC【五年保】",
+             "宏碁", "Acer", "256GB"),
+            ("宏碁 Acer RE100 2TB /2.5吋/讀557/寫515/TLC【五年保】",
+             "宏碁", "Acer", "2TB"),
+            # 新增品牌：Biwin / 佰維
+            ("Biwin 佰維 X570 1TB/Gen5/讀14000M/寫7300M/TLC 單面設計 【五年保】",
+             "Biwin", "佰維", "1TB"),
+            ("Biwin 佰維 X570 2TB/Gen5/讀14500M/寫10000M/TLC 單面設計 【五年保】",
+             "Biwin", "佰維", "2TB"),
+            # 新增品牌：KLEVV
+            ("KLEVV CRAS C910 2TB/Gen4 PCIe 4.0/讀5000/寫4800/TLC【五年保】",
+             "KLEVV", "CRAS C910", "2TB"),
+        ],
+    )
+    def test_ssd_new_brands_recognized(
+        self, name: str, expected_brand: str, expected_model_fragment: str,
+        expected_capacity: str,
+    ) -> None:
+        """新增 SSD 品牌（UMAX/致態/宏碁/Biwin/KLEVV）皆可正確辨識。"""
+        spec = parse_spec("SSD", name)
+        assert spec.brand == expected_brand
+        assert spec.model is not None
+        assert expected_model_fragment in spec.model
+        assert spec.extra["capacity"] == expected_capacity
+
 
 # ── HDD 深度 ─────────────────────────────────────────────────────────────
 

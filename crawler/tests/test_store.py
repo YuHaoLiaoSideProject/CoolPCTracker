@@ -523,6 +523,67 @@ class TestRefreshed:
         assert result[0].history == [[YESTERDAY_STR, 9990], [TODAY_STR, 9990]]  # 平價日仍累積
         assert result[0].last_seen == TODAY_STR
 
+    def test_brand_spec_update_is_refreshed_not_unchanged(self, tmp_path):
+        """brand 從 None 變為可辨識（spec_parser 加入新品牌後）：
+        price/status 不變、spec 異動 → refreshed（非 unchanged），
+        apply 後 spec.brand 更新為今日值。"""
+        store = Store(tmp_path)
+        # 舊資料：brand=None（品牌未加入 _SSD_BRANDS 時的解析結果）
+        prev = {
+            "s1": make_item("s1", name="UMAX S330 240GB", price=1399,
+                            spec={"brand": None, "model": None, "extra": {}},
+                            history=[[YESTERDAY_STR, 1399]],
+                            first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        }
+        # 今日：品牌加入後，parse_spec 可辨識 UMAX
+        today_items = [
+            make_item("s1", name="UMAX S330 240GB", price=1399,
+                      spec={"brand": "UMAX", "model": "S330 240GB",
+                            "extra": {"capacity": "240GB"}}),
+        ]
+        diff = store.diff(today_items, prev)
+        # spec 變動（brand: None→UMAX）→ refreshed（非 unchanged、非 changed）
+        assert [i.id for i in diff.refreshed_items] == ["s1"]
+        assert diff.changed_items == []
+        assert diff.unchanged_ids == set()
+        # apply：spec 更新、append 平價日
+        result = store.apply(diff, TODAY, prev)
+        r = result[0]
+        assert r.spec == {"brand": "UMAX", "model": "S330 240GB",
+                          "extra": {"capacity": "240GB"}}
+        assert r.history == [[YESTERDAY_STR, 1399], [TODAY_STR, 1399]]  # 平價日
+        assert r.last_seen == TODAY_STR
+
+    def test_brand_auto_update_round_trip_via_save_load(self, tmp_path):
+        """品牌自動更新：diff+apply+save+load 全流程，
+        驗證更新後的 spec 可正確寫入並回讀。"""
+        store = Store(tmp_path)
+        # Step 1：既有資料（brand=None）
+        prev = {
+            "s1": make_item("s1", name="宏碁 Acer RE100 256GB", price=799,
+                            spec={"brand": None, "model": None, "extra": {}},
+                            history=[[YESTERDAY_STR, 799]],
+                            first_seen=YESTERDAY_STR, last_seen=YESTERDAY_STR),
+        }
+        meta = {"crawled_at": "2026-08-15T06:00:00Z", "status": "ok"}
+        store.save(list(prev.values()), meta)
+        # Step 2：今日解析（brand 已加入 _SSD_BRANDS）
+        today_items = [
+            make_item("s1", name="宏碁 Acer RE100 256GB", price=799,
+                      spec={"brand": "宏碁", "model": "Acer RE100 256GB",
+                            "extra": {"capacity": "256GB"}}),
+        ]
+        diff = store.diff(today_items, prev)
+        result = store.apply(diff, TODAY, prev)
+        meta["crawled_at"] = "2026-08-16T06:00:00Z"
+        store.save(result, meta)
+        # Step 3：load 回讀，驗證 brand 已更新
+        loaded_items, _ = Store(tmp_path).load()
+        r = loaded_items["s1"]
+        assert r.spec["brand"] == "宏碁"
+        assert r.spec["extra"]["capacity"] == "256GB"
+        assert r.last_seen == TODAY_STR
+
 
 # ── save（V2：依分類分檔 data/items/{g}.json） ───────────────────────────────
 
