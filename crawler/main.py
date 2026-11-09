@@ -45,7 +45,8 @@ from .store import STATUS_IN_STOCK, SOURCE_URL, CHECKPOINT_INTERVAL_DAYS, DiffRe
 logger = logging.getLogger(__name__)
 
 DROP_THRESHOLD = 0.20  # 商品數驟降保護門檻（與 007 功能共用；邊界恰 80% 不判異常）
-NotifyFn = Callable[[str], None]  # 007 telegram 警報 hook
+NotifyFn = Callable[[str], None]  # 007 telegram 警報 hook（scripts/telegram_hook.py:notify）
+MAX_ERROR_DETAIL_LEN = 800  # 例外訊息截斷上限（Telegram 上限 4096 由 hook 再守一層）
 
 STATUS_OK = "ok"
 STATUS_PARTIAL = "partial"
@@ -117,8 +118,8 @@ def run_crawler(data_dir: Path, today: date | None = None,
     # 4. 健康檢查（規則以 007 health 為準，此處為 001 子集）
     status, reason = _compute_status(total, previous_total, failed_categories)
     if status == STATUS_FAILED:
-        if notify is not None:
-            notify(_build_alert(day, total, previous_total, failed_categories, reason))
+        # notify 失敗（網路/token 錯）只記 warning：不得掩蓋 failed 狀態與 meta 落盤
+        _safe_notify(notify, _build_alert(day, total, previous_total, failed_categories, reason))
         store.write_meta(crawled_at=_utc_now(), counts=counts, total=total, changed=0,
                          failed_categories=failed_categories, status=STATUS_FAILED)
         logger.error("crawler %s: %s（不覆寫 items 分類檔）", day.isoformat(), reason)
@@ -285,14 +286,73 @@ def _to_item(raw: RawItem, day: str) -> Item:
 
 def _build_alert(day: date, total: int, previous_total: int | None,
                  failed_categories: list[str], reason: str) -> str:
-    """中文警報文案（007 notify hook）：含本次 run 摘要與失敗原因。"""
+    """中文警報文案（007 notify hook）：含執行時間、失敗階段、原因與本次 run 摘要。"""
     prev = previous_total if previous_total is not None else "無"
     failed = "、".join(failed_categories) if failed_categories else "無"
     return (
-        f"⚠️ [CoolPC 爬蟲異常] {day.isoformat()} 執行失敗：{reason}。"
-        f"本次解析 {total} 商品（前次基準 {prev}），失敗分類：{failed}。"
+        f"⚠️ [CoolPC 爬蟲異常] {day.isoformat()} 排程失敗（階段：健康檢查）\n"
+        f"執行時間（UTC）：{_utc_now()}\n"
+        f"失敗原因：{reason}\n"
+        f"本次解析 {total} 商品（前次基準 {prev}），失敗分類：{failed}。\n"
         "已取消覆寫 data/items/ 分類檔，既有資料保持原狀。"
     )
+
+
+def _build_exception_alert(day: date | None, stage: str, exc: BaseException) -> str:
+    """執行期例外的警報文案：執行時間、失敗階段、錯誤類型與訊息（截斷）。
+
+    完整 traceback 留在 Actions log（logger.exception），訊息只帶摘要以避免超長。
+    """
+    detail = " ".join(str(exc).split()) or "（無訊息）"
+    if len(detail) > MAX_ERROR_DETAIL_LEN:
+        detail = detail[:MAX_ERROR_DETAIL_LEN] + "…"
+    day_text = day.isoformat() if day is not None else date.today().isoformat()
+    return (
+        f"🚨 [CoolPC 爬蟲異常] {day_text} 排程失敗（階段：{stage}）\n"
+        f"執行時間（UTC）：{_utc_now()}\n"
+        f"錯誤類型：{type(exc).__name__}\n"
+        f"錯誤訊息：{detail}\n"
+        "完整 traceback 請見 GitHub Actions log（exit code 2）。"
+    )
+
+
+def _safe_notify(notify: NotifyFn | None, text: str) -> None:
+    """呼叫 notify 並吞掉通知層例外（網路/token 錯不得 crash，也不得掩蓋原錯誤）。"""
+    if notify is None:
+        return
+    try:
+        notify(text)
+    except Exception:  # noqa: BLE001 — 通知失敗只記 log，不影響爬蟲結果與 exit code
+        logger.warning("告警通知發送失敗（不影響本次 run 結果）", exc_info=True)
+
+
+def _load_notifier() -> NotifyFn | None:
+    """載入 `scripts/telegram_hook.py` 的 `notify` 作為 NotifyFn。
+
+    以檔案路徑載入（scripts/ 非套件），任何載入失敗（檔案不存在、httpx 缺失…）
+    皆回傳 None 並記 warning：通知是輔助功能，不得讓爬蟲無法執行。
+    """
+    import importlib.util
+
+    hook_path = Path(__file__).resolve().parents[1] / "scripts" / "telegram_hook.py"
+    try:
+        if not hook_path.is_file():
+            logger.warning("找不到 telegram notify hook：%s（本次不發送通知）", hook_path)
+            return None
+        spec = importlib.util.spec_from_file_location("coolpc_telegram_hook", hook_path)
+        if spec is None or spec.loader is None:
+            logger.warning("找不到 telegram notify hook：%s（本次不發送通知）", hook_path)
+            return None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        hook = getattr(module, "notify", None)
+        if not callable(hook):
+            logger.warning("telegram_hook 缺少 notify()（本次不發送通知）")
+            return None
+        return hook
+    except Exception:  # noqa: BLE001 — 通知載入失敗不得阻擋爬蟲
+        logger.warning("載入 telegram notify hook 失敗（本次不發送通知）", exc_info=True)
+        return None
 
 
 def _utc_now() -> str:
@@ -305,16 +365,29 @@ def main(argv: list[str] | None = None) -> int:
 
     --date 供 workflow_dispatch 手動補爬（002 整合點），歷史以實際爬取日記錄；
     重複執行冪等（同日同價不重複 append 歷史）。
+
+    告警：啟動時載入 `scripts/telegram_hook.py:notify` 並注入 `run_crawler`，
+    因此健康檢查 failed（exit 1）與任何執行期例外（exit 2）都會嘗試發 Telegram；
+    載入或發送失敗只記 warning，不影響爬蟲結果與 exit code。
     """
     arg_parser = argparse.ArgumentParser(prog="crawler")
     arg_parser.add_argument("--data-dir", default="data", type=Path)
     arg_parser.add_argument("--date", default=None, help="實際爬取日 YYYY-MM-DD（預設今日 UTC）")
     args = arg_parser.parse_args(argv)
+
+    notify = _load_notifier()  # 注入告警 hook（失敗 → None，只記 warning）
+    today: date | None = None
     try:
         today = date.fromisoformat(args.date) if args.date else date.today()
-        return run_crawler(args.data_dir, today=today)
-    except Exception:  # noqa: BLE001 — exit 2：其他執行失敗（無效 --date、檔案損壞、寫檔失敗…）
+    except ValueError as exc:
+        logger.exception("crawler CLI 參數錯誤（exit 2）")
+        _safe_notify(notify, _build_exception_alert(None, "CLI 參數解析（--date）", exc))
+        return 2
+    try:
+        return run_crawler(args.data_dir, today=today, notify=notify)
+    except Exception as exc:  # noqa: BLE001 — exit 2：其他執行失敗（檔案損壞、寫檔失敗…）
         logger.exception("crawler run 意外失敗（exit 2）")
+        _safe_notify(notify, _build_exception_alert(today, "run_crawler（執行期例外）", exc))
         return 2
 
 
