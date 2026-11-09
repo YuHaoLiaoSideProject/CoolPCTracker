@@ -40,7 +40,11 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 import httpx
-from selectolax.parser import HTMLParser
+
+# selectolax >= 1.0 已移除 Modest backend（`selectolax.parser` 匯入即拋 ImportError，
+# 與 2026-10 排程中斷同一根因）。改用 lexbor backend；本檔僅用 HTMLParser(html) /
+# .css() / .attributes.get() / .text()，lexbor 行為一致，故以別名沿用原呼叫端。
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 from crawler.categories import CATEGORIES, Category, normalize_name
 from crawler.parser import Parser as CrawlerParser
