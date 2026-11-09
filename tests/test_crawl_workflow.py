@@ -123,6 +123,60 @@ def test_crawl_job_steps(workflow: dict) -> None:
     assert index_telegram < index_commit
 
 
+def test_crawler_step_has_telegram_env(workflow: dict) -> None:
+    """憑證注入在「真正執行爬蟲」的 step（不是 checkout / setup）。
+
+    `crawler/main.py` 以 `scripts/telegram_hook.py:notify` 注入告警，憑證只在那個
+    step 的 env 才會被看到；若放錯 step（例如 checkout）告警會 graceful skip 而靜默。
+    """
+    steps = workflow["jobs"]["crawl"]["steps"]
+    crawler_steps = [s for s in steps if "python -m crawler.main" in s.get("run", "")]
+    assert crawler_steps, "缺少執行 `python -m crawler.main` 的 step"
+    env = crawler_steps[0].get("env") or {}
+    assert env.get("TELEGRAM_BOT_TOKEN") == "${{ secrets.TELEGRAM_BOT_TOKEN }}"
+    assert env.get("TELEGRAM_CHAT_ID") == "${{ secrets.TELEGRAM_CHAT_ID }}"
+
+    # 憑證不得外流到 checkout / setup step（最小暴露面）
+    for step in steps:
+        name = step.get("name", "")
+        if name.startswith(("Checkout", "Setup Python")):
+            assert not (step.get("env") or {}).get("TELEGRAM_BOT_TOKEN"), (
+                f"{name} step 不應帶 Telegram 憑證"
+            )
+
+
+def test_failure_notification_step(workflow: dict) -> None:
+    """`if: failure()` 兜底告警 step（2026-10 事故盲點）。
+
+    事故情境：selectolax 1.0 移除 Modest backend，`import crawler.parser` 即 ImportError，
+    `crawler/main.py` 內的 notifier 永遠沒機會執行 → 必須有 workflow 層級的兜底告警。
+    """
+    steps = workflow["jobs"]["crawl"]["steps"]
+    fail_steps = [
+        s for s in steps
+        if "telegram_hook.py" in s.get("run", "") and s.get("if") == "failure()"
+    ]
+    assert fail_steps, "缺少 `if: failure()` 的 Telegram 兜底告警 step"
+    step = fail_steps[0]
+
+    env = step.get("env") or {}
+    assert env.get("TELEGRAM_BOT_TOKEN") == "${{ secrets.TELEGRAM_BOT_TOKEN }}"
+    assert env.get("TELEGRAM_CHAT_ID") == "${{ secrets.TELEGRAM_CHAT_ID }}"
+
+    # 訊息需帶 workflow run context（run id / 分支 / commit）
+    context_values = " ".join(str(v) for v in env.values())
+    for expr in ("${{ github.run_id }}", "${{ github.ref_name }}", "${{ github.sha }}"):
+        assert expr in context_values, f"兜底告警缺少 run context：{expr}"
+
+    # 走 hook 既有的任意訊息路徑（--text），不依賴 meta.json（import 死掉時沒有 meta）
+    assert "--text" in step["run"]
+    assert "$MSG" in step["run"]
+
+    # 必須在 commit step 之後：commit 失敗也需告警
+    commit = [s for s in steps if s.get("if", "").startswith("steps.version")][0]
+    assert steps.index(step) > steps.index(commit)
+
+
 def test_deploy_job_permissions_minimal(workflow: dict) -> None:
     """§1.3 權限最小化：deploy 僅 pages + id-token write。"""
     perms = workflow["jobs"]["deploy"]["permissions"]

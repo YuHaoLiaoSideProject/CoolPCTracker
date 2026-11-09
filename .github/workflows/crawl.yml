@@ -38,17 +38,43 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-          cache-dependency-path: crawler/pyproject.toml
+          cache-dependency-path: |
+            crawler/pyproject.toml
+            crawler/requirements.txt
+            crawler/requirements-dev.txt
 
-      - name: Install crawler dependencies
-        run: pip install -e ./crawler
-        # 依 crawler/pyproject.toml 安裝 httpx / selectolax（001 依賴）
+      - name: Install crawler dependencies (locked)
+        run: |
+          # 依 lock 檔安裝（含間接依賴固定版本），不再讓 pip 每日重新解析 pyproject 範圍約束
+          pip install -r crawler/requirements-dev.txt
+          pip install -e ./crawler --no-deps
+        # 2026-10 selectolax 1.0 移除 Modest backend：舊版 `pip install -e ./crawler`
+        # 會安裝到 1.0.x 並於 import 即 ImportError，排程連續 36 天失敗。
+        # requirements-dev.txt = requirements.txt（執行期鎖定）＋ pytest/pytest-mock。
+        # --no-deps：依賴已由 lock 檔安裝；避免 pip 重新解析並升級到未鎖定版本。
+
+      - name: Import smoke test (selectolax lexbor backend)
+        run: |
+          python -c "import selectolax; from crawler.parser import Parser; from crawler.main import main; print('import ok selectolax', selectolax.__version__)"
+        # 2 秒內抓出 breaking import（本類故障的原始症狀），早於任何網路抓取
+
+      - name: Run crawler unit tests
+        run: python -m pytest crawler/tests -q
+        # parser 壞掉（依賴 API 變更、DOM 假設失效）→ 測試紅 → step 失敗 → 不執行排程與部署
 
       - name: Run crawler (feature 001)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python -m crawler.main --data-dir data
         # exit code 契約：0 成功（含 partial）；1 健康檢查擋下；2 其他執行失敗
         # 非零 → step 失敗 → job 失敗 → deploy 因 needs 不啟動；舊資料不被覆寫（001 原子寫入）
         # BDD @error-handling @p0：爬蟲執行失敗時保留舊資料且不部署
+        # env：crawler/main.py 以 scripts/telegram_hook.py 的 notify() 注入告警，
+        # 憑證只在此 step 與 Telegram 相關 step 提供（不放在 checkout / setup，最小暴露面）。
+        # 注意：只有「執行期」失敗（health check、例外）能靠此處的 notifier 告警；
+        # import 階段就死（如 selectolax ImportError）時 main.py 根本沒被執行 →
+        # 由 job 末端的 `if: failure()` step 兜底（見下）。
 
       - name: Version data (diff + cache-busting)
         id: version
@@ -58,11 +84,16 @@ jobs:
         # BDD @edge-case @initial-setup：首次執行建立 api/items/{g}.json + api/daily/{date}.json + api/trends/ + api/index.json
         # BDD @business-rule @regression：無異動 → changed=false
 
-      - name: Telegram notification hook (feature 006 placeholder)
+      - name: Telegram notification hook (feature 006)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/telegram_hook.py
         continue-on-error: true    # 整合點尚未實作/失敗時不中斷 run
                                    # BDD @integration @placeholder：整合點不使工作流中斷
         # 位置在資料 commit 之前：telegram.json 異動可併入本次 commit（006 契約）
+        # env：hook 需要憑證才會真的送出摘要（缺憑證 → graceful skip）；
+        # 成功 run 亦發心跳摘要，TELEGRAM_NOTIFY_SUCCESS=0 可關閉。
 
       - name: Commit data changes
         if: steps.version.outputs.changed == 'true'   # 無異動 → 整步跳過（不產生空 commit）
@@ -83,6 +114,39 @@ jobs:
           git push
         # push 失敗（權限不足/衝突）→ step 失敗 → run 失敗、異動停留工作目錄
         # BDD @error-handling：資料 commit 失敗時工作流失敗
+
+      # ── 失敗兜底告警（2026-10 事故盲點）─────────────────────────────────
+      # 事故：selectolax 1.0 移除 Modest backend → `from crawler.parser import ...`
+      # 在 **import 階段** 即 ImportError，`crawler/main.py` 的 notifier 根本沒被執行，
+      # 因此 main.py 內的告警路徑對「連程式都跑不起來」的故障完全無效。
+      # 本 step 不依賴 crawler 是否成功啟動：只要本 job 任何一步失敗就發告警。
+      # 置於 job 末端（commit 之後）：確保 commit 失敗也能告警，且不影響
+      # 「telegram（continue-on-error）在 commit 之前」的既有契約與結構測試。
+      - name: Notify failure on Telegram
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          REPO_SLUG: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          # 訊息由 workflow 端組裝後以 `--text` 交給 hook（hook 的 `--text` 路徑
+          # 不讀 meta.json，故不依賴 crawler 是否跑得起來；無需改 hook 核心邏輯）。
+          MSG="$(printf '%s\n' \
+            "🚨 [CoolPC 排程] 工作流失敗（crawl job）" \
+            "workflow：${WORKFLOW_NAME}" \
+            "分支：${REF_NAME}" \
+            "commit：${COMMIT_SHA}" \
+            "run：#${RUN_NUMBER}（run id ${RUN_ID}）" \
+            "log：${SERVER_URL}/${REPO_SLUG}/actions/runs/${RUN_ID}" \
+            "（workflow 兜底告警：可能為安裝 / import / 測試 / 爬取 / commit 階段失敗，詳見 log）")"
+          python scripts/telegram_hook.py --text "$MSG"
+        # hook 契約：缺憑證 → graceful skip（exit 0）；發送失敗只記 log，不拋例外。
 
   deploy:
     needs: crawl                  # crawl 失敗 → deploy 不啟動
