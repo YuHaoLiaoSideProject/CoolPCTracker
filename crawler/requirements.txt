@@ -1,0 +1,15 @@
+# crawler 執行期依賴鎖定（CI 與本機重現安裝）
+#
+# 產生方式：以 crawler/pyproject.toml 解析後凍結（pip freeze），含間接依賴。
+# 為什麼需要：pyproject 只有範圍約束，CI 每日重新安裝會吃到新發佈的破壞性版本
+# （2026-10 selectolax 1.0 移除 Modest backend → 排程連續 36 天失敗）。
+# 更新方式：改 pyproject 後在乾淨 venv `pip install -e ./crawler` 再 `pip freeze`
+#          更新本檔與 requirements-dev.txt，並跑 CI smoke/pytest。
+anyio==4.16.0
+certifi==2026.10.23
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.20
+selectolax==1.0.2
+typing_extensions==4.16.0

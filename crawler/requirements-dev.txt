@@ -1,0 +1,11 @@
+# crawler 測試依賴鎖定（CI 與本機重現安裝）：`pip install -r crawler/requirements-dev.txt`
+#
+# 含執行期依賴（-r requirements.txt）＋ pytest / pytest-mock；版本皆固定，
+# 避免 CI 每日重裝時吃到新發佈的破壞性版本。
+-r requirements.txt
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==9.2.0
+pytest-mock==3.17.0

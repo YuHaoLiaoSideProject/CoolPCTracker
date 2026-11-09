@@ -21,7 +21,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from selectolax.parser import HTMLParser, Node
+# selectolax >= 1.0 已移除 Modest backend（`selectolax.parser` 匯入即拋 ImportError）。
+# 改用 lexbor backend（自 0.3.x 起即存在、API 幾乎一致）；別名沿用 HTMLParser/Node
+# 讓本檔其餘呼叫端（css/css_first/.text()/.attributes）不需修改。
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
+from selectolax.lexbor import LexborNode as Node
 
 from .categories import Category
 
@@ -64,7 +68,7 @@ class ParseResult:
 
 
 class Parser:
-    """selectolax 解析（Spike：vs BeautifulSoup4 擇一，本類別介面不變）。"""
+    """selectolax（lexbor backend）解析（Spike：vs BeautifulSoup4 擇一，本類別介面不變）。"""
 
     def parse_page(self, html: str, category: Category) -> ParseResult:
         """完整解析一頁：
